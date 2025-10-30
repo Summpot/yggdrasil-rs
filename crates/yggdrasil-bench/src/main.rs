@@ -504,8 +504,8 @@ async fn update_dashboard(
 
     // Configure Datadog client
     let mut config = datadog::Configuration::new();
-    config.set_auth_key("apiKeyAuth", APIKey { key: api_key_str, prefix: String::new() });
-    config.set_auth_key("appKeyAuth", APIKey { key: app_key_str, prefix: String::new() });
+    config.set_auth_key("DD-API-KEY", APIKey { key: api_key_str, prefix: String::new() });
+    config.set_auth_key("DD-APPLICATION-KEY", APIKey { key: app_key_str, prefix: String::new() });
     // Note: base_path cannot be changed in this version, uses default datadoghq.com
 
     let api = DashboardsAPI::with_config(config);
