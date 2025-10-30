@@ -104,6 +104,25 @@ enum Commands {
         #[arg(short, long, default_value = "datadog-dashboard.json")]
         output: String,
     },
+
+    /// Create or update Datadog dashboard using API
+    UpdateDashboard {
+        /// Dashboard title
+        #[arg(long, default_value = "Yggdrasil Performance Benchmarks")]
+        title: String,
+
+        /// Datadog API key (or use DD_API_KEY env var)
+        #[arg(long)]
+        api_key: Option<String>,
+
+        /// Datadog Application key (or use DD_APP_KEY env var)
+        #[arg(long)]
+        app_key: Option<String>,
+
+        /// Datadog site (default: datadoghq.com)
+        #[arg(long, default_value = "datadoghq.com")]
+        site: String,
+    },
 }
 
 #[tokio::main]
@@ -150,6 +169,9 @@ async fn main() -> Result<()> {
         }
         Commands::GenDashboard { output } => {
             generate_dashboard(output)?;
+        }
+        Commands::UpdateDashboard { title, api_key, app_key, site } => {
+            update_dashboard(title, api_key, app_key, site).await?;
         }
     }
 
@@ -458,6 +480,108 @@ fn generate_dashboard(output: String) -> Result<()> {
     println!("   3. Click the settings icon (⚙️) → 'Import dashboard JSON'");
     println!("   4. Paste the contents of {}", output);
     println!("   5. Click 'Save'\n");
+
+    Ok(())
+}
+
+async fn update_dashboard(
+    title: String,
+    api_key: Option<String>,
+    app_key: Option<String>,
+    site: String,
+) -> Result<()> {
+    use datadog_api_client::datadog;
+    use datadog_api_client::datadog::APIKey;
+    use datadog_api_client::datadogV1::api_dashboards::{DashboardsAPI, ListDashboardsOptionalParams};
+
+    // Get API keys from arguments or environment variables
+    let api_key_str = api_key.or_else(|| std::env::var("DD_API_KEY").ok())
+        .context("DD_API_KEY not provided (use --api-key or DD_API_KEY env var)")?;
+    let app_key_str = app_key.or_else(|| std::env::var("DD_APP_KEY").ok())
+        .context("DD_APP_KEY not provided (use --app-key or DD_APP_KEY env var)")?;
+
+    info!("Configuring Datadog API client for site: {}", site);
+
+    // Configure Datadog client
+    let mut config = datadog::Configuration::new();
+    config.set_auth_key("apiKeyAuth", APIKey { key: api_key_str, prefix: String::new() });
+    config.set_auth_key("appKeyAuth", APIKey { key: app_key_str, prefix: String::new() });
+    // Note: base_path cannot be changed in this version, uses default datadoghq.com
+
+    let api = DashboardsAPI::with_config(config);
+
+    info!("🔍 Searching for existing dashboard: '{}'", title);
+
+    // List all dashboards to find existing one
+    let dashboards_response = api
+        .list_dashboards(ListDashboardsOptionalParams::default())
+        .await
+        .context("Failed to list dashboards")?;
+
+    let existing_dashboard = dashboards_response
+        .dashboards
+        .as_ref()
+        .and_then(|dashboards| {
+            dashboards
+                .iter()
+                .find(|d| d.title.as_ref() == Some(&title))
+        });
+
+    // Load dashboard JSON from file or generate it
+    info!("Loading dashboard configuration...");
+    let dashboard_json_str = crate::emit::generate_dashboard_json()?;
+    let mut dashboard_value: serde_json::Value = serde_json::from_str(&dashboard_json_str)
+        .context("Failed to parse dashboard JSON")?;
+
+    // Ensure title matches
+    dashboard_value["title"] = serde_json::json!(title);
+
+    if let Some(existing) = existing_dashboard {
+        let dashboard_id = existing.id.as_ref()
+            .context("Dashboard missing ID")?;
+
+        info!("📊 Dashboard found with ID: {}", dashboard_id);
+        info!("🔄 Updating existing dashboard...");
+
+        // Parse JSON into Dashboard struct for update
+        let dashboard: datadog_api_client::datadogV1::model::Dashboard =
+            serde_json::from_value(dashboard_value)
+                .context("Failed to deserialize dashboard")?;
+
+        let result = api
+            .update_dashboard(dashboard_id.clone(), dashboard)
+            .await
+            .context("Failed to update dashboard")?;
+
+        let url = result.url.unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site, dashboard_id));
+
+        println!("\n✅ Dashboard updated successfully!");
+        println!("   Dashboard ID: {}", dashboard_id);
+        println!("   Dashboard URL: {}", url);
+        info!("Dashboard updated: {}", url);
+
+    } else {
+        info!("📊 Dashboard not found. Creating new dashboard...");
+
+        // Parse JSON into Dashboard struct for creation
+        let dashboard: datadog_api_client::datadogV1::model::Dashboard =
+            serde_json::from_value(dashboard_value)
+                .context("Failed to deserialize dashboard")?;
+
+        let result = api
+            .create_dashboard(dashboard)
+            .await
+            .context("Failed to create dashboard")?;
+
+        let dashboard_id = result.id
+            .context("Created dashboard missing ID")?;
+        let url = result.url.unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site, dashboard_id));
+
+        println!("\n✅ Dashboard created successfully!");
+        println!("   Dashboard ID: {}", dashboard_id);
+        println!("   Dashboard URL: {}", url);
+        info!("Dashboard created: {}", url);
+    }
 
     Ok(())
 }

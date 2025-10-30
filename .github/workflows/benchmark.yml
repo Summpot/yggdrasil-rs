@@ -52,6 +52,16 @@ jobs:
         with:
           fetch-depth: 0 # Need history for baseline comparison
 
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -112,14 +122,13 @@ jobs:
         if: ${{ steps.mode.outputs.push_datadog == 'true' }}
         run: |
           ./target/release/yggdrasil-bench gen-dashboard -o dashboard.json
-          echo "Dashboard JSON generated"
+          echo "📊 Dashboard JSON generated"
 
       - name: Update Datadog Dashboard
         if: ${{ steps.mode.outputs.push_datadog == 'true' }}
         env:
           DD_API_KEY: ${{ secrets.DD_API_KEY }}
           DD_APP_KEY: ${{ secrets.DD_APP_KEY }}
-          DD_SITE: datadoghq.com
         run: |
           # Check if keys are available
           if [ -z "$DD_API_KEY" ] || [ -z "$DD_APP_KEY" ]; then
@@ -127,60 +136,10 @@ jobs:
             exit 0
           fi
           
-          # Get or create dashboard
-          DASHBOARD_TITLE="Yggdrasil Performance Benchmarks"
-          
-          echo "Searching for existing dashboard..."
-          DASHBOARD_ID=$(curl -s -X GET \
-            "https://api.${DD_SITE}/api/v1/dashboard" \
-            -H "DD-API-KEY: ${DD_API_KEY}" \
-            -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" \
-            | jq -r ".dashboards[] | select(.title == \"${DASHBOARD_TITLE}\") | .id" \
-            | head -n 1)
-          
-          if [ -z "$DASHBOARD_ID" ] || [ "$DASHBOARD_ID" = "null" ]; then
-            echo "Dashboard not found. Creating new dashboard..."
-            RESPONSE=$(curl -s -X POST \
-              "https://api.${DD_SITE}/api/v1/dashboard" \
-              -H "Content-Type: application/json" \
-              -H "DD-API-KEY: ${DD_API_KEY}" \
-              -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" \
-              -d @dashboard.json)
-            
-            DASHBOARD_ID=$(echo "$RESPONSE" | jq -r '.id')
-            
-            if [ -z "$DASHBOARD_ID" ] || [ "$DASHBOARD_ID" = "null" ]; then
-              echo "Failed to create dashboard. Response:"
-              echo "$RESPONSE" | jq '.'
-              exit 1
-            fi
-            
-            echo "✅ Dashboard created successfully!"
-            echo "Dashboard ID: $DASHBOARD_ID"
-            echo "Dashboard URL: https://app.${DD_SITE}/dashboard/${DASHBOARD_ID}"
-          else
-            echo "Dashboard found with ID: $DASHBOARD_ID"
-            echo "Updating existing dashboard..."
-            
-            RESPONSE=$(curl -s -X PUT \
-              "https://api.${DD_SITE}/api/v1/dashboard/${DASHBOARD_ID}" \
-              -H "Content-Type: application/json" \
-              -H "DD-API-KEY: ${DD_API_KEY}" \
-              -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" \
-              -d @dashboard.json)
-            
-            if echo "$RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
-              echo "✅ Dashboard updated successfully!"
-              echo "Dashboard URL: https://app.${DD_SITE}/dashboard/${DASHBOARD_ID}"
-            else
-              echo "Failed to update dashboard. Response:"
-              echo "$RESPONSE" | jq '.'
-              exit 1
-            fi
-          fi
-          
-          # Save dashboard URL to output
-          echo "DASHBOARD_URL=https://app.${DD_SITE}/dashboard/${DASHBOARD_ID}" >> $GITHUB_ENV
+          # Use Rust SDK to create/update dashboard
+          ./target/release/yggdrasil-bench update-dashboard \
+            --title "Yggdrasil Performance Benchmarks" \
+            --site "datadoghq.com"
 
       - name: Start Datadog Agent (main/cron only)
         if: ${{ steps.mode.outputs.push_datadog == 'true' }}
