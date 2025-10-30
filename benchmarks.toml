@@ -1,0 +1,249 @@
+[[scenarios]]
+name = "tcp over ipv4"
+proto = "tcp"
+overlay = "ipv4"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tcp over ipv6"
+proto = "tcp"
+overlay = "ipv6"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tcp over udp"
+proto = "tcp"
+overlay = "udp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tcp over tcp"
+proto = "tcp"
+overlay = "tcp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tcp over quic"
+proto = "tcp"
+overlay = "quic"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tls over ipv4"
+proto = "tls"
+overlay = "ipv4"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tls over ipv6"
+proto = "tls"
+overlay = "ipv6"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tls over udp"
+proto = "tls"
+overlay = "udp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tls over tcp"
+proto = "tls"
+overlay = "tcp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "tls over quic"
+proto = "tls"
+overlay = "quic"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "quic over ipv4"
+proto = "quic"
+overlay = "ipv4"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "quic over ipv6"
+proto = "quic"
+overlay = "ipv6"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "quic over udp"
+proto = "quic"
+overlay = "udp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "quic over tcp"
+proto = "quic"
+overlay = "tcp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "quic over quic"
+proto = "quic"
+overlay = "quic"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "ws over ipv4"
+proto = "ws"
+overlay = "ipv4"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "ws over ipv6"
+proto = "ws"
+overlay = "ipv6"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "ws over udp"
+proto = "ws"
+overlay = "udp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "ws over tcp"
+proto = "ws"
+overlay = "tcp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "ws over quic"
+proto = "ws"
+overlay = "quic"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "wss over ipv4"
+proto = "wss"
+overlay = "ipv4"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "wss over ipv6"
+proto = "wss"
+overlay = "ipv6"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "wss over udp"
+proto = "wss"
+overlay = "udp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "wss over tcp"
+proto = "wss"
+overlay = "tcp"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5
+
+[[scenarios]]
+name = "wss over quic"
+proto = "wss"
+overlay = "quic"
+packet_size = 1024
+warmup_count = 1000
+sample_duration_secs = 30
+concurrency = 1
+repeat = 5

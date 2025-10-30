@@ -1,0 +1,21 @@
+[package]
+name = "genkeys"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "genkeys"
+path = "src/main.rs"
+
+[dependencies]
+yggdrasil-core.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+hex.workspace = true
+ed25519-dalek.workspace = true
+rand.workspace = true
+getrandom = "0.3"
+ctrlc = "3.5"

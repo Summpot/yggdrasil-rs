@@ -1,0 +1,22 @@
+[package]
+name = "yggdrasil-bench"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+chrono = "0.4.42"
+clap = { workspace = true, features = ["derive"] }
+datadog-api-client = { version = "0.21.0", default-features = false, features = ["rustls-tls"] }
+env_logger.workspace = true
+hdrhistogram = "7.5.4"
+log.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+statrs = "0.18.0"
+tokio = { workspace = true, features = ["full"] }
+toml.workspace = true
+yggdrasil-core = { version = "0.1.0", path = "../yggdrasil-core" }

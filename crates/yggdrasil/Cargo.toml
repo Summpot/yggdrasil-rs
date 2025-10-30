@@ -1,0 +1,22 @@
+[package]
+name = "yggdrasil"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "yggdrasil"
+path = "src/main.rs"
+
+[dependencies]
+yggdrasil-core.workspace = true
+tokio.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+log.workspace = true
+env_logger.workspace = true
+serde-hjson.workspace = true
+serde_json.workspace = true
+hex.workspace = true

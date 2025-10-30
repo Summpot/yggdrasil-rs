@@ -1,0 +1,306 @@
+name: Performance Benchmarks
+
+on:
+  # PR: lightweight benchmarks, comparison only
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'crates/yggdrasil-core/**'
+      - 'crates/yggdrasil/**'
+      - 'crates/yggdrasil-bench/**'
+      - 'benchmarks.toml'
+      - '.github/workflows/benchmark.yml'
+  
+  # Main push: full benchmarks with Datadog push
+  push:
+    branches: [main, master]
+    paths:
+      - 'crates/yggdrasil-core/**'
+      - 'crates/yggdrasil/**'
+      - 'crates/yggdrasil-bench/**'
+      - 'benchmarks.toml'
+  
+  # Daily cron: full benchmarks
+  schedule:
+    - cron: '0 2 * * *' # 2 AM UTC daily
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Benchmark mode'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - lightweight
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need history for baseline comparison
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-bench-
+
+      - name: Set CPU performance mode
+        run: |
+          echo "Setting CPU governor to performance"
+          echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor || true
+          cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor || true
+
+      - name: Build benchmark tool
+        run: cargo build --release -p yggdrasil-bench
+
+      - name: Generate environment hash
+        id: env_hash
+        run: |
+          ENV_HASH=$(echo "${{ runner.os }}-$(nproc)-$(free -m | grep Mem | awk '{print $2}')" | sha256sum | cut -d' ' -f1 | head -c 8)
+          echo "hash=$ENV_HASH" >> $GITHUB_OUTPUT
+          echo "Environment hash: $ENV_HASH"
+
+      - name: Download baseline results (PR only)
+        if: github.event_name == 'pull_request'
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          name: benchmark-baseline-${{ steps.env_hash.outputs.hash }}
+          path: baseline
+          workflow: benchmark.yml
+          branch: ${{ github.base_ref }}
+
+      - name: Determine benchmark mode
+        id: mode
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "mode=lightweight" >> $GITHUB_OUTPUT
+            echo "push_datadog=false" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.inputs.mode }}" == "lightweight" ]]; then
+            echo "mode=lightweight" >> $GITHUB_OUTPUT
+            echo "push_datadog=false" >> $GITHUB_OUTPUT
+          else
+            echo "mode=full" >> $GITHUB_OUTPUT
+            echo "push_datadog=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Dashboard JSON
+        if: ${{ steps.mode.outputs.push_datadog == 'true' }}
+        run: |
+          ./target/release/yggdrasil-bench gen-dashboard -o dashboard.json
+          echo "Dashboard JSON generated"
+
+      - name: Update Datadog Dashboard
+        if: ${{ steps.mode.outputs.push_datadog == 'true' }}
+        env:
+          DD_API_KEY: ${{ secrets.DD_API_KEY }}
+          DD_APP_KEY: ${{ secrets.DD_APP_KEY }}
+          DD_SITE: datadoghq.com
+        run: |
+          # Check if keys are available
+          if [ -z "$DD_API_KEY" ] || [ -z "$DD_APP_KEY" ]; then
+            echo "⚠️  Skipping dashboard update: DD_API_KEY or DD_APP_KEY not configured"
+            exit 0
+          fi
+          
+          # Get or create dashboard
+          DASHBOARD_TITLE="Yggdrasil Performance Benchmarks"
+          
+          echo "Searching for existing dashboard..."
+          DASHBOARD_ID=$(curl -s -X GET \
+            "https://api.${DD_SITE}/api/v1/dashboard" \
+            -H "DD-API-KEY: ${DD_API_KEY}" \
+            -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" \
+            | jq -r ".dashboards[] | select(.title == \"${DASHBOARD_TITLE}\") | .id" \
+            | head -n 1)
+          
+          if [ -z "$DASHBOARD_ID" ] || [ "$DASHBOARD_ID" = "null" ]; then
+            echo "Dashboard not found. Creating new dashboard..."
+            RESPONSE=$(curl -s -X POST \
+              "https://api.${DD_SITE}/api/v1/dashboard" \
+              -H "Content-Type: application/json" \
+              -H "DD-API-KEY: ${DD_API_KEY}" \
+              -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" \
+              -d @dashboard.json)
+            
+            DASHBOARD_ID=$(echo "$RESPONSE" | jq -r '.id')
+            
+            if [ -z "$DASHBOARD_ID" ] || [ "$DASHBOARD_ID" = "null" ]; then
+              echo "Failed to create dashboard. Response:"
+              echo "$RESPONSE" | jq '.'
+              exit 1
+            fi
+            
+            echo "✅ Dashboard created successfully!"
+            echo "Dashboard ID: $DASHBOARD_ID"
+            echo "Dashboard URL: https://app.${DD_SITE}/dashboard/${DASHBOARD_ID}"
+          else
+            echo "Dashboard found with ID: $DASHBOARD_ID"
+            echo "Updating existing dashboard..."
+            
+            RESPONSE=$(curl -s -X PUT \
+              "https://api.${DD_SITE}/api/v1/dashboard/${DASHBOARD_ID}" \
+              -H "Content-Type: application/json" \
+              -H "DD-API-KEY: ${DD_API_KEY}" \
+              -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" \
+              -d @dashboard.json)
+            
+            if echo "$RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
+              echo "✅ Dashboard updated successfully!"
+              echo "Dashboard URL: https://app.${DD_SITE}/dashboard/${DASHBOARD_ID}"
+            else
+              echo "Failed to update dashboard. Response:"
+              echo "$RESPONSE" | jq '.'
+              exit 1
+            fi
+          fi
+          
+          # Save dashboard URL to output
+          echo "DASHBOARD_URL=https://app.${DD_SITE}/dashboard/${DASHBOARD_ID}" >> $GITHUB_ENV
+
+      - name: Start Datadog Agent (main/cron only)
+        if: ${{ steps.mode.outputs.push_datadog == 'true' }}
+        env:
+          DD_API_KEY: ${{ secrets.DD_API_KEY }}
+        run: |
+          # Check if API key is available
+          if [ -z "$DD_API_KEY" ]; then
+            echo "⚠️  Skipping Datadog agent: DD_API_KEY not configured"
+            exit 0
+          fi
+          
+          docker run -d --name dd-agent \
+            -e DD_API_KEY=$DD_API_KEY \
+            -e DD_SITE=datadoghq.com \
+            -e DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true \
+            -p 8125:8125/udp \
+            gcr.io/datadoghq/agent:latest
+
+      - name: Run benchmarks
+        run: |
+          MODE_FLAG=""
+          if [[ "${{ steps.mode.outputs.mode }}" == "lightweight" ]]; then
+            MODE_FLAG="--lightweight"
+          fi
+          
+          PUSH_FLAG=""
+          if [[ "${{ steps.mode.outputs.push_datadog }}" == "true" ]]; then
+            PUSH_FLAG="--push-datadog"
+          fi
+          
+          ./target/release/yggdrasil-bench run \
+            $MODE_FLAG \
+            $PUSH_FLAG \
+            --datadog-address "127.0.0.1:8125" \
+            --commit "${{ github.sha }}" \
+            --branch "${{ github.ref_name }}" \
+            --env-hash "${{ steps.env_hash.outputs.hash }}" \
+            --output results.json
+
+      - name: Compare with baseline (PR only)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          if [ -f baseline/results.json ]; then
+            ./target/release/yggdrasil-bench compare \
+              --current results.json \
+              --baseline baseline/results.json \
+              --output comparison.md \
+              --warn-threshold 1.05 \
+              --fail-threshold 1.10
+          else
+            echo "No baseline found, skipping comparison"
+            echo "# Benchmark Results (No Baseline)" > comparison.md
+            echo "No baseline results found for comparison." >> comparison.md
+          fi
+
+      - name: Post PR comment (PR only)
+        if: github.event_name == 'pull_request' && hashFiles('comparison.md') != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const comparison = fs.readFileSync('comparison.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comparison
+            });
+
+      - name: Upload results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.sha }}
+          path: results.json
+          retention-days: 90
+
+      - name: Upload baseline artifact (main/master only)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-baseline-${{ steps.env_hash.outputs.hash }}
+          path: results.json
+          retention-days: 30
+
+      - name: Create Workflow Summary
+        if: always()
+        run: |
+          echo "## 📊 Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode**: ${{ steps.mode.outputs.mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "$DASHBOARD_URL" ]; then
+            echo "### 📈 Datadog Dashboard" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "View live metrics: [$DASHBOARD_URL]($DASHBOARD_URL)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f comparison.md ]; then
+            echo "### 📝 Comparison Report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat comparison.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Stop Datadog Agent
+        if: ${{ always() && steps.mode.outputs.push_datadog == 'true' }}
+        run: docker stop dd-agent || true
+
+      - name: Check regression status (PR only)
+        if: github.event_name == 'pull_request' && hashFiles('comparison.md') != ''
+        run: |
+          if grep -q "❌ FAILED" comparison.md; then
+            echo "::error::Performance regression detected"
+            exit 1
+          elif grep -q "⚠️  WARNING" comparison.md; then
+            echo "::warning::Performance degradation detected"
+          fi

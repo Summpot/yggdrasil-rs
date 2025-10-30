@@ -1,0 +1,45 @@
+[package]
+name = "yggdrasil-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde-hjson.workspace = true
+toml.workspace = true
+ed25519-dalek.workspace = true
+ring.workspace = true
+rand.workspace = true
+socket2.workspace = true
+pnet.workspace = true
+tun.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+log.workspace = true
+hex.workspace = true
+bytes.workspace = true
+parking_lot.workspace = true
+blake2 = "0.10.6"
+sha2 = "0.10.9"
+nix = { version = "0.30.1", features = ["socket"] }
+rcgen = "0.14.5"
+pem = "3.0.6"
+pkcs8 = { version = "0.10.2", features = ["alloc", "pem"] }
+time = "0.3.44"
+quinn = "0.11.9"
+rustls = { version = "0.23.34", features = ["aws_lc_rs"] }
+rustls-pemfile = "2.2.0"
+tokio-tungstenite = "0.28.0"
+futures-util = "0.3.31"
+siphasher = "1.0.1"
+
+[dev-dependencies]
+env_logger.workspace = true
+tempfile = "3.23.0"
+testcontainers-modules = { version = "0.13.0", features = ["postgres"] }
+port_check = "0.3.0"
