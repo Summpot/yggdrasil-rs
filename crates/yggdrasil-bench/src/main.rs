@@ -119,9 +119,9 @@ enum Commands {
         #[arg(long)]
         app_key: Option<String>,
 
-        /// Datadog site (default: datadoghq.com)
-        #[arg(long, default_value = "datadoghq.com")]
-        site: String,
+        /// Datadog site (or use DD_SITE env var, default: datadoghq.com)
+        #[arg(long)]
+        site: Option<String>,
     },
 }
 
@@ -488,24 +488,26 @@ async fn update_dashboard(
     title: String,
     api_key: Option<String>,
     app_key: Option<String>,
-    site: String,
+    site: Option<String>,
 ) -> Result<()> {
     use datadog_api_client::datadog;
     use datadog_api_client::datadog::APIKey;
     use datadog_api_client::datadogV1::api_dashboards::{DashboardsAPI, ListDashboardsOptionalParams};
 
-    // Get API keys from arguments or environment variables
+    // Get API keys and site from arguments or environment variables
     let api_key_str = api_key.or_else(|| std::env::var("DD_API_KEY").ok())
         .context("DD_API_KEY not provided (use --api-key or DD_API_KEY env var)")?;
     let app_key_str = app_key.or_else(|| std::env::var("DD_APP_KEY").ok())
         .context("DD_APP_KEY not provided (use --app-key or DD_APP_KEY env var)")?;
+    let site_str = site.or_else(|| std::env::var("DD_SITE").ok())
+        .unwrap_or_else(|| "datadoghq.com".to_string());
 
-    info!("Configuring Datadog API client for site: {}", site);
+    info!("Configuring Datadog API client for site: {}", site_str);
 
     // Configure Datadog client
     let mut config = datadog::Configuration::new();
-    config.set_auth_key("DD-API-KEY", APIKey { key: api_key_str, prefix: String::new() });
-    config.set_auth_key("DD-APPLICATION-KEY", APIKey { key: app_key_str, prefix: String::new() });
+    config.set_auth_key("apiKeyAuth", APIKey { key: api_key_str, prefix: String::new() });
+    config.set_auth_key("appKeyAuth", APIKey { key: app_key_str, prefix: String::new() });
     // Note: base_path cannot be changed in this version, uses default datadoghq.com
 
     let api = DashboardsAPI::with_config(config);
@@ -553,7 +555,7 @@ async fn update_dashboard(
             .await
             .context("Failed to update dashboard")?;
 
-        let url = result.url.unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site, dashboard_id));
+        let url = result.url.unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site_str, dashboard_id));
 
         println!("\n✅ Dashboard updated successfully!");
         println!("   Dashboard ID: {}", dashboard_id);
@@ -575,7 +577,7 @@ async fn update_dashboard(
 
         let dashboard_id = result.id
             .context("Created dashboard missing ID")?;
-        let url = result.url.unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site, dashboard_id));
+        let url = result.url.unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site_str, dashboard_id));
 
         println!("\n✅ Dashboard created successfully!");
         println!("   Dashboard ID: {}", dashboard_id);
