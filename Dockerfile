@@ -5,6 +5,10 @@
 # ===== Build Stage =====
 FROM rust:alpine AS builder
 
+# Set target architecture based on build platform
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+
 WORKDIR /build
 
 # Install build dependencies
@@ -22,11 +26,22 @@ RUN apk add --no-cache \
 RUN curl -L --proto '=https' --tlsv1.2 -sSf \
     https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
+# Determine Rust target based on platform
+RUN case "$TARGETPLATFORM" in \
+        "linux/amd64") echo "x86_64-unknown-linux-musl" > /tmp/rust_target ;; \
+        "linux/arm64") echo "aarch64-unknown-linux-musl" > /tmp/rust_target ;; \
+        *) echo "Unsupported platform: $TARGETPLATFORM" && exit 1 ;; \
+    esac && \
+    RUST_TARGET=$(cat /tmp/rust_target) && \
+    echo "Building for Rust target: $RUST_TARGET" && \
+    rustup target add $RUST_TARGET
+
 # Install sccache and wild-linker
 RUN cargo binstall -y sccache wild-linker
 
-# Configure wild linker for x86_64-unknown-linux-musl
-RUN printf '[target.x86_64-unknown-linux-musl]\nlinker = "clang"\nrustflags = ["-Clink-arg=--ld-path=wild"]\n' > /usr/local/cargo/config.toml
+# Configure wild linker based on target
+RUN RUST_TARGET=$(cat /tmp/rust_target) && \
+    printf "[target.$RUST_TARGET]\nlinker = \"clang\"\nrustflags = [\"-Clink-arg=--ld-path=wild\"]\n" > /usr/local/cargo/config.toml
 
 # Configure sccache
 ENV RUSTC_WRAPPER="/usr/local/cargo/bin/sccache" \
@@ -43,14 +58,16 @@ RUN --mount=type=cache,id=yggdrasil-sccache,target=/sccache,sharing=locked \
     --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/build/target \
-    cargo build --workspace --release --target x86_64-unknown-linux-musl && \
+    RUST_TARGET=$(cat /tmp/rust_target) && \
+    echo "Building for target: $RUST_TARGET" && \
+    cargo build --workspace --release --target $RUST_TARGET && \
     sccache --show-stats && \
     # Copy binaries out of cache directory
     mkdir -p /binout && \
-    cp /build/target/x86_64-unknown-linux-musl/release/yggdrasil /binout/ && \
-    cp /build/target/x86_64-unknown-linux-musl/release/yggdrasilctl /binout/ && \
-    cp /build/target/x86_64-unknown-linux-musl/release/genkeys /binout/ && \
-    cp /build/target/x86_64-unknown-linux-musl/release/yggdrasil-bench /binout/
+    cp /build/target/$RUST_TARGET/release/yggdrasil /binout/ && \
+    cp /build/target/$RUST_TARGET/release/yggdrasilctl /binout/ && \
+    cp /build/target/$RUST_TARGET/release/genkeys /binout/ && \
+    cp /build/target/$RUST_TARGET/release/yggdrasil-bench /binout/
 
 # ===== Runtime Stage =====
 FROM alpine:latest

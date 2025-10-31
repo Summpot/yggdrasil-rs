@@ -11,15 +11,6 @@ on:
       - 'benchmarks.toml'
       - '.github/workflows/benchmark.yml'
   
-  # Main push: full benchmarks with Datadog push
-  push:
-    branches: [main, master]
-    paths:
-      - 'crates/yggdrasil-core/**'
-      - 'crates/yggdrasil/**'
-      - 'crates/yggdrasil-bench/**'
-      - 'benchmarks.toml'
-  
   # Daily cron: full benchmarks
   schedule:
     - cron: '0 2 * * *' # 2 AM UTC daily
