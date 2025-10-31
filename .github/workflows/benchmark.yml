@@ -52,18 +52,13 @@ jobs:
         with:
           fetch-depth: 0 # Need history for baseline comparison
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.6
+
+      - uses: davidlattimore/wild-action@latest
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -84,8 +79,18 @@ jobs:
           echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor || true
           cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor || true
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev pkg-config clang
+
       - name: Build benchmark tool
-        run: cargo build --release -p yggdrasil-bench
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_GHA_ENABLED: "true"
+        run: |
+          cargo build --release -p yggdrasil-bench
+          sccache --show-stats
 
       - name: Generate environment hash
         id: env_hash

@@ -1,18 +1,38 @@
+# syntax=docker/dockerfile:1.4
 # Yggdrasil Rust Implementation - Multi-stage Docker Build
-# Supports Docker Buildx cache mounts for faster builds
+# Supports Alpine Linux, wild linker, sccache, and Docker Buildx cache
 
 # ===== Build Stage =====
-FROM rust:1.82-bookworm AS builder
+FROM rust:alpine AS builder
+
+WORKDIR /build
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
+    openssl-dev \
+    openssl \
     cmake \
-    libssl-dev \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+    musl-dev \
+    curl \
+    bash \
+    clang \
+    pkgconfig
 
-# Set working directory
-WORKDIR /build
+# Install cargo-binstall for faster tool installation
+RUN curl -L --proto '=https' --tlsv1.2 -sSf \
+    https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+# Install sccache and wild-linker
+RUN cargo binstall -y sccache wild-linker
+
+# Configure wild linker for x86_64-unknown-linux-musl
+RUN printf '[target.x86_64-unknown-linux-musl]\nlinker = "clang"\nrustflags = ["-Clink-arg=--ld-path=wild"]\n' > /usr/local/cargo/config.toml
+
+# Configure sccache
+ENV RUSTC_WRAPPER="/usr/local/cargo/bin/sccache" \
+    SCCACHE_DIR="/sccache" \
+    SCCACHE_CACHE_SIZE="10G" \
+    CARGO_INCREMENTAL="0"
 
 # Copy workspace manifest first for better caching
 COPY Cargo.toml Cargo.lock ./
@@ -37,41 +57,45 @@ RUN mkdir -p crates/yggdrasil-core/src && \
     mkdir -p crates/yggdrasil-bench/src && \
     echo "fn main() {}" > crates/yggdrasil-bench/src/main.rs
 
-# Build dependencies with Buildx cache mount
-# This layer will be cached and reused unless Cargo.toml changes
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
+# Build dependencies with sccache and cache mounts
+RUN --mount=type=cache,id=yggdrasil-sccache,target=/sccache,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/build/target \
-    cargo build --workspace --release && \
+    cargo build --workspace --release --target x86_64-unknown-linux-musl && \
     rm -rf crates/*/src
 
 # Copy actual source code
 COPY crates/ ./crates/
 
-# Build the actual binaries with cache mounts
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
+# Build the actual binaries with sccache and cache mounts
+RUN --mount=type=cache,id=yggdrasil-sccache,target=/sccache,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/build/target \
-    cargo build --workspace --release && \
+    cargo build --workspace --release --target x86_64-unknown-linux-musl && \
+    sccache --show-stats && \
     # Copy binaries out of cache directory
-    cp /build/target/release/yggdrasil /yggdrasil && \
-    cp /build/target/release/yggdrasilctl /yggdrasilctl && \
-    cp /build/target/release/genkeys /genkeys
+    mkdir -p /binout && \
+    cp /build/target/x86_64-unknown-linux-musl/release/yggdrasil /binout/ && \
+    cp /build/target/x86_64-unknown-linux-musl/release/yggdrasilctl /binout/ && \
+    cp /build/target/x86_64-unknown-linux-musl/release/genkeys /binout/ && \
+    cp /build/target/x86_64-unknown-linux-musl/release/yggdrasil-bench /binout/
 
 # ===== Runtime Stage =====
-FROM debian:bookworm-slim
+FROM alpine:latest
 
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     ca-certificates \
     iproute2 \
-    iptables \
-    && rm -rf /var/lib/apt/lists/*
+    iptables
 
 # Copy binaries from builder
-COPY --from=builder /yggdrasil /usr/local/bin/yggdrasil
-COPY --from=builder /yggdrasilctl /usr/local/bin/yggdrasilctl
-COPY --from=builder /genkeys /usr/local/bin/genkeys
+COPY --from=builder /binout/yggdrasil /usr/local/bin/yggdrasil
+COPY --from=builder /binout/yggdrasilctl /usr/local/bin/yggdrasilctl
+COPY --from=builder /binout/genkeys /usr/local/bin/genkeys
+COPY --from=builder /binout/yggdrasil-bench /usr/local/bin/yggdrasil-bench
 
 # Create configuration directory
 RUN mkdir -p /etc/yggdrasil
