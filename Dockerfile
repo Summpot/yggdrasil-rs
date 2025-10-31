@@ -26,11 +26,8 @@ RUN apk add --no-cache \
     bash \
     clang \
     pkgconfig \
-    sccache
-
-# Install cargo-binstall for faster tool installation
-RUN curl -L --proto '=https' --tlsv1.2 -sSf \
-    https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+    sccache \
+    wild
 
 # Determine Rust target based on platform
 RUN case "$TARGETPLATFORM" in \
@@ -41,9 +38,6 @@ RUN case "$TARGETPLATFORM" in \
     RUST_TARGET=$(cat /tmp/rust_target) && \
     echo "Building for Rust target: $RUST_TARGET" && \
     rustup target add $RUST_TARGET
-
-# Install sccache and wild-linker
-RUN cargo binstall -y wild-linker
 
 # Configure wild linker based on target
 RUN RUST_TARGET=$(cat /tmp/rust_target) && \
