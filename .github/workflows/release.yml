@@ -129,13 +129,21 @@ jobs:
         run: |
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      - name: Configure linker for ARM64 targets
+      - name: Configure cargo for ARM64 cross-compilation
         if: runner.os == 'Linux' && (matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'aarch64-unknown-linux-musl')
         run: |
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C link-arg=-fuse-ld=lld" >> $GITHUB_ENV
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS=-C link-arg=-fuse-ld=lld -C target-feature=+crt-static" >> $GITHUB_ENV
+          mkdir -p .cargo
+          cat >> .cargo/config.toml << 'EOF'
+          
+          [target.aarch64-unknown-linux-gnu]
+          linker = "aarch64-linux-gnu-gcc"
+          rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+          
+          [target.aarch64-unknown-linux-musl]
+          linker = "aarch64-linux-gnu-gcc"
+          rustflags = ["-C", "link-arg=-fuse-ld=lld", "-C", "target-feature=+crt-static"]
+          EOF
+          cat .cargo/config.toml
 
       - name: Build workspace
         env:
