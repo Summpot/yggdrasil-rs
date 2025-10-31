@@ -162,7 +162,7 @@ jobs:
   release-docker-amd64:
     name: Release Docker Image (linux/amd64)
     needs: create-release
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -206,7 +206,7 @@ jobs:
   release-docker-arm64:
     name: Release Docker Image (linux/arm64)
     needs: create-release
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
