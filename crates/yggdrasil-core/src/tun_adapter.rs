@@ -22,6 +22,8 @@ pub struct TunAdapter {
     event_tx: mpsc::Sender<TunEvent>,
     #[cfg(target_os = "linux")]
     device: Option<Arc<std::sync::Mutex<tun::Device>>>,
+    #[cfg(target_os = "linux")]
+    stop_tx: Option<tokio::sync::watch::Sender<bool>>,
 }
 
 impl TunAdapter {
@@ -63,6 +65,8 @@ impl TunAdapter {
             event_tx,
             #[cfg(target_os = "linux")]
             device,
+            #[cfg(target_os = "linux")]
+            stop_tx: None,
         };
 
         (adapter, rx, event_rx)
@@ -79,12 +83,22 @@ impl TunAdapter {
             let name = self.name.clone();
             let mtu = self.mtu;
 
+            // Create stop signal channel
+            let (stop_tx, stop_rx) = tokio::sync::watch::channel(false);
+            self.stop_tx = Some(stop_tx);
+
             // Start read loop in blocking task
             tokio::task::spawn_blocking(move || {
                 info!("TUN adapter read loop started for {}", name);
                 let mut buffer = vec![0u8; mtu as usize + 4]; // Extra space for protocol header
 
                 loop {
+                    // Check stop signal (non-blocking)
+                    if *stop_rx.borrow() {
+                        info!("TUN adapter received stop signal for {}", name);
+                        break;
+                    }
+
                     let result = {
                         let mut dev = match device_clone.lock() {
                             Ok(d) => d,
@@ -109,16 +123,29 @@ impl TunAdapter {
                             let packet = buffer[..n].to_vec();
 
                             let event_tx_clone = event_tx.clone();
-                            let _ = tokio::runtime::Handle::current().block_on(async {
+                            let send_result = tokio::runtime::Handle::current().block_on(async {
                                 event_tx_clone.send(TunEvent::PacketRead(packet)).await
                             });
+                            
+                            // If channel is closed, exit the loop
+                            if send_result.is_err() {
+                                info!("TUN adapter event channel closed, stopping read loop for {}", name);
+                                break;
+                            }
                         }
                         Err(e) => {
                             error!("TUN read error on {}: {}", name, e);
                             let event_tx_clone = event_tx.clone();
-                            let _ = tokio::runtime::Handle::current().block_on(async {
+                            let send_result = tokio::runtime::Handle::current().block_on(async {
                                 event_tx_clone.send(TunEvent::Error(e.to_string())).await
                             });
+                            
+                            // If channel is closed, exit the loop
+                            if send_result.is_err() {
+                                info!("TUN adapter event channel closed, stopping read loop for {}", name);
+                                break;
+                            }
+                            
                             std::thread::sleep(std::time::Duration::from_secs(1));
                         }
                     }
@@ -134,6 +161,28 @@ impl TunAdapter {
         }
 
         info!("TUN adapter started: {}", self.name);
+        Ok(())
+    }
+
+    /// Stop TUN adapter
+    #[cfg(target_os = "linux")]
+    pub async fn stop(&mut self) -> Result<()> {
+        info!("Stopping TUN adapter: {}", self.name);
+        
+        if let Some(stop_tx) = &self.stop_tx {
+            let _ = stop_tx.send(true);
+            // Give the background task a moment to exit
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+        
+        self.stop_tx = None;
+        info!("TUN adapter stopped: {}", self.name);
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    pub async fn stop(&mut self) -> Result<()> {
+        info!("TUN adapter stopped: {} (simulation mode)", self.name);
         Ok(())
     }
 
@@ -245,8 +294,25 @@ mod tests {
         assert!(result.is_ok(), "start() should complete within timeout");
         assert!(result.unwrap().is_ok(), "start() should succeed");
 
-        // Give a moment for any background tasks to initialize
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        // Verify adapter properties
+        assert_eq!(adapter.name(), "ygg_test");
+        assert_eq!(adapter.mtu(), 1500);
+
+        // On non-Linux platforms or without root, device won't be available
+        #[cfg(not(target_os = "linux"))]
+        assert!(!adapter.is_available());
+
+        // Stop the adapter to cleanup background tasks
+        let stop_result = tokio::time::timeout(std::time::Duration::from_secs(2), adapter.stop()).await;
+        assert!(stop_result.is_ok(), "stop() should complete within timeout");
+        
+        // Drop the adapter and channels to ensure cleanup
+        drop(adapter);
+        drop(_rx);
+        drop(_event_rx);
+        
+        // Give background tasks time to finish cleanup
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
     }
 
     #[tokio::test]
