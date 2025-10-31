@@ -1,76 +1,11 @@
 # syntax=docker/dockerfile:1.4
-# Yggdrasil Rust Implementation - Multi-stage Docker Build
-# Simplified build process using Docker Buildx cache
+# Yggdrasil Rust Implementation - Runtime Docker Image
+# This Dockerfile uses pre-built musl binaries from the CI/CD pipeline.
+# Binaries should be placed in the binaries/ directory before building.
 
-# ===== Build Stage =====
-FROM rust:alpine AS builder
-
-# Set target architecture based on build platform
-ARG TARGETPLATFORM
-ARG BUILDPLATFORM
-
-WORKDIR /build
-
-RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
-    apk update
-
-# Install build dependencies
-RUN apk add --no-cache \
-    openssl-dev \
-    openssl \
-    cmake \
-    musl-dev \
-    curl \
-    bash \
-    clang \
-    pkgconfig \
-    sccache \
-    wild
-
-# Determine Rust target based on platform
-RUN case "$TARGETPLATFORM" in \
-        "linux/amd64") echo "x86_64-unknown-linux-musl" > /tmp/rust_target ;; \
-        "linux/arm64") echo "aarch64-unknown-linux-musl" > /tmp/rust_target ;; \
-        *) echo "Unsupported platform: $TARGETPLATFORM" && exit 1 ;; \
-    esac && \
-    RUST_TARGET=$(cat /tmp/rust_target) && \
-    echo "Building for Rust target: $RUST_TARGET" && \
-    rustup target add $RUST_TARGET
-
-# Configure wild linker based on target
-RUN RUST_TARGET=$(cat /tmp/rust_target) && \
-    printf "[target.$RUST_TARGET]\nlinker = \"clang\"\nrustflags = [\"-Clink-arg=--ld-path=wild\"]\n" > /usr/local/cargo/config.toml
-
-# Configure sccache
-ENV RUSTC_WRAPPER="/usr/bin/sccache" \
-    SCCACHE_DIR="/sccache" \
-    SCCACHE_CACHE_SIZE="10G" \
-    CARGO_INCREMENTAL="0"
-
-# Copy all source code
-COPY Cargo.toml Cargo.lock benchmarks.toml ./
-COPY crates/ ./crates/
-
-# Build the binaries with sccache and cache mounts
-RUN --mount=type=cache,id=yggdrasil-sccache,target=/sccache,sharing=locked \
-    --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=/build/target \
-    RUST_TARGET=$(cat /tmp/rust_target) && \
-    echo "Building for target: $RUST_TARGET" && \
-    cargo build --workspace --release --target $RUST_TARGET && \
-    sccache --show-stats && \
-    # Copy binaries out of cache directory
-    mkdir -p /binout && \
-    cp /build/target/$RUST_TARGET/release/yggdrasil /binout/ && \
-    cp /build/target/$RUST_TARGET/release/yggdrasilctl /binout/ && \
-    cp /build/target/$RUST_TARGET/release/genkeys /binout/ && \
-    cp /build/target/$RUST_TARGET/release/yggdrasil-bench /binout/
-
-# ===== Runtime Stage =====
 FROM alpine:latest
+
+ARG TARGETARCH
 
 # Install runtime dependencies
 RUN apk add --no-cache \
@@ -78,11 +13,17 @@ RUN apk add --no-cache \
     iproute2 \
     iptables
 
-# Copy binaries from builder
-COPY --from=builder /binout/yggdrasil /usr/local/bin/yggdrasil
-COPY --from=builder /binout/yggdrasilctl /usr/local/bin/yggdrasilctl
-COPY --from=builder /binout/genkeys /usr/local/bin/genkeys
-COPY --from=builder /binout/yggdrasil-bench /usr/local/bin/yggdrasil-bench
+# Copy pre-built binaries from binaries directory
+COPY binaries/yggdrasil /usr/local/bin/yggdrasil
+COPY binaries/yggdrasilctl /usr/local/bin/yggdrasilctl
+COPY binaries/genkeys /usr/local/bin/genkeys
+COPY binaries/yggdrasil-bench /usr/local/bin/yggdrasil-bench
+
+# Set permissions
+RUN chmod +x /usr/local/bin/yggdrasil \
+    /usr/local/bin/yggdrasilctl \
+    /usr/local/bin/genkeys \
+    /usr/local/bin/yggdrasil-bench
 
 # Create configuration directory
 RUN mkdir -p /etc/yggdrasil
@@ -93,7 +34,6 @@ RUN yggdrasil gen-conf > /etc/yggdrasil/config.hjson
 # Expose default ports
 # 9001: Main peer port (TCP/QUIC/WebSocket)
 # 9002: Multicast discovery port
-# 9003: Admin socket (typically Unix socket)
 EXPOSE 9001 9002
 
 # Set working directory
@@ -106,3 +46,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Run Yggdrasil
 ENTRYPOINT ["yggdrasil"]
 CMD ["run", "--config", "/etc/yggdrasil/config.hjson"]
+
+

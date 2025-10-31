@@ -59,6 +59,21 @@ jobs:
             artifact_name: yggdrasil-linux-amd64
             asset_ext: tar.gz
             arch: amd64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact_name: yggdrasil-linux-arm64
+            asset_ext: tar.gz
+            arch: arm64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact_name: yggdrasil-linux-amd64-musl
+            asset_ext: tar.gz
+            arch: amd64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            artifact_name: yggdrasil-linux-arm64-musl
+            asset_ext: tar.gz
+            arch: arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: yggdrasil-windows-amd64
@@ -107,7 +122,20 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev pkg-config clang
+          sudo apt-get install -y cmake libssl-dev pkg-config clang lld musl-tools
+          
+      - name: Install cross-compilation toolchain (Linux ARM64)
+        if: runner.os == 'Linux' && (matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'aarch64-unknown-linux-musl')
+        run: |
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Configure linker for ARM64 targets
+        if: runner.os == 'Linux' && (matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'aarch64-unknown-linux-musl')
+        run: |
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C link-arg=-fuse-ld=lld" >> $GITHUB_ENV
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS=-C link-arg=-fuse-ld=lld -C target-feature=+crt-static" >> $GITHUB_ENV
 
       - name: Build workspace
         env:
@@ -161,7 +189,7 @@ jobs:
 
   release-docker-amd64:
     name: Release Docker Image (linux/amd64)
-    needs: create-release
+    needs: [create-release, build-and-release]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -170,11 +198,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Download release asset
+        uses: robinraju/release-downloader@v1
+        with:
+          tag: ${{ needs.create-release.outputs.version }}
+          fileName: yggdrasil-linux-amd64-musl-${{ needs.create-release.outputs.version }}.tar.gz
+          
+      - name: Extract binaries
+        run: |
+          mkdir -p binaries
+          tar -xzf yggdrasil-linux-amd64-musl-${{ needs.create-release.outputs.version }}.tar.gz -C binaries
+          ls -la binaries
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker-container
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -199,13 +237,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=release-docker-amd64
-          cache-to: type=gha,scope=release-docker-amd64,mode=max
           platforms: linux/amd64
+          build-args: |
+            TARGETARCH=amd64
 
   release-docker-arm64:
     name: Release Docker Image (linux/arm64)
-    needs: create-release
+    needs: [create-release, build-and-release]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -214,11 +252,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Download release asset
+        uses: robinraju/release-downloader@v1
+        with:
+          tag: ${{ needs.create-release.outputs.version }}
+          fileName: yggdrasil-linux-arm64-musl-${{ needs.create-release.outputs.version }}.tar.gz
+          
+      - name: Extract binaries
+        run: |
+          mkdir -p binaries
+          tar -xzf yggdrasil-linux-arm64-musl-${{ needs.create-release.outputs.version }}.tar.gz -C binaries
+          ls -la binaries
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker-container
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -243,9 +291,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=release-docker-arm64
-          cache-to: type=gha,scope=release-docker-arm64,mode=max
           platforms: linux/arm64
+          build-args: |
+            TARGETARCH=arm64
 
   release-docker-manifest:
     name: Create Docker Multi-arch Manifest
