@@ -66,7 +66,7 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.9
 
       - uses: davidlattimore/wild-action@latest
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && (matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-unknown-linux-musl')
 
       - name: Setup Rust cache
         uses: actions/cache@v4
@@ -99,12 +99,20 @@ jobs:
           cat >> .cargo/config.toml << 'EOF'
           
           [target.aarch64-unknown-linux-gnu]
-          linker = "aarch64-linux-gnu-gcc"
-          rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+          linker = "clang"
+          rustflags = [
+            "-C", "link-arg=--target=aarch64-unknown-linux-gnu",
+            "-C", "link-arg=-fuse-ld=lld",
+            "-C", "link-arg=--sysroot=/usr/aarch64-linux-gnu"
+          ]
           
           [target.aarch64-unknown-linux-musl]
-          linker = "aarch64-linux-gnu-gcc"
-          rustflags = ["-C", "link-arg=-fuse-ld=lld", "-C", "target-feature=+crt-static"]
+          linker = "clang"
+          rustflags = [
+            "-C", "link-arg=--target=aarch64-unknown-linux-musl",
+            "-C", "link-arg=-fuse-ld=lld",
+            "-C", "target-feature=+crt-static"
+          ]
           EOF
           cat .cargo/config.toml
 
