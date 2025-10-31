@@ -123,7 +123,7 @@ jobs:
 
   build-docker-amd64:
     name: Build Docker Image (linux/amd64)
-    runs-on: ubuntu-latest
+    runs-on: macos-latest-large
     permissions:
       contents: read
       packages: write
@@ -131,6 +131,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -168,7 +171,7 @@ jobs:
 
   build-docker-arm64:
     name: Build Docker Image (linux/arm64)
-    runs-on: ubuntu-latest
+    runs-on: macos-26-xlarge
     permissions:
       contents: read
       packages: write
@@ -177,6 +180,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
