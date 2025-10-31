@@ -48,6 +48,43 @@ This Rust implementation uses the `tun` crate which provides cross-platform TUN/
 
 For production deployments, it's recommended to run Yggdrasil as a system service with appropriate capabilities.
 
+## Quick Start
+
+### Docker (Recommended)
+
+The easiest way to run Yggdrasil:
+
+```bash
+# Using Docker Compose
+docker-compose up -d
+
+# Or build and run manually
+./build-docker.sh
+docker run -d --name yggdrasil --cap-add=NET_ADMIN --cap-add=NET_RAW --network host yggdrasil-rs
+```
+
+See [DOCKER_SERVICE_GUIDE.md](DOCKER_SERVICE_GUIDE.md) for detailed Docker instructions.
+
+### System Service
+
+Install Yggdrasil as a native system service (Linux/macOS/Windows):
+
+```bash
+# Generate configuration
+yggdrasil gen-conf > /etc/yggdrasil/config.hjson
+
+# Install and start service
+sudo yggdrasil service install
+sudo yggdrasil service start
+
+# Check status
+systemctl status yggdrasil  # Linux
+```
+
+Service commands: `install`, `start`, `stop`, `restart`, `uninstall`, `status`
+
+See [DOCKER_SERVICE_GUIDE.md](DOCKER_SERVICE_GUIDE.md) for complete service management documentation.
+
 ## Building
 
 If you want to build from source:
