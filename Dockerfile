@@ -11,6 +11,11 @@ ARG BUILDPLATFORM
 
 WORKDIR /build
 
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
+    apk update
+
 # Install build dependencies
 RUN apk add --no-cache \
     openssl-dev \
@@ -20,7 +25,8 @@ RUN apk add --no-cache \
     curl \
     bash \
     clang \
-    pkgconfig
+    pkgconfig \
+    sccache
 
 # Install cargo-binstall for faster tool installation
 RUN curl -L --proto '=https' --tlsv1.2 -sSf \
@@ -37,14 +43,14 @@ RUN case "$TARGETPLATFORM" in \
     rustup target add $RUST_TARGET
 
 # Install sccache and wild-linker
-RUN cargo binstall -y sccache wild-linker
+RUN cargo binstall -y wild-linker
 
 # Configure wild linker based on target
 RUN RUST_TARGET=$(cat /tmp/rust_target) && \
     printf "[target.$RUST_TARGET]\nlinker = \"clang\"\nrustflags = [\"-Clink-arg=--ld-path=wild\"]\n" > /usr/local/cargo/config.toml
 
 # Configure sccache
-ENV RUSTC_WRAPPER="/usr/local/cargo/bin/sccache" \
+ENV RUSTC_WRAPPER="/usr/bin/sccache" \
     SCCACHE_DIR="/sccache" \
     SCCACHE_CACHE_SIZE="10G" \
     CARGO_INCREMENTAL="0"

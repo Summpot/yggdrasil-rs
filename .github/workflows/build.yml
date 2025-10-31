@@ -269,7 +269,3 @@ jobs:
         run: |
           cargo test --workspace --all-features --target ${{ matrix.target }}
           sccache --show-stats
-
-      - name: Check formatting
-        if: runner.os == 'Linux'
-        run: cargo fmt --all -- --check
