@@ -178,7 +178,7 @@ async fn run(config_path: Option<String>, autoconf: bool) -> Result<()> {
         use tokio::signal::unix::{signal, SignalKind};
         let mut sigterm = signal(SignalKind::terminate())?;
         let mut sigint = signal(SignalKind::interrupt())?;
-        
+
         tokio::select! {
             _ = sigterm.recv() => {
                 info!("Received SIGTERM, shutting down gracefully...");
@@ -188,7 +188,7 @@ async fn run(config_path: Option<String>, autoconf: bool) -> Result<()> {
             }
         }
     }
-    
+
     #[cfg(not(unix))]
     {
         tokio::signal::ctrl_c().await?;
@@ -222,9 +222,7 @@ fn handle_service(action: ServiceAction) -> Result<()> {
             info!("Uninstalling Yggdrasil service...");
             service::uninstall_service()
         }
-        ServiceAction::Status => {
-            service::status_service()
-        }
+        ServiceAction::Status => service::status_service(),
     }
 }
 
@@ -279,7 +277,8 @@ async fn compat(args: CompatArgs) -> Result<()> {
     }
 
     if args.exportkey {
-        let private_key = config.private_key
+        let private_key = config
+            .private_key
             .ok_or_else(|| anyhow::anyhow!("No private key in configuration"))?;
         println!("{}", hex::encode(private_key));
         return Ok(());

@@ -1,3 +1,3 @@
 pub mod memory;
 
-pub use memory::{MemoryStats, MemoryProbe};
+pub use memory::{MemoryProbe, MemoryStats};

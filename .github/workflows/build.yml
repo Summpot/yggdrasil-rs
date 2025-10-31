@@ -163,31 +163,33 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
   test:
-    name: Run Tests
-    runs-on: ubuntu-latest
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.9
 
-      - name: Setup wild linker
-        run: |
-          cargo install wild
-          echo "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang" >> $GITHUB_ENV
-
-      - name: Configure wild linker
-        run: |
-          mkdir -p ~/.cargo
-          cat >> ~/.cargo/config.toml << EOF
-          [target.x86_64-unknown-linux-gnu]
-          linker = "clang"
-          rustflags = ["-Clink-arg=--ld-path=wild"]
-          EOF
+      - uses: davidlattimore/wild-action@latest
+        if: runner.os == 'Linux'
 
       - name: Setup Rust cache
         uses: actions/cache@v4
@@ -198,11 +200,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-test-
+            ${{ runner.os }}-${{ matrix.target }}-cargo-test-
 
-      - name: Install dependencies
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake libssl-dev pkg-config clang
@@ -212,14 +215,14 @@ jobs:
           RUSTC_WRAPPER: sccache
           SCCACHE_GHA_ENABLED: "true"
         run: |
-          cargo test --workspace --all-features
+          cargo test --workspace --all-features --target ${{ matrix.target }}
           sccache --show-stats
 
       - name: Run clippy
         env:
           RUSTC_WRAPPER: sccache
           SCCACHE_GHA_ENABLED: "true"
-        run: cargo clippy --workspace --all-features -- -D warnings
+        run: cargo clippy --workspace --all-features --target ${{ matrix.target }} -- -D warnings
 
       - name: Check formatting
         run: cargo fmt --all -- --check

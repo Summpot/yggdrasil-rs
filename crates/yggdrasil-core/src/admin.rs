@@ -1,13 +1,17 @@
 use anyhow::{Context, Result};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::{UnixStream, UnixListener};
-use log::{info, debug, error};
-use std::path::Path;
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::future::Future;
+#[cfg(unix)]
+use std::path::Path;
 use std::pin::Pin;
+use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+#[cfg(not(unix))]
+use tokio::net::{TcpListener, TcpStream};
+#[cfg(unix)]
+use tokio::net::{UnixListener, UnixStream};
 
 pub struct AdminClient {
     endpoint: String,
@@ -25,7 +29,14 @@ struct HandlerInfo {
 
 pub type HandlerFunc = Arc<dyn Fn(serde_json::Value) -> Result<serde_json::Value> + Send + Sync>;
 
-pub type AsyncHandlerFunc = Arc<dyn Fn(&str, serde_json::Value) -> Pin<Box<dyn Future<Output = Result<serde_json::Value>> + Send>> + Send + Sync>;
+pub type AsyncHandlerFunc = Arc<
+    dyn Fn(
+            &str,
+            serde_json::Value,
+        ) -> Pin<Box<dyn Future<Output = Result<serde_json::Value>> + Send>>
+        + Send
+        + Sync,
+>;
 
 impl AdminClient {
     pub fn new(endpoint: impl Into<String>) -> Self {
@@ -39,21 +50,59 @@ impl AdminClient {
         request_name: &str,
         arguments: &T,
     ) -> Result<R> {
-        // Parse endpoint to check if it's a unix socket
-        let socket_path = if self.endpoint.starts_with("unix://") {
-            self.endpoint.strip_prefix("unix://").unwrap()
-        } else {
-            self.endpoint.as_str()
-        };
+        #[cfg(unix)]
+        {
+            // Parse endpoint to check if it's a unix socket
+            let socket_path = if self.endpoint.starts_with("unix://") {
+                self.endpoint.strip_prefix("unix://").unwrap()
+            } else {
+                self.endpoint.as_str()
+            };
 
-        // Connect to unix socket
-        let stream = UnixStream::connect(socket_path)
-            .await
-            .context(format!("Failed to connect to admin socket: {}", socket_path))?;
+            // Connect to unix socket
+            let stream = UnixStream::connect(socket_path).await.context(format!(
+                "Failed to connect to admin socket: {}",
+                socket_path
+            ))?;
 
-        let (reader, mut writer) = stream.into_split();
-        let mut reader = BufReader::new(reader);
+            let (reader, mut writer) = stream.into_split();
+            let mut reader = BufReader::new(reader);
 
+            Self::process_request(request_name, arguments, &mut reader, &mut writer).await
+        }
+
+        #[cfg(not(unix))]
+        {
+            // Parse endpoint as TCP address
+            let addr = if self.endpoint.starts_with("tcp://") {
+                self.endpoint.strip_prefix("tcp://").unwrap()
+            } else {
+                self.endpoint.as_str()
+            };
+
+            // Connect to TCP socket
+            let stream = TcpStream::connect(addr)
+                .await
+                .context(format!("Failed to connect to admin socket: {}", addr))?;
+
+            let (reader, writer) = stream.into_split();
+            let mut reader = BufReader::new(reader);
+            let mut writer = writer;
+
+            Self::process_request(request_name, arguments, &mut reader, &mut writer).await
+        }
+    }
+
+    async fn process_request<T: Serialize, R: for<'de> Deserialize<'de>, RD, WR>(
+        request_name: &str,
+        arguments: &T,
+        reader: &mut BufReader<RD>,
+        writer: &mut WR,
+    ) -> Result<R>
+    where
+        RD: tokio::io::AsyncRead + Unpin,
+        WR: tokio::io::AsyncWrite + Unpin,
+    {
         // Prepare request
         let request = AdminSocketRequest {
             request: request_name.to_string(),
@@ -71,17 +120,17 @@ impl AdminClient {
         let mut response_text = String::new();
         let mut brace_count = 0;
         let mut in_response = false;
-        
+
         loop {
             let mut line = String::new();
             let bytes_read = reader.read_line(&mut line).await?;
-            
+
             if bytes_read == 0 {
                 break;
             }
-            
+
             response_text.push_str(&line);
-            
+
             for ch in line.chars() {
                 match ch {
                     '{' => {
@@ -91,8 +140,11 @@ impl AdminClient {
                     '}' => {
                         brace_count -= 1;
                         if in_response && brace_count == 0 {
-                            let response: AdminSocketResponse<R> = serde_json::from_str(&response_text)
-                                .context(format!("Failed to parse admin response: {}", response_text.trim()))?;
+                            let response: AdminSocketResponse<R> =
+                                serde_json::from_str(&response_text).context(format!(
+                                    "Failed to parse admin response: {}",
+                                    response_text.trim()
+                                ))?;
 
                             if response.status == "success" {
                                 return response.response.ok_or_else(|| {
@@ -101,7 +153,9 @@ impl AdminClient {
                             } else {
                                 return Err(anyhow::anyhow!(
                                     "Admin API error: {}",
-                                    response.error.unwrap_or_else(|| "Unknown error".to_string())
+                                    response
+                                        .error
+                                        .unwrap_or_else(|| "Unknown error".to_string())
                                 ));
                             }
                         }
@@ -127,7 +181,8 @@ impl AdminClient {
     }
 
     pub async fn get_sessions(&self) -> Result<GetSessionsResponse> {
-        self.send_request("getSessions", &GetSessionsRequest {}).await
+        self.send_request("getSessions", &GetSessionsRequest {})
+            .await
     }
 
     pub async fn add_peer(&self, uri: &str, interface: Option<&str>) -> Result<AddPeerResponse> {
@@ -138,7 +193,11 @@ impl AdminClient {
         self.send_request("addPeer", &request).await
     }
 
-    pub async fn remove_peer(&self, uri: &str, interface: Option<&str>) -> Result<RemovePeerResponse> {
+    pub async fn remove_peer(
+        &self,
+        uri: &str,
+        interface: Option<&str>,
+    ) -> Result<RemovePeerResponse> {
         let request = RemovePeerRequest {
             uri: uri.to_string(),
             interface: interface.map(|s| s.to_string()),
@@ -154,104 +213,168 @@ impl AdminClient {
 impl AdminServer {
     pub fn new(endpoint: impl Into<String>) -> Self {
         let mut handlers = HashMap::new();
-        
+
         // Register default handlers
-        handlers.insert("list".to_string(), HandlerInfo {
-            description: "List available commands".to_string(),
-            fields: vec![],
-        });
-        
-        handlers.insert("getSelf".to_string(), HandlerInfo {
-            description: "Show details about this node".to_string(),
-            fields: vec![],
-        });
-        
-        handlers.insert("getPeers".to_string(), HandlerInfo {
-            description: "Show directly connected peers".to_string(),
-            fields: vec![],
-        });
-        
-        handlers.insert("getPaths".to_string(), HandlerInfo {
-            description: "Show established paths through this node".to_string(),
-            fields: vec![],
-        });
-        
-        handlers.insert("getSessions".to_string(), HandlerInfo {
-            description: "Show established traffic sessions with remote nodes".to_string(),
-            fields: vec![],
-        });
-        
-        handlers.insert("addPeer".to_string(), HandlerInfo {
-            description: "Add a peer to the peer list".to_string(),
-            fields: vec!["uri".to_string(), "interface".to_string()],
-        });
-        
-        handlers.insert("removePeer".to_string(), HandlerInfo {
-            description: "Remove a peer from the peer list".to_string(),
-            fields: vec!["uri".to_string(), "interface".to_string()],
-        });
-        
+        handlers.insert(
+            "list".to_string(),
+            HandlerInfo {
+                description: "List available commands".to_string(),
+                fields: vec![],
+            },
+        );
+
+        handlers.insert(
+            "getSelf".to_string(),
+            HandlerInfo {
+                description: "Show details about this node".to_string(),
+                fields: vec![],
+            },
+        );
+
+        handlers.insert(
+            "getPeers".to_string(),
+            HandlerInfo {
+                description: "Show directly connected peers".to_string(),
+                fields: vec![],
+            },
+        );
+
+        handlers.insert(
+            "getPaths".to_string(),
+            HandlerInfo {
+                description: "Show established paths through this node".to_string(),
+                fields: vec![],
+            },
+        );
+
+        handlers.insert(
+            "getSessions".to_string(),
+            HandlerInfo {
+                description: "Show established traffic sessions with remote nodes".to_string(),
+                fields: vec![],
+            },
+        );
+
+        handlers.insert(
+            "addPeer".to_string(),
+            HandlerInfo {
+                description: "Add a peer to the peer list".to_string(),
+                fields: vec!["uri".to_string(), "interface".to_string()],
+            },
+        );
+
+        handlers.insert(
+            "removePeer".to_string(),
+            HandlerInfo {
+                description: "Remove a peer from the peer list".to_string(),
+                fields: vec!["uri".to_string(), "interface".to_string()],
+            },
+        );
+
         Self {
             endpoint: endpoint.into(),
             handlers: Arc::new(handlers),
         }
     }
-    
+
     pub async fn start<F, Fut>(&self, handler: F) -> Result<()>
     where
         F: Fn(&str, serde_json::Value) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = Result<serde_json::Value>> + Send + 'static,
     {
-        let socket_path = if self.endpoint.starts_with("unix://") {
-            self.endpoint.strip_prefix("unix://").unwrap()
-        } else {
-            self.endpoint.as_str()
-        };
-        
-        // Remove existing socket file if it exists
-        if Path::new(socket_path).exists() {
-            info!("Removing existing admin socket: {}", socket_path);
-            tokio::fs::remove_file(socket_path).await?;
-        }
-        
-        // Create listener
-        let listener = UnixListener::bind(socket_path)
-            .context(format!("Failed to bind admin socket: {}", socket_path))?;
-        
-        // Set socket permissions
         #[cfg(unix)]
         {
+            let socket_path = if self.endpoint.starts_with("unix://") {
+                self.endpoint.strip_prefix("unix://").unwrap()
+            } else {
+                self.endpoint.as_str()
+            };
+
+            // Remove existing socket file if it exists
+            if Path::new(socket_path).exists() {
+                info!("Removing existing admin socket: {}", socket_path);
+                tokio::fs::remove_file(socket_path).await?;
+            }
+
+            // Create listener
+            let listener = UnixListener::bind(socket_path)
+                .context(format!("Failed to bind admin socket: {}", socket_path))?;
+
+            // Set socket permissions
             use std::os::unix::fs::PermissionsExt;
             let permissions = std::fs::Permissions::from_mode(0o660);
             std::fs::set_permissions(socket_path, permissions)?;
-        }
-        
-        info!("Admin socket listening on {}", socket_path);
-        
-        let handlers = Arc::clone(&self.handlers);
-        let handler = Arc::new(handler);
-        
-        // Accept connections
-        loop {
-            match listener.accept().await {
-                Ok((stream, _addr)) => {
-                    let handlers = Arc::clone(&handlers);
-                    let handler = Arc::clone(&handler);
-                    
-                    tokio::spawn(async move {
-                        if let Err(e) = Self::handle_connection(stream, handlers, handler).await {
-                            error!("Error handling admin connection: {}", e);
-                        }
-                    });
+
+            info!("Admin socket listening on {}", socket_path);
+
+            let handlers = Arc::clone(&self.handlers);
+            let handler = Arc::new(handler);
+
+            // Accept connections
+            loop {
+                match listener.accept().await {
+                    Ok((stream, _addr)) => {
+                        let handlers = Arc::clone(&handlers);
+                        let handler = Arc::clone(&handler);
+
+                        tokio::spawn(async move {
+                            if let Err(e) =
+                                Self::handle_connection_unix(stream, handlers, handler).await
+                            {
+                                error!("Error handling admin connection: {}", e);
+                            }
+                        });
+                    }
+                    Err(e) => {
+                        error!("Error accepting admin connection: {}", e);
+                    }
                 }
-                Err(e) => {
-                    error!("Error accepting admin connection: {}", e);
+            }
+        }
+
+        #[cfg(not(unix))]
+        {
+            let addr = if self.endpoint.starts_with("tcp://") {
+                self.endpoint.strip_prefix("tcp://").unwrap()
+            } else {
+                self.endpoint.as_str()
+            };
+
+            // Create TCP listener
+            let listener = TcpListener::bind(addr)
+                .await
+                .context(format!("Failed to bind admin socket: {}", addr))?;
+
+            info!("Admin socket listening on {}", addr);
+
+            let handlers = Arc::clone(&self.handlers);
+            let handler = Arc::new(handler);
+
+            // Accept connections
+            loop {
+                match listener.accept().await {
+                    Ok((stream, _addr)) => {
+                        let handlers = Arc::clone(&handlers);
+                        let handler = Arc::clone(&handler);
+
+                        tokio::spawn(async move {
+                            if let Err(e) =
+                                Self::handle_connection_tcp(stream, handlers, handler).await
+                            {
+                                error!("Error handling admin connection: {}", e);
+                            }
+                        });
+                    }
+                    Err(e) => {
+                        error!("Error accepting admin connection: {}", e);
+                    }
                 }
             }
         }
     }
-    
-    async fn handle_connection<F, Fut>(
+
+    #[cfg(unix)]
+    async fn handle_connection_unix<F, Fut>(
         stream: UnixStream,
         handlers: Arc<HashMap<String, HandlerInfo>>,
         handler: Arc<F>,
@@ -260,27 +383,60 @@ impl AdminServer {
         F: Fn(&str, serde_json::Value) -> Fut + Send + Sync,
         Fut: Future<Output = Result<serde_json::Value>> + Send,
     {
-        let (reader, mut writer) = stream.into_split();
+        let (reader, writer) = stream.into_split();
         let mut reader = BufReader::new(reader);
-        
+        let mut writer = writer;
+
+        Self::handle_connection_impl(&mut reader, &mut writer, handlers, handler).await
+    }
+
+    #[cfg(not(unix))]
+    async fn handle_connection_tcp<F, Fut>(
+        stream: TcpStream,
+        handlers: Arc<HashMap<String, HandlerInfo>>,
+        handler: Arc<F>,
+    ) -> Result<()>
+    where
+        F: Fn(&str, serde_json::Value) -> Fut + Send + Sync,
+        Fut: Future<Output = Result<serde_json::Value>> + Send,
+    {
+        let (reader, writer) = stream.into_split();
+        let mut reader = BufReader::new(reader);
+        let mut writer = writer;
+
+        Self::handle_connection_impl(&mut reader, &mut writer, handlers, handler).await
+    }
+
+    async fn handle_connection_impl<F, Fut, RD, WR>(
+        reader: &mut BufReader<RD>,
+        writer: &mut WR,
+        handlers: Arc<HashMap<String, HandlerInfo>>,
+        handler: Arc<F>,
+    ) -> Result<()>
+    where
+        F: Fn(&str, serde_json::Value) -> Fut + Send + Sync,
+        Fut: Future<Output = Result<serde_json::Value>> + Send,
+        RD: tokio::io::AsyncRead + Unpin,
+        WR: tokio::io::AsyncWrite + Unpin,
+    {
         loop {
             let mut _response_text = String::new();
             let mut brace_count = 0;
             let mut in_request = false;
             let mut request_json = String::new();
-            
+
             // Read request (may be multi-line JSON)
             loop {
                 let mut line = String::new();
                 let bytes_read = reader.read_line(&mut line).await?;
-                
+
                 if bytes_read == 0 {
                     // Connection closed
                     return Ok(());
                 }
-                
+
                 request_json.push_str(&line);
-                
+
                 for ch in line.chars() {
                     match ch {
                         '{' => {
@@ -297,12 +453,12 @@ impl AdminServer {
                         _ => {}
                     }
                 }
-                
+
                 if in_request && brace_count == 0 {
                     break;
                 }
             }
-            
+
             // Parse request
             let request: AdminSocketRequest = match serde_json::from_str(&request_json) {
                 Ok(req) => req,
@@ -319,9 +475,9 @@ impl AdminServer {
                     continue;
                 }
             };
-            
+
             debug!("Admin request: {}", request.request);
-            
+
             // Handle special "list" command
             if request.request == "list" {
                 let mut list = Vec::new();
@@ -333,13 +489,13 @@ impl AdminServer {
                     });
                 }
                 list.sort_by(|a, b| a.command.cmp(&b.command));
-                
+
                 let response = AdminSocketResponseOut {
                     status: "success".to_string(),
                     error: None,
                     response: Some(ListResponse { list }),
                 };
-                
+
                 let json = serde_json::to_string_pretty(&response)?;
                 writer.write_all(json.as_bytes()).await?;
                 writer.write_all(b"\n").await?;
@@ -359,19 +515,19 @@ impl AdminServer {
                         response: None,
                     },
                 };
-                
+
                 let json = serde_json::to_string_pretty(&response)?;
                 writer.write_all(json.as_bytes()).await?;
                 writer.write_all(b"\n").await?;
                 writer.flush().await?;
             }
-            
+
             // Check if we should keep the connection alive
             if !request.keepalive {
                 break;
             }
         }
-        
+
         Ok(())
     }
 }
@@ -571,7 +727,7 @@ mod tests {
             arguments: Some(serde_json::json!({})),
             keepalive: false,
         };
-        
+
         let json = serde_json::to_string(&request).unwrap();
         assert!(json.contains("getSelf"));
     }

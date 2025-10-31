@@ -26,10 +26,10 @@ pub mod tun_adapter;
 // Re-export commonly used types
 pub use address::{Address, Subnet};
 pub use admin::{AdminClient, AdminServer};
-pub use config::{Config, MulticastInterfaceConfig, ConfigFormat};
+pub use config::{Config, ConfigFormat, MulticastInterfaceConfig};
 pub use core::Core;
 pub use crypto::Crypto;
-pub use lookup::{LookupManager, BloomFilter, LookupStats};
+pub use lookup::{BloomFilter, LookupManager, LookupStats};
 pub use metrics::{MetricsRegistry, YggdrasilMetrics};
 pub use quic_pool::{QuicPool, QuicPoolConfig, QuicPoolStats};
 pub use spanning_tree::{SpanningTree, TreeAnnouncement};

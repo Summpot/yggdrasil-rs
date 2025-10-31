@@ -125,13 +125,19 @@ impl ProtoHandler {
             }
             TYPE_PROTO_NODEINFO_RESPONSE => {
                 // Forward to nodeinfo handler (to be implemented)
-                log::debug!("Received NodeInfo response from {:?}", hex::encode(from_key));
+                log::debug!(
+                    "Received NodeInfo response from {:?}",
+                    hex::encode(from_key)
+                );
                 Ok(())
             }
             TYPE_PROTO_TREE_ANNOUNCEMENT => {
                 // Tree announcements are handled directly by Core since it owns SpanningTree
                 // This is just a marker - actual handling happens in Core::handle_session_packet
-                log::debug!("Received tree announcement from {:?}", hex::encode(from_key));
+                log::debug!(
+                    "Received tree announcement from {:?}",
+                    hex::encode(from_key)
+                );
                 Ok(())
             }
             TYPE_PROTO_BLOOM_FILTER => {
@@ -232,8 +238,7 @@ impl ProtoHandler {
         );
         drop(requests);
 
-        self.send_debug(key, TYPE_DEBUG_GET_SELF_REQUEST, &[])
-            .await
+        self.send_debug(key, TYPE_DEBUG_GET_SELF_REQUEST, &[]).await
     }
 
     async fn handle_get_self_request(&self, from_key: [u8; 32]) -> Result<()> {
@@ -316,8 +321,7 @@ impl ProtoHandler {
         );
         drop(requests);
 
-        self.send_debug(key, TYPE_DEBUG_GET_TREE_REQUEST, &[])
-            .await
+        self.send_debug(key, TYPE_DEBUG_GET_TREE_REQUEST, &[]).await
     }
 
     async fn handle_get_tree_request(&self, from_key: [u8; 32]) -> Result<()> {
@@ -341,7 +345,11 @@ impl ProtoHandler {
     }
 
     // Bloom Filter Exchange methods
-    pub async fn send_bloom_filter_update(&self, to_key: [u8; 32], filter_data: &[u8]) -> Result<()> {
+    pub async fn send_bloom_filter_update(
+        &self,
+        to_key: [u8; 32],
+        filter_data: &[u8],
+    ) -> Result<()> {
         let mut packet = vec![TYPE_SESSION_PROTO, TYPE_PROTO_BLOOM_FILTER];
         packet.extend_from_slice(filter_data);
         self.send_tx
@@ -353,12 +361,19 @@ impl ProtoHandler {
     async fn handle_bloom_filter_update(&self, from_key: [u8; 32], data: &[u8]) -> Result<()> {
         // Bloom filter format: [filter_bytes (1024)]
         if data.len() < 1024 {
-            log::warn!("Invalid bloom filter size from {:?}: {} bytes", hex::encode(from_key), data.len());
+            log::warn!(
+                "Invalid bloom filter size from {:?}: {} bytes",
+                hex::encode(from_key),
+                data.len()
+            );
             return Ok(());
         }
 
-        log::debug!("Received bloom filter update from {:?}", hex::encode(from_key));
-        
+        log::debug!(
+            "Received bloom filter update from {:?}",
+            hex::encode(from_key)
+        );
+
         // This will be handled by Core which has access to LookupManager
         // For now, just log it
         Ok(())
@@ -376,7 +391,7 @@ impl ProtoHandler {
     {
         let mut requests = self.lookup_requests.write().await;
         requests.remove(&(to_key, target_key));
-        
+
         // Convert the Option<[u8; 32]> callback to Vec<u8> callback
         let wrapped_callback = Box::new(move |data: Vec<u8>| {
             if data.len() >= 32 {
@@ -387,7 +402,7 @@ impl ProtoHandler {
                 callback(None);
             }
         });
-        
+
         requests.insert(
             (to_key, target_key),
             RequestInfo {
@@ -400,7 +415,7 @@ impl ProtoHandler {
         // Packet format: [TYPE_SESSION_PROTO][TYPE_PROTO_LOOKUP_REQUEST][target_key(32)]
         let mut packet = vec![TYPE_SESSION_PROTO, TYPE_PROTO_LOOKUP_REQUEST];
         packet.extend_from_slice(&target_key);
-        
+
         self.send_tx
             .send((packet, to_key))
             .await
@@ -409,7 +424,11 @@ impl ProtoHandler {
 
     async fn handle_lookup_request(&self, from_key: [u8; 32], data: &[u8]) -> Result<()> {
         if data.len() < 32 {
-            log::warn!("Invalid lookup request from {:?}: {} bytes", hex::encode(from_key), data.len());
+            log::warn!(
+                "Invalid lookup request from {:?}: {} bytes",
+                hex::encode(from_key),
+                data.len()
+            );
             return Ok(());
         }
 
@@ -427,10 +446,14 @@ impl ProtoHandler {
         self.send_lookup_response(from_key, None).await
     }
 
-    pub async fn send_lookup_response(&self, to_key: [u8; 32], found_key: Option<[u8; 32]>) -> Result<()> {
+    pub async fn send_lookup_response(
+        &self,
+        to_key: [u8; 32],
+        found_key: Option<[u8; 32]>,
+    ) -> Result<()> {
         // Packet format: [TYPE_SESSION_PROTO][TYPE_PROTO_LOOKUP_RESPONSE][found_key(32) or empty]
         let mut packet = vec![TYPE_SESSION_PROTO, TYPE_PROTO_LOOKUP_RESPONSE];
-        
+
         if let Some(key) = found_key {
             packet.extend_from_slice(&key);
         }
@@ -451,7 +474,7 @@ impl ProtoHandler {
         // Find the matching request by iterating through all pending requests
         let mut requests = self.lookup_requests.write().await;
         let mut found_request = None;
-        
+
         for ((req_to_key, _target_key), _info) in requests.iter() {
             if req_to_key == &from_key {
                 found_request = Some((*req_to_key, *_target_key));
@@ -462,7 +485,7 @@ impl ProtoHandler {
         if let Some(key_pair) = found_request {
             if let Some(info) = requests.remove(&key_pair) {
                 drop(requests);
-                
+
                 // Take the callback out of the Arc<Mutex<Option<>>>
                 if let Some(callback) = info.callback.lock().await.take() {
                     callback(data.to_vec());
@@ -527,7 +550,11 @@ where
 
     match request_type {
         "get_self" => handler.send_get_self_request(key, wrapped_callback).await?,
-        "get_peers" => handler.send_get_peers_request(key, wrapped_callback).await?,
+        "get_peers" => {
+            handler
+                .send_get_peers_request(key, wrapped_callback)
+                .await?
+        }
         "get_tree" => handler.send_get_tree_request(key, wrapped_callback).await?,
         _ => return Err(anyhow::anyhow!("Unknown request type")),
     }

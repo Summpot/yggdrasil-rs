@@ -68,7 +68,7 @@ enum Commands {
         /// Command to execute in compatibility mode
         #[arg(value_name = "COMMAND")]
         command: String,
-        
+
         /// Additional arguments
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
@@ -87,9 +87,15 @@ async fn main() -> Result<()> {
         Some(Commands::GetDHT) => get_dht(&client, json_output).await,
         Some(Commands::GetPaths) => get_paths(&client, json_output).await,
         Some(Commands::GetSessions) => get_sessions(&client, json_output).await,
-        Some(Commands::AddPeer { uri, interface }) => add_peer(&client, &uri, interface.as_deref(), json_output).await,
-        Some(Commands::RemovePeer { uri, interface }) => remove_peer(&client, &uri, interface.as_deref(), json_output).await,
-        Some(Commands::GetMulticastInterfaces) => get_multicast_interfaces(&client, json_output).await,
+        Some(Commands::AddPeer { uri, interface }) => {
+            add_peer(&client, &uri, interface.as_deref(), json_output).await
+        }
+        Some(Commands::RemovePeer { uri, interface }) => {
+            remove_peer(&client, &uri, interface.as_deref(), json_output).await
+        }
+        Some(Commands::GetMulticastInterfaces) => {
+            get_multicast_interfaces(&client, json_output).await
+        }
         Some(Commands::GetTUN) => get_tun(&client, json_output).await,
         Some(Commands::List) => list_commands(&client, json_output).await,
         Some(Commands::Compat { command, args }) => {
@@ -105,7 +111,7 @@ async fn main() -> Result<()> {
 
 async fn get_self(client: &AdminClient, json: bool) -> Result<()> {
     let response = client.get_self().await?;
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&response)?);
     } else {
@@ -117,26 +123,26 @@ async fn get_self(client: &AdminClient, json: bool) -> Result<()> {
         println!("  IPv6 Subnet:      {}", response.subnet);
         println!("  Routing Entries:  {}", response.routing_entries);
     }
-    
+
     Ok(())
 }
 
 async fn get_peers(client: &AdminClient, json: bool) -> Result<()> {
     let response = client.get_peers().await?;
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&response)?);
         return Ok(());
     }
-    
+
     if response.peers.is_empty() {
         println!("No peers connected");
         return Ok(());
     }
-    
+
     println!("Connected Peers ({}):", response.peers.len());
     println!();
-    
+
     for (i, peer) in response.peers.iter().enumerate() {
         println!("Peer #{}:", i + 1);
         println!("  Public Key:   {}", peer.public_key);
@@ -146,12 +152,15 @@ async fn get_peers(client: &AdminClient, json: bool) -> Result<()> {
         if let Some(uri) = &peer.uri {
             println!("  URI:          {}", uri);
         }
-        println!("  Direction:    {}", if peer.inbound { "Inbound" } else { "Outbound" });
+        println!(
+            "  Direction:    {}",
+            if peer.inbound { "Inbound" } else { "Outbound" }
+        );
         println!("  Status:       {}", if peer.up { "Up" } else { "Down" });
         println!("  Port:         {}", peer.port);
         println!("  Priority:     {}", peer.priority);
         println!("  Cost:         {}", peer.cost);
-        
+
         if let Some(uptime) = peer.uptime {
             println!("  Uptime:       {:.2}s", uptime);
         }
@@ -175,7 +184,7 @@ async fn get_peers(client: &AdminClient, json: bool) -> Result<()> {
         }
         println!();
     }
-    
+
     Ok(())
 }
 
@@ -191,20 +200,20 @@ async fn get_dht(_client: &AdminClient, json: bool) -> Result<()> {
 
 async fn get_paths(client: &AdminClient, json: bool) -> Result<()> {
     let response = client.get_paths().await?;
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&response)?);
         return Ok(());
     }
-    
+
     if response.paths.is_empty() {
         println!("No paths found");
         return Ok(());
     }
-    
+
     println!("Routing Paths ({}):", response.paths.len());
     println!();
-    
+
     for (i, path) in response.paths.iter().enumerate() {
         println!("Path #{}:", i + 1);
         println!("  Public Key:   {}", path.public_key);
@@ -212,26 +221,26 @@ async fn get_paths(client: &AdminClient, json: bool) -> Result<()> {
         println!("  Path:         {:?}", path.path);
         println!();
     }
-    
+
     Ok(())
 }
 
 async fn get_sessions(client: &AdminClient, json: bool) -> Result<()> {
     let response = client.get_sessions().await?;
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&response)?);
         return Ok(());
     }
-    
+
     if response.sessions.is_empty() {
         println!("No active sessions");
         return Ok(());
     }
-    
+
     println!("Active Sessions ({}):", response.sessions.len());
     println!();
-    
+
     for (i, session) in response.sessions.iter().enumerate() {
         println!("Session #{}:", i + 1);
         println!("  Public Key:   {}", session.public_key);
@@ -241,23 +250,28 @@ async fn get_sessions(client: &AdminClient, json: bool) -> Result<()> {
         println!("  Uptime:       {:.2}s", session.uptime);
         println!();
     }
-    
+
     Ok(())
 }
 
-async fn add_peer(client: &AdminClient, uri: &str, interface: Option<&str>, json: bool) -> Result<()> {
+async fn add_peer(
+    client: &AdminClient,
+    uri: &str,
+    interface: Option<&str>,
+    json: bool,
+) -> Result<()> {
     let response = client.add_peer(uri, interface).await?;
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&response)?);
         return Ok(());
     }
-    
+
     println!("Adding peer: {}", uri);
     if let Some(iface) = interface {
         println!("Using interface: {}", iface);
     }
-    
+
     if response.success.unwrap_or(false) {
         println!("✓ Peer added successfully");
     } else if let Some(err) = response.error {
@@ -265,23 +279,28 @@ async fn add_peer(client: &AdminClient, uri: &str, interface: Option<&str>, json
     } else {
         println!("✓ Peer add request completed");
     }
-    
+
     Ok(())
 }
 
-async fn remove_peer(client: &AdminClient, uri: &str, interface: Option<&str>, json: bool) -> Result<()> {
+async fn remove_peer(
+    client: &AdminClient,
+    uri: &str,
+    interface: Option<&str>,
+    json: bool,
+) -> Result<()> {
     let response = client.remove_peer(uri, interface).await?;
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&response)?);
         return Ok(());
     }
-    
+
     println!("Removing peer: {}", uri);
     if let Some(iface) = interface {
         println!("Using interface: {}", iface);
     }
-    
+
     if response.success.unwrap_or(false) {
         println!("✓ Peer removed successfully");
     } else if let Some(err) = response.error {
@@ -289,7 +308,7 @@ async fn remove_peer(client: &AdminClient, uri: &str, interface: Option<&str>, j
     } else {
         println!("✓ Peer remove request completed");
     }
-    
+
     Ok(())
 }
 
@@ -315,15 +334,15 @@ async fn get_tun(_client: &AdminClient, json: bool) -> Result<()> {
 
 async fn list_commands(client: &AdminClient, json: bool) -> Result<()> {
     let response = client.list().await?;
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&response)?);
         return Ok(());
     }
-    
+
     println!("Available Commands:");
     println!();
-    
+
     for entry in response.list {
         println!("  {}", entry.command);
         println!("    {}", entry.description);
@@ -332,15 +351,20 @@ async fn list_commands(client: &AdminClient, json: bool) -> Result<()> {
         }
         println!();
     }
-    
+
     Ok(())
 }
 
 /// Compatibility mode for original yggdrasilctl command format
-async fn compat_command(client: &AdminClient, command: &str, args: &[String], _endpoint: String) -> Result<()> {
+async fn compat_command(
+    client: &AdminClient,
+    command: &str,
+    args: &[String],
+    _endpoint: String,
+) -> Result<()> {
     // Parse JSON flag from args
     let json = args.contains(&"--json".to_string()) || args.contains(&"-json".to_string());
-    
+
     // Map original command names to new functions
     match command {
         "getSelf" | "getself" => get_self(client, json).await,
@@ -357,7 +381,8 @@ async fn compat_command(client: &AdminClient, command: &str, args: &[String], _e
                 std::process::exit(1);
             }
             let uri = &args[0];
-            let interface = args.iter()
+            let interface = args
+                .iter()
                 .position(|a| a == "--interface" || a == "-i")
                 .and_then(|i| args.get(i + 1))
                 .map(|s| s.as_str());
@@ -369,7 +394,8 @@ async fn compat_command(client: &AdminClient, command: &str, args: &[String], _e
                 std::process::exit(1);
             }
             let uri = &args[0];
-            let interface = args.iter()
+            let interface = args
+                .iter()
                 .position(|a| a == "--interface" || a == "-i")
                 .and_then(|i| args.get(i + 1))
                 .map(|s| s.as_str());
@@ -389,7 +415,7 @@ fn format_bytes(bytes: u64) -> String {
     const MB: u64 = KB * 1024;
     const GB: u64 = MB * 1024;
     const TB: u64 = GB * 1024;
-    
+
     if bytes >= TB {
         format!("{:.1}TB", bytes as f64 / TB as f64)
     } else if bytes >= GB {

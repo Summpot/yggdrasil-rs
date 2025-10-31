@@ -125,10 +125,7 @@ fn main() -> Result<()> {
             let attempts = total_attempts_monitor.load(Ordering::Relaxed);
             let elapsed = start.elapsed().as_secs_f64();
             let rate = attempts as f64 / elapsed;
-            eprintln!(
-                "Attempts: {} | Rate: {:.0} keys/sec",
-                attempts, rate
-            );
+            eprintln!("Attempts: {} | Rate: {:.0} keys/sec", attempts, rate);
         }
     });
 
@@ -154,10 +151,7 @@ fn main() -> Result<()> {
 
     println!();
     println!("Key generation complete!");
-    println!(
-        "Total attempts: {}",
-        total_attempts.load(Ordering::Relaxed)
-    );
+    println!("Total attempts: {}", total_attempts.load(Ordering::Relaxed));
 
     Ok(())
 }

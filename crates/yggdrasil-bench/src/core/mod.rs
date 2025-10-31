@@ -1,3 +1,3 @@
 pub mod timing;
 
-pub use timing::{Timer, LatencyStats, ThroughputCounter};
+pub use timing::{LatencyStats, ThroughputCounter, Timer};

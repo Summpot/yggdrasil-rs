@@ -1,10 +1,10 @@
 #![forbid(unsafe_code)]
 
+use anyhow::{Context, Result};
+use log::{debug, warn};
 use std::fs;
 use std::time::Duration;
-use anyhow::{Context, Result};
 use tokio::sync::mpsc;
-use log::{debug, warn};
 
 /// Memory statistics from /proc/self/statm
 #[derive(Debug, Clone, Copy)]
@@ -24,17 +24,15 @@ impl MemoryStats {
         {
             let statm = fs::read_to_string("/proc/self/statm")
                 .context("Failed to read /proc/self/statm")?;
-            
+
             let parts: Vec<&str> = statm.split_whitespace().collect();
             if parts.len() < 2 {
                 anyhow::bail!("Invalid /proc/self/statm format");
             }
 
             let page_size = 4096; // Standard Linux page size
-            let vsize_pages: u64 = parts[0].parse()
-                .context("Failed to parse vsize")?;
-            let rss_pages: u64 = parts[1].parse()
-                .context("Failed to parse rss")?;
+            let vsize_pages: u64 = parts[0].parse().context("Failed to parse vsize")?;
+            let rss_pages: u64 = parts[1].parse().context("Failed to parse rss")?;
 
             Ok(Self {
                 rss_bytes: rss_pages * page_size,
@@ -80,7 +78,7 @@ impl MemoryProbe {
 
             loop {
                 interval_timer.tick().await;
-                
+
                 match MemoryStats::read() {
                     Ok(stats) => {
                         debug!("Memory sample: RSS={:.2} MB", stats.rss_mb());
@@ -110,10 +108,7 @@ impl MemoryProbe {
 
     /// Get peak RSS across all samples
     pub fn peak_rss(&self) -> u64 {
-        self.samples.iter()
-            .map(|s| s.rss_bytes)
-            .max()
-            .unwrap_or(0)
+        self.samples.iter().map(|s| s.rss_bytes).max().unwrap_or(0)
     }
 
     /// Get mean RSS across all samples
@@ -133,7 +128,7 @@ impl MemoryProbe {
 
         let skip = self.samples.len() / 2;
         let steady_samples: Vec<_> = self.samples.iter().skip(skip).collect();
-        
+
         if steady_samples.is_empty() {
             return 0.0;
         }
@@ -170,7 +165,7 @@ mod tests {
     #[tokio::test]
     async fn test_memory_probe() {
         let mut probe = MemoryProbe::spawn(Duration::from_millis(10));
-        
+
         tokio::time::sleep(Duration::from_millis(100)).await;
         probe.collect().await;
 

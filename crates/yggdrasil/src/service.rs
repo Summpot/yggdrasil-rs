@@ -31,8 +31,8 @@ fn get_config_path() -> PathBuf {
 
 /// Install Yggdrasil as a system service
 pub fn install_service(config_path: Option<String>) -> Result<()> {
-    let manager = <dyn ServiceManager>::native()
-        .context("Failed to detect native service manager")?;
+    let manager =
+        <dyn ServiceManager>::native().context("Failed to detect native service manager")?;
 
     let executable = get_executable_path()?;
     let config = config_path
@@ -82,8 +82,8 @@ pub fn install_service(config_path: Option<String>) -> Result<()> {
 
 /// Start the Yggdrasil service
 pub fn start_service() -> Result<()> {
-    let manager = <dyn ServiceManager>::native()
-        .context("Failed to detect native service manager")?;
+    let manager =
+        <dyn ServiceManager>::native().context("Failed to detect native service manager")?;
 
     let label: ServiceLabel = SERVICE_NAME.parse()?;
 
@@ -100,8 +100,8 @@ pub fn start_service() -> Result<()> {
 
 /// Stop the Yggdrasil service
 pub fn stop_service() -> Result<()> {
-    let manager = <dyn ServiceManager>::native()
-        .context("Failed to detect native service manager")?;
+    let manager =
+        <dyn ServiceManager>::native().context("Failed to detect native service manager")?;
 
     let label: ServiceLabel = SERVICE_NAME.parse()?;
 
@@ -129,8 +129,8 @@ pub fn restart_service() -> Result<()> {
 
 /// Uninstall the Yggdrasil service
 pub fn uninstall_service() -> Result<()> {
-    let manager = <dyn ServiceManager>::native()
-        .context("Failed to detect native service manager")?;
+    let manager =
+        <dyn ServiceManager>::native().context("Failed to detect native service manager")?;
 
     let label: ServiceLabel = SERVICE_NAME.parse()?;
 
@@ -150,8 +150,8 @@ pub fn uninstall_service() -> Result<()> {
 
 /// Get the status of the Yggdrasil service
 pub fn status_service() -> Result<()> {
-    let _manager = <dyn ServiceManager>::native()
-        .context("Failed to detect native service manager")?;
+    let _manager =
+        <dyn ServiceManager>::native().context("Failed to detect native service manager")?;
 
     let _label: ServiceLabel = SERVICE_NAME.parse()?;
 
@@ -162,7 +162,7 @@ pub fn status_service() -> Result<()> {
     println!("  Display Name: {}", SERVICE_DISPLAY_NAME);
     println!("  Description: {}", SERVICE_DESCRIPTION);
     println!("\nTo check if the service is running:");
-    
+
     if cfg!(target_os = "linux") {
         println!("  systemctl status {}", SERVICE_NAME);
     } else if cfg!(target_os = "macos") {

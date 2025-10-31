@@ -170,10 +170,7 @@ pub struct GetNodeInfoResponse {
 }
 
 // Helper function to send NodeInfo request with timeout
-pub async fn get_nodeinfo_with_timeout(
-    nodeinfo: &NodeInfo,
-    key: [u8; 32],
-) -> Result<JsonValue> {
+pub async fn get_nodeinfo_with_timeout(nodeinfo: &NodeInfo, key: [u8; 32]) -> Result<JsonValue> {
     let (tx, mut rx) = mpsc::channel(1);
 
     nodeinfo
@@ -214,12 +211,15 @@ mod tests {
             "location": "test-location"
         });
 
-        nodeinfo.set_nodeinfo(test_info.clone(), true).await.unwrap();
+        nodeinfo
+            .set_nodeinfo(test_info.clone(), true)
+            .await
+            .unwrap();
 
         let stored = nodeinfo.get_nodeinfo().await;
         assert_eq!(stored["name"], "test-node");
         assert_eq!(stored["location"], "test-location");
-        
+
         // Should not have build info when privacy is enabled
         assert!(stored.get("buildname").is_none());
     }
@@ -233,11 +233,14 @@ mod tests {
             "name": "test-node"
         });
 
-        nodeinfo.set_nodeinfo(test_info.clone(), false).await.unwrap();
+        nodeinfo
+            .set_nodeinfo(test_info.clone(), false)
+            .await
+            .unwrap();
 
         let stored = nodeinfo.get_nodeinfo().await;
         assert_eq!(stored["name"], "test-node");
-        
+
         // Should have build info when privacy is disabled
         assert!(stored.get("buildname").is_some());
         assert!(stored.get("buildversion").is_some());
@@ -258,7 +261,10 @@ mod tests {
 
         let result = nodeinfo.set_nodeinfo(test_info, true).await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("exceeds max length"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("exceeds max length"));
     }
 
     #[tokio::test]
@@ -357,6 +363,9 @@ mod tests {
         let result = nodeinfo.set_nodeinfo(invalid_info, true).await;
 
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("must be a JSON object"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("must be a JSON object"));
     }
 }

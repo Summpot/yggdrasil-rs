@@ -1,15 +1,15 @@
-use std::fs;
-use std::path::PathBuf;
-use std::process::{Child, Command, Stdio};
-use std::time::Duration;
-use std::net::TcpStream;
-use std::sync::Arc;
-use tempfile::TempDir;
-use tokio::time::sleep;
-use yggdrasil_core::{Crypto, Config};
-use yggdrasil_core::link::LinkManager;
 use ed25519_dalek::SigningKey;
 use port_check::free_local_port;
+use std::fs;
+use std::net::TcpStream;
+use std::path::PathBuf;
+use std::process::{Child, Command, Stdio};
+use std::sync::Arc;
+use std::time::Duration;
+use tempfile::TempDir;
+use tokio::time::sleep;
+use yggdrasil_core::link::LinkManager;
+use yggdrasil_core::{Config, Crypto};
 
 /// Find an available port using port_check crate
 fn find_available_port() -> u16 {
@@ -21,43 +21,46 @@ fn ensure_go_binary_exists(go_binary: &PathBuf) -> bool {
     if go_binary.exists() {
         return true;
     }
-    
+
     eprintln!("Yggdrasil-go binary not found at {:?}", go_binary);
-    
+
     // Check if Go is installed
-    let go_check = Command::new("go")
-        .arg("version")
-        .output();
-    
+    let go_check = Command::new("go").arg("version").output();
+
     match go_check {
         Ok(output) if output.status.success() => {
             let version = String::from_utf8_lossy(&output.stdout);
             eprintln!("Go compiler found: {}", version.trim());
             eprintln!("Attempting to build yggdrasil-go...");
-            
-            let go_source_dir = go_binary.parent()
-                .expect("Failed to get parent directory");
-            
+
+            let go_source_dir = go_binary.parent().expect("Failed to get parent directory");
+
             // Try to build using the build script
             let build_result = Command::new("sh")
                 .arg("-c")
                 .arg("./build")
                 .current_dir(go_source_dir)
                 .output();
-            
+
             match build_result {
                 Ok(build_output) if build_output.status.success() => {
                     eprintln!("Successfully built yggdrasil-go!");
-                    
+
                     // Check if binary exists now
                     if !go_binary.exists() {
-                        eprintln!("Build succeeded but binary still not found at {:?}", go_binary);
+                        eprintln!(
+                            "Build succeeded but binary still not found at {:?}",
+                            go_binary
+                        );
                         return false;
                     }
                     return true;
                 }
                 Ok(build_output) => {
-                    eprintln!("Build failed with exit code: {:?}", build_output.status.code());
+                    eprintln!(
+                        "Build failed with exit code: {:?}",
+                        build_output.status.code()
+                    );
                     eprintln!("stdout: {}", String::from_utf8_lossy(&build_output.stdout));
                     eprintln!("stderr: {}", String::from_utf8_lossy(&build_output.stderr));
                     return false;
@@ -82,14 +85,13 @@ fn ensure_go_binary_exists(go_binary: &PathBuf) -> bool {
     }
 }
 
-
 /// Check if running with sudo privileges (for TUN device tests)
 fn has_sudo_privileges() -> bool {
     // Check if running as root (using std::env::var for portability)
     if std::env::var("USER").map(|u| u == "root").unwrap_or(false) {
         return true;
     }
-    
+
     // Check if EUID is 0 (more reliable, but requires platform-specific code)
     #[cfg(unix)]
     {
@@ -102,13 +104,10 @@ fn has_sudo_privileges() -> bool {
             }
         }
     }
-    
+
     // Check if sudo is available and configured for passwordless use
-    let output = Command::new("sudo")
-        .arg("-n")
-        .arg("true")
-        .output();
-    
+    let output = Command::new("sudo").arg("-n").arg("true").output();
+
     match output {
         Ok(result) => result.status.success(),
         Err(_) => false,
@@ -116,22 +115,22 @@ fn has_sudo_privileges() -> bool {
 }
 
 /// Helper struct for managing a Yggdrasil Rust node instance
-/// 
+///
 /// # TUN Device Tests
-/// 
+///
 /// Tests that use TUN devices require sudo privileges. To run these tests:
-/// 
+///
 /// 1. Configure passwordless sudo (add to /etc/sudoers or /etc/sudoers.d/):
 ///    ```
 ///    your_username ALL=(ALL) NOPASSWD: /path/to/yggdrasil
 ///    ```
-/// 
+///
 /// 2. Configure cargo runner in .cargo/config.toml:
 ///    ```toml
 ///    [target.x86_64-unknown-linux-gnu]
 ///    runner = 'sudo -E'
 ///    ```
-/// 
+///
 /// Tests requiring TUN will automatically skip if sudo is not available.
 #[allow(dead_code)]
 struct YggdrasilRustNode {
@@ -154,8 +153,8 @@ impl YggdrasilRustNode {
         allowed_keys: Vec<String>,
         use_tun: bool,
     ) -> Option<Self> {
-        let rust_binary = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../target/debug/yggdrasil");
+        let rust_binary =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/debug/yggdrasil");
 
         if !rust_binary.exists() {
             eprintln!("Yggdrasil Rust binary not found at {:?}", rust_binary);
@@ -172,9 +171,13 @@ impl YggdrasilRustNode {
         config.peers = peers;
         config.admin_listen = Some(format!("tcp://127.0.0.1:{}", admin_port));
         config.multicast_interfaces = vec![]; // Disable multicast for testing
-        config.if_name = if use_tun { "auto".to_string() } else { "none".to_string() };
+        config.if_name = if use_tun {
+            "auto".to_string()
+        } else {
+            "none".to_string()
+        };
         config.allowed_public_keys = allowed_keys;
-        
+
         if let Some((iface, iface_peers)) = interface_peers {
             config.interface_peers.insert(iface, iface_peers);
         }
@@ -242,15 +245,15 @@ impl Drop for YggdrasilRustNode {
 }
 
 /// Helper struct for managing a Yggdrasil Go node instance (for Go compatibility tests)
-/// 
+///
 /// # Note on Log Levels
-/// 
+///
 /// Go nodes are started with `-loglevel error` to avoid noise in test output.
 /// In production Go implementation, when a connection is closed normally, the read loop
 /// may timeout first (default 3s) before detecting the closure, which results in
 /// "i/o timeout" messages at info/debug level. These are harmless and expected when
 /// tests end and connections are torn down quickly.
-/// 
+///
 /// Using 'error' level ensures only genuine errors are logged, making test output cleaner
 /// while still catching real issues.
 #[allow(dead_code)]
@@ -290,7 +293,7 @@ impl YggdrasilGoNode {
             .arg("-useconffile")
             .arg(&config_path)
             .arg("-loglevel")
-            .arg("error")  // Use 'error' level to reduce noise from timeouts
+            .arg("error") // Use 'error' level to reduce noise from timeouts
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .spawn()
@@ -329,7 +332,7 @@ impl YggdrasilGoNode {
             public_key: Vec::new(),
         })
     }
-    
+
     /// Start a Go node with custom configuration (peers, allowed keys, etc.)
     async fn start_with_config(
         port: u16,
@@ -351,9 +354,7 @@ impl YggdrasilGoNode {
         let peers_str = if peers.is_empty() {
             String::from("[]")
         } else {
-            let peer_list: Vec<String> = peers.iter()
-                .map(|p| format!("\"{}\"", p))
-                .collect();
+            let peer_list: Vec<String> = peers.iter().map(|p| format!("\"{}\"", p)).collect();
             format!("[{}]", peer_list.join(", "))
         };
 
@@ -361,9 +362,7 @@ impl YggdrasilGoNode {
         let allowed_keys_str = if allowed_keys.is_empty() {
             String::from("[]")
         } else {
-            let key_list: Vec<String> = allowed_keys.iter()
-                .map(|k| format!("\"{}\"", k))
-                .collect();
+            let key_list: Vec<String> = allowed_keys.iter().map(|k| format!("\"{}\"", k)).collect();
             format!("[{}]", key_list.join(", "))
         };
 
@@ -385,7 +384,7 @@ impl YggdrasilGoNode {
             .arg("-useconffile")
             .arg(&config_path)
             .arg("-loglevel")
-            .arg("error")  // Use 'error' level to reduce noise from timeouts
+            .arg("error") // Use 'error' level to reduce noise from timeouts
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .spawn()
@@ -434,7 +433,8 @@ async fn test_two_rust_nodes_direct() {
     let node1_admin = find_available_port();
 
     // Start node 1 (listener)
-    let node1 = YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], false).await;
+    let node1 =
+        YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], false).await;
     let node1 = match node1 {
         Some(n) => n,
         None => {
@@ -454,7 +454,8 @@ async fn test_two_rust_nodes_direct() {
 
     // Start node 2 (connects to node 1)
     let node2_peers = vec![format!("tcp://127.0.0.1:{}", node1.listen_port)];
-    let node2 = YggdrasilRustNode::start(node2_listen, node2_admin, node2_peers, None, vec![], false).await;
+    let node2 =
+        YggdrasilRustNode::start(node2_listen, node2_admin, node2_peers, None, vec![], false).await;
     let node2 = match node2 {
         Some(n) => n,
         None => {
@@ -487,7 +488,8 @@ async fn test_three_rust_nodes_chain() {
     let node1_admin = find_available_port();
 
     // Start node 1
-    let node1 = YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], false).await;
+    let node1 =
+        YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], false).await;
     let node1 = match node1 {
         Some(n) => n,
         None => {
@@ -503,7 +505,8 @@ async fn test_three_rust_nodes_chain() {
 
     // Start node 2 (connects to node 1)
     let node2_peers = vec![format!("tcp://127.0.0.1:{}", node1.listen_port)];
-    let node2 = YggdrasilRustNode::start(node2_listen, node2_admin, node2_peers, None, vec![], false).await;
+    let node2 =
+        YggdrasilRustNode::start(node2_listen, node2_admin, node2_peers, None, vec![], false).await;
     let node2 = match node2 {
         Some(n) => n,
         None => {
@@ -519,7 +522,8 @@ async fn test_three_rust_nodes_chain() {
 
     // Start node 3 (connects to node 2)
     let node3_peers = vec![format!("tcp://127.0.0.1:{}", node2.listen_port)];
-    let node3 = YggdrasilRustNode::start(node3_listen, node3_admin, node3_peers, None, vec![], false).await;
+    let node3 =
+        YggdrasilRustNode::start(node3_listen, node3_admin, node3_peers, None, vec![], false).await;
     let node3 = match node3 {
         Some(n) => n,
         None => {
@@ -553,7 +557,8 @@ async fn test_four_rust_nodes_mesh() {
     let node4_admin = find_available_port();
 
     // Start all nodes first
-    let node1 = YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], false).await;
+    let node1 =
+        YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], false).await;
     let _node1 = match node1 {
         Some(n) => n,
         None => {
@@ -563,7 +568,8 @@ async fn test_four_rust_nodes_mesh() {
     };
     println!("✓ Node 1 started");
 
-    let node2 = YggdrasilRustNode::start(node2_listen, node2_admin, vec![], None, vec![], false).await;
+    let node2 =
+        YggdrasilRustNode::start(node2_listen, node2_admin, vec![], None, vec![], false).await;
     let _node2 = match node2 {
         Some(n) => n,
         None => {
@@ -573,7 +579,8 @@ async fn test_four_rust_nodes_mesh() {
     };
     println!("✓ Node 2 started");
 
-    let node3 = YggdrasilRustNode::start(node3_listen, node3_admin, vec![], None, vec![], false).await;
+    let node3 =
+        YggdrasilRustNode::start(node3_listen, node3_admin, vec![], None, vec![], false).await;
     let _node3 = match node3 {
         Some(n) => n,
         None => {
@@ -583,7 +590,8 @@ async fn test_four_rust_nodes_mesh() {
     };
     println!("✓ Node 3 started");
 
-    let node4 = YggdrasilRustNode::start(node4_listen, node4_admin, vec![], None, vec![], false).await;
+    let node4 =
+        YggdrasilRustNode::start(node4_listen, node4_admin, vec![], None, vec![], false).await;
     let _node4 = match node4 {
         Some(n) => n,
         None => {
@@ -616,7 +624,8 @@ async fn test_access_control_allowed_keys() {
     let node1_admin = find_available_port();
 
     // Start node 1 without restrictions
-    let node1 = YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], false).await;
+    let node1 =
+        YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], false).await;
     let node1 = match node1 {
         Some(n) => n,
         None => {
@@ -634,7 +643,15 @@ async fn test_access_control_allowed_keys() {
     // Start node 2 that ONLY allows node 1's public key
     let node2_peers = vec![format!("tcp://127.0.0.1:{}", node1.listen_port)];
     let node2_allowed = vec![node1.public_key.clone()];
-    let node2 = YggdrasilRustNode::start(node2_listen, node2_admin, node2_peers, None, node2_allowed, false).await;
+    let node2 = YggdrasilRustNode::start(
+        node2_listen,
+        node2_admin,
+        node2_peers,
+        None,
+        node2_allowed,
+        false,
+    )
+    .await;
     let node2 = match node2 {
         Some(n) => n,
         None => {
@@ -651,7 +668,8 @@ async fn test_access_control_allowed_keys() {
 
     // Start node 3 that tries to connect to node 2 (should be rejected)
     let node3_peers = vec![format!("tcp://127.0.0.1:{}", node2.listen_port)];
-    let node3 = YggdrasilRustNode::start(node3_listen, node3_admin, node3_peers, None, vec![], false).await;
+    let node3 =
+        YggdrasilRustNode::start(node3_listen, node3_admin, node3_peers, None, vec![], false).await;
     let node3 = match node3 {
         Some(n) => n,
         None => {
@@ -690,8 +708,8 @@ async fn test_multiple_listen_addresses() {
     let config_path = temp_dir.path().join("config.hjson");
     fs::write(&config_path, config.to_hjson_with_comments().unwrap()).unwrap();
 
-    let rust_binary = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../target/debug/yggdrasil");
+    let rust_binary =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/debug/yggdrasil");
 
     let _process = Command::new(&rust_binary)
         .arg("run")
@@ -762,7 +780,6 @@ async fn test_stress_ten_nodes() {
 
     // Start 10 nodes
     for (i, (listen_port, admin_port)) in ports.iter().enumerate() {
-        
         // Each node connects to previous node (creating a chain)
         let peers = if i > 0 {
             vec![format!("tcp://127.0.0.1:{}", ports[i - 1].0)]
@@ -770,14 +787,8 @@ async fn test_stress_ten_nodes() {
             vec![]
         };
 
-        let node = YggdrasilRustNode::start(
-            *listen_port,
-            *admin_port,
-            peers,
-            None,
-            vec![],
-            false,
-        ).await;
+        let node =
+            YggdrasilRustNode::start(*listen_port, *admin_port, peers, None, vec![], false).await;
 
         match node {
             Some(n) => {
@@ -820,7 +831,8 @@ async fn test_two_nodes_with_tun() {
     let node1_admin = find_available_port();
 
     // Start node 1 with TUN
-    let node1 = YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], true).await;
+    let node1 =
+        YggdrasilRustNode::start(node1_listen, node1_admin, vec![], None, vec![], true).await;
     let node1 = match node1 {
         Some(n) => n,
         None => {
@@ -837,7 +849,8 @@ async fn test_two_nodes_with_tun() {
 
     // Start node 2 with TUN (connects to node 1)
     let node2_peers = vec![format!("tcp://127.0.0.1:{}", node1.listen_port)];
-    let node2 = YggdrasilRustNode::start(node2_listen, node2_admin, node2_peers, None, vec![], true).await;
+    let node2 =
+        YggdrasilRustNode::start(node2_listen, node2_admin, node2_peers, None, vec![], true).await;
     let node2 = match node2 {
         Some(n) => n,
         None => {
@@ -861,7 +874,7 @@ async fn test_two_nodes_with_tun() {
 
 async fn test_rust_connects_to_go() {
     println!("\n=== Test 9: Rust node connects to Go node ===");
-    
+
     // Initialize logger
     let _ = env_logger::builder()
         .is_test(true)
@@ -885,9 +898,9 @@ async fn test_rust_connects_to_go() {
 
     let crypto = Crypto::from_private_key([1u8; 32]).unwrap();
     let connect_addr = go_node.listen_addr.clone(); // Keep tcp:// prefix
-    
+
     println!("  Rust node will connect to: {}", connect_addr);
-    
+
     let config = Arc::new(Config::generate().unwrap());
     let (link_manager, mut event_rx) = LinkManager::new(
         vec![],
@@ -906,13 +919,18 @@ async fn test_rust_connects_to_go() {
     }
 
     sleep(Duration::from_secs(2)).await;
-    
+
     println!("  Waiting for handshake...");
-    
+
     let result = tokio::time::timeout(Duration::from_secs(15), async {
         loop {
             match event_rx.recv().await {
-                Some(yggdrasil_core::link::LinkEvent::HandshakeComplete(addr, peer_key, _priority, _)) => {
+                Some(yggdrasil_core::link::LinkEvent::HandshakeComplete(
+                    addr,
+                    peer_key,
+                    _priority,
+                    _,
+                )) => {
                     println!("✓ Handshake completed with Go node at {}", addr);
                     println!("  Go node public key: {}", hex::encode(peer_key.as_bytes()));
                     return true;
@@ -953,7 +971,7 @@ async fn test_rust_connects_to_go() {
 
 async fn test_go_connects_to_rust() {
     println!("\n=== Test 10: Go node connects to Rust node ===");
-    
+
     // Initialize logger
     let _ = env_logger::builder()
         .is_test(true)
@@ -965,7 +983,7 @@ async fn test_go_connects_to_rust() {
     let go_port = find_available_port();
 
     let crypto = Crypto::from_private_key([2u8; 32]).unwrap();
-    
+
     let config = Arc::new(Config::generate().unwrap());
     let (link_manager, mut event_rx) = LinkManager::new(
         vec![format!("tcp://127.0.0.1:{}", rust_listen_port)],
@@ -984,7 +1002,10 @@ async fn test_go_connects_to_rust() {
     }
 
     sleep(Duration::from_secs(2)).await;
-    println!("✓ Rust node listening at tcp://127.0.0.1:{}", rust_listen_port);
+    println!(
+        "✓ Rust node listening at tcp://127.0.0.1:{}",
+        rust_listen_port
+    );
 
     // Start Go node with peer configured to connect to Rust node
     let go_peers = vec![format!("tcp://127.0.0.1:{}", rust_listen_port)];
@@ -1002,7 +1023,12 @@ async fn test_go_connects_to_rust() {
     let result = tokio::time::timeout(Duration::from_secs(15), async {
         loop {
             match event_rx.recv().await {
-                Some(yggdrasil_core::link::LinkEvent::HandshakeComplete(addr, peer_key, _priority, _)) => {
+                Some(yggdrasil_core::link::LinkEvent::HandshakeComplete(
+                    addr,
+                    peer_key,
+                    _priority,
+                    _,
+                )) => {
                     println!("✓ Handshake completed with Go node");
                     println!("  Go node connected from {}", addr);
                     println!("  Go node public key: {}", hex::encode(peer_key.as_bytes()));
@@ -1067,7 +1093,8 @@ async fn test_go_as_relay_between_rust_nodes() {
 
     // Start Rust node 1 (connects to Go node)
     let rust1_peers = vec![format!("tcp://127.0.0.1:{}", go_port)];
-    let rust1 = YggdrasilRustNode::start(rust1_listen, rust1_admin, rust1_peers, None, vec![], false).await;
+    let rust1 =
+        YggdrasilRustNode::start(rust1_listen, rust1_admin, rust1_peers, None, vec![], false).await;
     let rust1 = match rust1 {
         Some(n) => n,
         None => {
@@ -1080,7 +1107,8 @@ async fn test_go_as_relay_between_rust_nodes() {
 
     // Start Rust node 2 (connects to Go node)
     let rust2_peers = vec![format!("tcp://127.0.0.1:{}", go_port)];
-    let rust2 = YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
+    let rust2 =
+        YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
     let rust2 = match rust2 {
         Some(n) => n,
         None => {
@@ -1146,7 +1174,8 @@ async fn test_mixed_go_rust_network() {
 
     // Start Rust node 1 (connects to Go node 1)
     let rust1_peers = vec![format!("tcp://127.0.0.1:{}", go1_port)];
-    let rust1 = YggdrasilRustNode::start(rust1_listen, rust1_admin, rust1_peers, None, vec![], false).await;
+    let rust1 =
+        YggdrasilRustNode::start(rust1_listen, rust1_admin, rust1_peers, None, vec![], false).await;
     let rust1 = match rust1 {
         Some(n) => n,
         None => {
@@ -1160,7 +1189,8 @@ async fn test_mixed_go_rust_network() {
 
     // Start Rust node 2 (connects to Go node 2)
     let rust2_peers = vec![format!("tcp://127.0.0.1:{}", go2_port)];
-    let rust2 = YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
+    let rust2 =
+        YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
     let rust2 = match rust2 {
         Some(n) => n,
         None => {
@@ -1196,7 +1226,8 @@ async fn test_rust_go_access_control() {
     let rust2_admin = find_available_port();
 
     // Start Rust node with no restrictions
-    let rust_unrestricted = YggdrasilRustNode::start(rust1_listen, rust1_admin, vec![], None, vec![], false).await;
+    let rust_unrestricted =
+        YggdrasilRustNode::start(rust1_listen, rust1_admin, vec![], None, vec![], false).await;
     let rust_unrestricted = match rust_unrestricted {
         Some(n) => n,
         None => {
@@ -1204,7 +1235,10 @@ async fn test_rust_go_access_control() {
             return;
         }
     };
-    println!("✓ Rust node (unrestricted) started at tcp://127.0.0.1:{}", rust1_listen);
+    println!(
+        "✓ Rust node (unrestricted) started at tcp://127.0.0.1:{}",
+        rust1_listen
+    );
     println!("  Public key: {}", rust_unrestricted.public_key);
 
     sleep(Duration::from_millis(500)).await;
@@ -1212,21 +1246,29 @@ async fn test_rust_go_access_control() {
     // Start Go node that ONLY allows the Rust node's public key
     let go_peers = vec![format!("tcp://127.0.0.1:{}", rust1_listen)];
     let go_allowed = vec![rust_unrestricted.public_key.clone()];
-    let _go_restricted = match YggdrasilGoNode::start_with_config(go_port, go_peers, go_allowed).await {
-        Some(node) => node,
-        None => {
-            eprintln!("Skipping test: Go node failed to start");
-            return;
-        }
-    };
-    println!("✓ Go node (restricted) started at tcp://127.0.0.1:{}", go_port);
-    println!("  Allows only Rust node with key: {}", rust_unrestricted.public_key);
+    let _go_restricted =
+        match YggdrasilGoNode::start_with_config(go_port, go_peers, go_allowed).await {
+            Some(node) => node,
+            None => {
+                eprintln!("Skipping test: Go node failed to start");
+                return;
+            }
+        };
+    println!(
+        "✓ Go node (restricted) started at tcp://127.0.0.1:{}",
+        go_port
+    );
+    println!(
+        "  Allows only Rust node with key: {}",
+        rust_unrestricted.public_key
+    );
 
     sleep(Duration::from_secs(2)).await;
 
     // Start another Rust node that will try to connect to restricted Go node
     let rust2_peers = vec![format!("tcp://127.0.0.1:{}", go_port)];
-    let rust_rejected = YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
+    let rust_rejected =
+        YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
     let rust_rejected = match rust_rejected {
         Some(n) => n,
         None => {
@@ -1296,7 +1338,10 @@ async fn test_multiple_rust_to_one_go() {
     // Wait for all connections to establish
     sleep(Duration::from_secs(3)).await;
 
-    println!("✓ Test passed: {} Rust nodes connected to Go hub", rust_nodes.len());
+    println!(
+        "✓ Test passed: {} Rust nodes connected to Go hub",
+        rust_nodes.len()
+    );
     println!("  All Rust nodes should be able to communicate through Go hub");
 }
 
@@ -1320,7 +1365,8 @@ async fn test_alternating_rust_go_chain() {
     let rust3_admin = find_available_port();
 
     // Start Rust node 1
-    let rust1 = YggdrasilRustNode::start(rust1_listen, rust1_admin, vec![], None, vec![], false).await;
+    let rust1 =
+        YggdrasilRustNode::start(rust1_listen, rust1_admin, vec![], None, vec![], false).await;
     let rust1 = match rust1 {
         Some(n) => n,
         None => {
@@ -1348,7 +1394,8 @@ async fn test_alternating_rust_go_chain() {
 
     // Start Rust node 2 (connects to Go1)
     let rust2_peers = vec![format!("tcp://127.0.0.1:{}", go1_port)];
-    let rust2 = YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
+    let rust2 =
+        YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
     let rust2 = match rust2 {
         Some(n) => n,
         None => {
@@ -1376,7 +1423,8 @@ async fn test_alternating_rust_go_chain() {
 
     // Start Rust node 3 (connects to Go2)
     let rust3_peers = vec![format!("tcp://127.0.0.1:{}", go2_port)];
-    let rust3 = YggdrasilRustNode::start(rust3_listen, rust3_admin, rust3_peers, None, vec![], false).await;
+    let rust3 =
+        YggdrasilRustNode::start(rust3_listen, rust3_admin, rust3_peers, None, vec![], false).await;
     let rust3 = match rust3 {
         Some(n) => n,
         None => {
@@ -1391,8 +1439,10 @@ async fn test_alternating_rust_go_chain() {
     sleep(Duration::from_secs(4)).await;
 
     println!("✓ Test passed: 5-node alternating Rust/Go chain established");
-    println!("  Rust1({}) <-> Go1 <-> Rust2({}) <-> Go2 <-> Rust3({})",
-             rust1.address, rust2.address, rust3.address);
+    println!(
+        "  Rust1({}) <-> Go1 <-> Rust2({}) <-> Go2 <-> Rust3({})",
+        rust1.address, rust2.address, rust3.address
+    );
 }
 
 // ============================================================================
@@ -1411,7 +1461,8 @@ async fn test_rust_go_bidirectional() {
     let rust2_admin = find_available_port();
 
     // Start Rust node with listener
-    let rust_node = YggdrasilRustNode::start(rust_listen, rust_admin, vec![], None, vec![], false).await;
+    let rust_node =
+        YggdrasilRustNode::start(rust_listen, rust_admin, vec![], None, vec![], false).await;
     let rust_node = match rust_node {
         Some(n) => n,
         None => {
@@ -1439,7 +1490,8 @@ async fn test_rust_go_bidirectional() {
     // Now create cross-connections
     // Start another Rust node that connects to Go
     let rust2_peers = vec![format!("tcp://127.0.0.1:{}", go_port)];
-    let rust2 = YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
+    let rust2 =
+        YggdrasilRustNode::start(rust2_listen, rust2_admin, rust2_peers, None, vec![], false).await;
     let _rust2 = match rust2 {
         Some(n) => n,
         None => {
@@ -1472,20 +1524,20 @@ async fn test_rust_go_bidirectional() {
 #[tokio::test]
 async fn test_quic_transport() {
     println!("\n=== Test 14: QUIC Transport ===");
-    
+
     // Create two nodes with QUIC transport
     let key1 = SigningKey::from_bytes(&[100u8; 32]);
     let key2 = SigningKey::from_bytes(&[101u8; 32]);
-    
+
     let config1 = Arc::new(Config::generate().unwrap());
     let config2 = Arc::new(Config::generate().unwrap());
-    
+
     let listen_addrs1 = vec!["quic://127.0.0.1:19091".to_string()];
     let peer_addrs1 = vec![];
-    
+
     let listen_addrs2 = vec!["quic://127.0.0.1:19092".to_string()];
     let peer_addrs2 = vec!["quic://127.0.0.1:19091".to_string()];
-    
+
     let (manager1, mut rx1) = LinkManager::new(
         listen_addrs1,
         peer_addrs1,
@@ -1495,7 +1547,7 @@ async fn test_quic_transport() {
         0,
         config1,
     );
-    
+
     let (manager2, mut rx2) = LinkManager::new(
         listen_addrs2,
         peer_addrs2,
@@ -1505,21 +1557,21 @@ async fn test_quic_transport() {
         0,
         config2,
     );
-    
+
     // Start both managers
     tokio::spawn(async move {
         let _ = manager1.start().await;
     });
-    
+
     tokio::spawn(async move {
         let _ = manager2.start().await;
     });
-    
+
     println!("✓ QUIC nodes started");
-    
+
     // Wait for handshake
     let mut handshake_completed = false;
-    
+
     let result = tokio::time::timeout(Duration::from_secs(10), async {
         loop {
             tokio::select! {
@@ -1540,11 +1592,11 @@ async fn test_quic_transport() {
             }
         }
     }).await;
-    
+
     if result.is_err() || !handshake_completed {
         println!("✗ QUIC handshake did not complete within timeout");
         panic!("QUIC handshake failed");
     }
-    
+
     println!("✓ Test passed: QUIC transport working");
 }

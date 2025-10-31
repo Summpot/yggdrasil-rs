@@ -1,19 +1,19 @@
 #![forbid(unsafe_code)]
 
 mod core;
-mod scenario;
-mod probe;
 mod emit;
+mod probe;
+mod scenario;
 
-use std::time::Duration;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use log::{info, warn};
+use std::time::Duration;
 
 use crate::core::{LatencyStats, ThroughputCounter, Timer};
+use crate::emit::{save_dashboard_json, BenchmarkResult, BenchmarkSuite, DatadogClient};
 use crate::probe::MemoryProbe;
 use crate::scenario::{Scenario, ScenarioConfig};
-use crate::emit::{BenchmarkResult, BenchmarkSuite, DatadogClient, save_dashboard_json};
 
 #[derive(Parser)]
 #[command(name = "yggdrasil-bench")]
@@ -153,9 +153,13 @@ async fn main() -> Result<()> {
                 commit,
                 branch,
                 env_hash,
-            ).await?;
+            )
+            .await?;
         }
-        Commands::GenConfig { output, lightweight } => {
+        Commands::GenConfig {
+            output,
+            lightweight,
+        } => {
             generate_config(output, lightweight)?;
         }
         Commands::Compare {
@@ -170,7 +174,12 @@ async fn main() -> Result<()> {
         Commands::GenDashboard { output } => {
             generate_dashboard(output)?;
         }
-        Commands::UpdateDashboard { title, api_key, app_key, site } => {
+        Commands::UpdateDashboard {
+            title,
+            api_key,
+            app_key,
+            site,
+        } => {
             update_dashboard(title, api_key, app_key, site).await?;
         }
     }
@@ -202,7 +211,9 @@ async fn run_benchmarks(
     info!("Loaded {} scenarios", config.scenario_count());
 
     let scenarios: Vec<_> = if let Some(filter) = scenario_filter {
-        config.scenarios.into_iter()
+        config
+            .scenarios
+            .into_iter()
             .filter(|s| s.id() == filter)
             .collect()
     } else {
@@ -234,13 +245,10 @@ async fn run_benchmarks(
 
     for scenario in scenarios {
         info!("Running scenario: {}", scenario.name);
-        
-        let result = run_single_scenario(
-            &scenario,
-            commit.clone(),
-            branch.clone(),
-            env_hash.clone(),
-        ).await?;
+
+        let result =
+            run_single_scenario(&scenario, commit.clone(), branch.clone(), env_hash.clone())
+                .await?;
 
         info!(
             "Scenario {} completed: p99={}µs, throughput={:.2} Mbps",
@@ -276,13 +284,16 @@ async fn run_single_scenario(
     env_hash: Option<String>,
 ) -> Result<BenchmarkResult> {
     info!("  Warmup phase: {} iterations", scenario.warmup_count);
-    
+
     // Warmup phase
     for _ in 0..scenario.warmup_count {
         simulate_operation(scenario.packet_size).await;
     }
 
-    info!("  Sampling phase: {} seconds", scenario.sample_duration_secs);
+    info!(
+        "  Sampling phase: {} seconds",
+        scenario.sample_duration_secs
+    );
 
     // Start memory probe
     let mut memory_probe = MemoryProbe::spawn(Duration::from_millis(100));
@@ -290,15 +301,15 @@ async fn run_single_scenario(
     // Sampling phase
     let mut latency_stats = LatencyStats::new()?;
     let mut throughput_counter = ThroughputCounter::new();
-    
+
     let start = std::time::Instant::now();
     let duration = Duration::from_secs(scenario.sample_duration_secs);
 
     while start.elapsed() < duration {
         let timer = Timer::new();
-        
+
         simulate_operation(scenario.packet_size).await;
-        
+
         let elapsed = timer.elapsed();
         latency_stats.record(elapsed)?;
         throughput_counter.record(scenario.packet_size);
@@ -306,7 +317,7 @@ async fn run_single_scenario(
 
     // Collect memory samples
     memory_probe.collect().await;
-    
+
     let timestamp = chrono::Utc::now().to_rfc3339();
 
     Ok(BenchmarkResult {
@@ -343,14 +354,21 @@ async fn run_single_scenario(
 async fn simulate_operation(packet_size: usize) {
     // Simulate network latency
     tokio::time::sleep(Duration::from_micros(100)).await;
-    
+
     // Simulate packet processing
     let _data = vec![0u8; packet_size];
     tokio::task::yield_now().await;
 }
 
 fn generate_config(output: String, lightweight: bool) -> Result<()> {
-    info!("Generating {} configuration...", if lightweight { "lightweight" } else { "default" });
+    info!(
+        "Generating {} configuration...",
+        if lightweight {
+            "lightweight"
+        } else {
+            "default"
+        }
+    );
 
     let config = if lightweight {
         ScenarioConfig::lightweight_matrix()
@@ -358,13 +376,17 @@ fn generate_config(output: String, lightweight: bool) -> Result<()> {
         ScenarioConfig::default_matrix()
     };
 
-    let toml_str = toml::to_string_pretty(&config)
-        .context("Failed to serialize configuration to TOML")?;
+    let toml_str =
+        toml::to_string_pretty(&config).context("Failed to serialize configuration to TOML")?;
 
     std::fs::write(&output, toml_str)
         .with_context(|| format!("Failed to write configuration to {}", output))?;
 
-    info!("Generated configuration with {} scenarios: {}", config.scenario_count(), output);
+    info!(
+        "Generated configuration with {} scenarios: {}",
+        config.scenario_count(),
+        output
+    );
     Ok(())
 }
 
@@ -393,7 +415,9 @@ fn compare_results(
     let mut has_warnings = false;
 
     for current_result in &current.results {
-        if let Some(baseline_result) = baseline.results.iter()
+        if let Some(baseline_result) = baseline
+            .results
+            .iter()
             .find(|r| r.scenario_id == current_result.scenario_id)
         {
             // Compare P99 latency (lower is better)
@@ -444,7 +468,8 @@ fn compare_results(
 
     markdown.push_str("\n## Summary\n\n");
     if has_failures {
-        markdown.push_str("❌ **FAILED**: Performance regressions detected beyond failure threshold\n");
+        markdown
+            .push_str("❌ **FAILED**: Performance regressions detected beyond failure threshold\n");
     } else if has_warnings {
         markdown.push_str("⚠️  **WARNING**: Performance regressions detected\n");
     } else {
@@ -492,22 +517,39 @@ async fn update_dashboard(
 ) -> Result<()> {
     use datadog_api_client::datadog;
     use datadog_api_client::datadog::APIKey;
-    use datadog_api_client::datadogV1::api_dashboards::{DashboardsAPI, ListDashboardsOptionalParams};
+    use datadog_api_client::datadogV1::api_dashboards::{
+        DashboardsAPI, ListDashboardsOptionalParams,
+    };
 
     // Get API keys and site from arguments or environment variables
-    let api_key_str = api_key.or_else(|| std::env::var("DD_API_KEY").ok())
+    let api_key_str = api_key
+        .or_else(|| std::env::var("DD_API_KEY").ok())
         .context("DD_API_KEY not provided (use --api-key or DD_API_KEY env var)")?;
-    let app_key_str = app_key.or_else(|| std::env::var("DD_APP_KEY").ok())
+    let app_key_str = app_key
+        .or_else(|| std::env::var("DD_APP_KEY").ok())
         .context("DD_APP_KEY not provided (use --app-key or DD_APP_KEY env var)")?;
-    let site_str = site.or_else(|| std::env::var("DD_SITE").ok())
+    let site_str = site
+        .or_else(|| std::env::var("DD_SITE").ok())
         .unwrap_or_else(|| "datadoghq.com".to_string());
 
     info!("Configuring Datadog API client for site: {}", site_str);
 
     // Configure Datadog client
     let mut config = datadog::Configuration::new();
-    config.set_auth_key("apiKeyAuth", APIKey { key: api_key_str, prefix: String::new() });
-    config.set_auth_key("appKeyAuth", APIKey { key: app_key_str, prefix: String::new() });
+    config.set_auth_key(
+        "apiKeyAuth",
+        APIKey {
+            key: api_key_str,
+            prefix: String::new(),
+        },
+    );
+    config.set_auth_key(
+        "appKeyAuth",
+        APIKey {
+            key: app_key_str,
+            prefix: String::new(),
+        },
+    );
     // Note: base_path cannot be changed in this version, uses default datadoghq.com
 
     let api = DashboardsAPI::with_config(config);
@@ -523,61 +565,56 @@ async fn update_dashboard(
     let existing_dashboard = dashboards_response
         .dashboards
         .as_ref()
-        .and_then(|dashboards| {
-            dashboards
-                .iter()
-                .find(|d| d.title.as_ref() == Some(&title))
-        });
+        .and_then(|dashboards| dashboards.iter().find(|d| d.title.as_ref() == Some(&title)));
 
     // Load dashboard JSON from file or generate it
     info!("Loading dashboard configuration...");
     let dashboard_json_str = crate::emit::generate_dashboard_json()?;
-    let mut dashboard_value: serde_json::Value = serde_json::from_str(&dashboard_json_str)
-        .context("Failed to parse dashboard JSON")?;
+    let mut dashboard_value: serde_json::Value =
+        serde_json::from_str(&dashboard_json_str).context("Failed to parse dashboard JSON")?;
 
     // Ensure title matches
     dashboard_value["title"] = serde_json::json!(title);
 
     if let Some(existing) = existing_dashboard {
-        let dashboard_id = existing.id.as_ref()
-            .context("Dashboard missing ID")?;
+        let dashboard_id = existing.id.as_ref().context("Dashboard missing ID")?;
 
         info!("📊 Dashboard found with ID: {}", dashboard_id);
         info!("🔄 Updating existing dashboard...");
 
         // Parse JSON into Dashboard struct for update
         let dashboard: datadog_api_client::datadogV1::model::Dashboard =
-            serde_json::from_value(dashboard_value)
-                .context("Failed to deserialize dashboard")?;
+            serde_json::from_value(dashboard_value).context("Failed to deserialize dashboard")?;
 
         let result = api
             .update_dashboard(dashboard_id.clone(), dashboard)
             .await
             .context("Failed to update dashboard")?;
 
-        let url = result.url.unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site_str, dashboard_id));
+        let url = result
+            .url
+            .unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site_str, dashboard_id));
 
         println!("\n✅ Dashboard updated successfully!");
         println!("   Dashboard ID: {}", dashboard_id);
         println!("   Dashboard URL: {}", url);
         info!("Dashboard updated: {}", url);
-
     } else {
         info!("📊 Dashboard not found. Creating new dashboard...");
 
         // Parse JSON into Dashboard struct for creation
         let dashboard: datadog_api_client::datadogV1::model::Dashboard =
-            serde_json::from_value(dashboard_value)
-                .context("Failed to deserialize dashboard")?;
+            serde_json::from_value(dashboard_value).context("Failed to deserialize dashboard")?;
 
         let result = api
             .create_dashboard(dashboard)
             .await
             .context("Failed to create dashboard")?;
 
-        let dashboard_id = result.id
-            .context("Created dashboard missing ID")?;
-        let url = result.url.unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site_str, dashboard_id));
+        let dashboard_id = result.id.context("Created dashboard missing ID")?;
+        let url = result
+            .url
+            .unwrap_or_else(|| format!("https://app.{}/dashboard/{}", site_str, dashboard_id));
 
         println!("\n✅ Dashboard created successfully!");
         println!("   Dashboard ID: {}", dashboard_id);

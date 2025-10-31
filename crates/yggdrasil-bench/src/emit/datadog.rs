@@ -1,8 +1,8 @@
 #![forbid(unsafe_code)]
 
-use std::net::UdpSocket;
 use anyhow::{Context, Result};
 use log::{debug, warn};
+use std::net::UdpSocket;
 
 use super::results::BenchmarkResult;
 
@@ -14,7 +14,7 @@ pub struct DatadogClient {
 
 impl DatadogClient {
     /// Create new Datadog client
-    /// 
+    ///
     /// # Arguments
     /// * `address` - DogStatsD address (e.g., "127.0.0.1:8125")
     pub fn new(address: &str) -> Result<Self> {
@@ -56,12 +56,16 @@ impl DatadogClient {
     /// Send raw metric string
     fn send(&self, metric: &str) -> Result<()> {
         if let Some(ref socket) = self.socket {
-            socket.send_to(metric.as_bytes(), &self.address)
+            socket
+                .send_to(metric.as_bytes(), &self.address)
                 .with_context(|| format!("Failed to send metric to {}", self.address))?;
             debug!("Sent metric: {}", metric);
             Ok(())
         } else {
-            warn!("DogStatsD socket not available, skipping metric: {}", metric);
+            warn!(
+                "DogStatsD socket not available, skipping metric: {}",
+                metric
+            );
             Ok(())
         }
     }
@@ -96,9 +100,17 @@ impl DatadogClient {
         self.send_gauge("ygg.bench.throughput.mbps", result.throughput_mbps, &tags)?;
 
         // Send memory metrics (convert to MB)
-        self.send_gauge("ygg.bench.rss.peak", result.rss_peak as f64 / 1_048_576.0, &tags)?;
+        self.send_gauge(
+            "ygg.bench.rss.peak",
+            result.rss_peak as f64 / 1_048_576.0,
+            &tags,
+        )?;
         self.send_gauge("ygg.bench.rss.mean", result.rss_mean / 1_048_576.0, &tags)?;
-        self.send_gauge("ygg.bench.rss.steady", result.rss_steady / 1_048_576.0, &tags)?;
+        self.send_gauge(
+            "ygg.bench.rss.steady",
+            result.rss_steady / 1_048_576.0,
+            &tags,
+        )?;
 
         // Send operation counters
         self.send_counter("ygg.bench.operations.total", result.total_operations, &tags)?;
@@ -120,7 +132,7 @@ mod tests {
     #[test]
     fn test_format_metric() {
         let client = DatadogClient::new("127.0.0.1:8125").unwrap();
-        
+
         let metric = client.format_metric("test.metric", 42.5, "g", &[]);
         assert_eq!(metric, "test.metric:42.5|g");
 

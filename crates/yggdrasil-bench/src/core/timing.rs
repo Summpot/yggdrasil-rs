@@ -1,8 +1,8 @@
 #![forbid(unsafe_code)]
 
-use std::time::{Duration, Instant};
-use hdrhistogram::Histogram;
 use anyhow::Result;
+use hdrhistogram::Histogram;
+use std::time::{Duration, Instant};
 
 /// High-resolution timer for latency measurements
 #[derive(Debug, Clone)]
@@ -179,7 +179,7 @@ mod tests {
     #[test]
     fn test_latency_stats() {
         let mut stats = LatencyStats::new().unwrap();
-        
+
         for i in 1..=100 {
             stats.record(Duration::from_micros(i * 100)).unwrap();
         }
@@ -194,7 +194,7 @@ mod tests {
     #[test]
     fn test_throughput_counter() {
         let mut counter = ThroughputCounter::new();
-        
+
         for _ in 0..100 {
             counter.record(1024);
         }
