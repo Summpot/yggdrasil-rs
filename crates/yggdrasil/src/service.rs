@@ -23,9 +23,9 @@ fn get_executable_path() -> Result<PathBuf> {
 /// Get the default configuration file path
 fn get_config_path() -> PathBuf {
     if cfg!(windows) {
-        PathBuf::from("C:\\ProgramData\\Yggdrasil\\config.hjson")
+        PathBuf::from("C:\\ProgramData\\Yggdrasil\\config.conf")
     } else {
-        PathBuf::from("/etc/yggdrasil/config.hjson")
+        PathBuf::from("/etc/yggdrasil/config.conf")
     }
 }
 

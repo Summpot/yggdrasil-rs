@@ -89,7 +89,7 @@ impl YggdrasilGoInstance {
         }
 
         let temp_dir = TempDir::new().ok()?;
-        let config_path = temp_dir.path().join("config.hjson");
+        let config_path = temp_dir.path().join("config.conf");
 
         #[cfg(unix)]
         let (admin_listen, _client_endpoint) = {

@@ -93,7 +93,7 @@ CRITICAL: Use `serde-hjson` (NOT `deser-hjson`) for full serialization support, 
 
 ```rust
 // Load configuration
-let config = Config::from_file("config.hjson")?;
+let config = Config::from_file("config.conf")?;
 
 // Generate configuration
 let config = Config::generate()?;

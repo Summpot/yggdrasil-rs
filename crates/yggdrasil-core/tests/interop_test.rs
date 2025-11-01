@@ -163,7 +163,7 @@ impl YggdrasilRustNode {
         }
 
         let temp_dir = TempDir::new().ok()?;
-        let config_path = temp_dir.path().join("config.hjson");
+        let config_path = temp_dir.path().join("config.conf");
 
         // Generate configuration
         let mut config = Config::generate().ok()?;
@@ -274,7 +274,7 @@ impl YggdrasilGoNode {
         }
 
         let temp_dir = TempDir::new().ok()?;
-        let config_path = temp_dir.path().join("config.hjson");
+        let config_path = temp_dir.path().join("config.conf");
         let listen_addr = format!("tcp://127.0.0.1:{}", port);
 
         let config = format!(
@@ -347,7 +347,7 @@ impl YggdrasilGoNode {
         }
 
         let temp_dir = TempDir::new().ok()?;
-        let config_path = temp_dir.path().join("config.hjson");
+        let config_path = temp_dir.path().join("config.conf");
         let listen_addr = format!("tcp://127.0.0.1:{}", port);
 
         // Build peers array
@@ -705,7 +705,7 @@ async fn test_multiple_listen_addresses() {
     config.if_name = "none".to_string();
 
     let temp_dir = TempDir::new().unwrap();
-    let config_path = temp_dir.path().join("config.hjson");
+    let config_path = temp_dir.path().join("config.conf");
     fs::write(&config_path, config.to_hjson_with_comments().unwrap()).unwrap();
 
     let rust_binary =
