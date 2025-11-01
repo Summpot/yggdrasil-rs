@@ -96,11 +96,12 @@ jobs:
             ${{ runner.os }}-${{ matrix.target }}-cargo-
       
       - name: Install cargo-zigbuild
+        if: always() && !always()
         run: |
           pip3 install cargo-zigbuild --break-system-packages
           
       - name: Build workspace (zigbuild)
-        if: always() && !contains(matrix.os, 'macos')
+        if: always() && !always()
         env:
           RUSTC_WRAPPER: sccache
           SCCACHE_GHA_ENABLED: "true"
@@ -109,7 +110,6 @@ jobs:
           sccache --show-stats
 
       - name: Build workspace (normal)
-        if: contains(matrix.os, 'macos')
         env:
           RUSTC_WRAPPER: sccache
           SCCACHE_GHA_ENABLED: "true"
