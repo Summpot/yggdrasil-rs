@@ -163,19 +163,16 @@ fn default_multicast_interfaces() -> Vec<MulticastInterfaceConfig> {
     }]
 }
 
-#[cfg(target_os = "linux")]
+// Platform-specific default admin listen address
+// Matches yggdrasil-go behavior: Unix systems use Unix sockets, Windows uses TCP
+#[cfg(unix)]
 fn default_admin_listen() -> String {
     "unix:///var/run/yggdrasil.sock".to_string()
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(not(unix))]
 fn default_admin_listen() -> String {
     "tcp://localhost:9001".to_string()
-}
-
-#[cfg(not(any(target_os = "linux", target_os = "windows")))]
-fn default_admin_listen() -> String {
-    "unix:///var/run/yggdrasil.sock".to_string()
 }
 
 impl Config {
