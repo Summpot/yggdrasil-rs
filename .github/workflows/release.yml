@@ -60,7 +60,7 @@ jobs:
             asset_ext: tar.gz
             arch: amd64
             use_zigbuild: false
-          - os: ubuntu-latest
+          - os: macos-latest
             target: aarch64-unknown-linux-gnu
             artifact_name: yggdrasil-linux-arm64
             asset_ext: tar.gz
@@ -72,7 +72,7 @@ jobs:
             asset_ext: tar.gz
             arch: amd64
             use_zigbuild: false
-          - os: ubuntu-latest
+          - os: macos-latest
             target: aarch64-unknown-linux-musl
             artifact_name: yggdrasil-linux-arm64-musl
             asset_ext: tar.gz
@@ -84,7 +84,7 @@ jobs:
             asset_ext: zip
             arch: amd64
             use_zigbuild: false
-          - os: windows-latest
+          - os: macos-latest
             target: aarch64-pc-windows-msvc
             artifact_name: yggdrasil-windows-arm64
             asset_ext: zip
@@ -137,16 +137,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake libssl-dev pkg-config clang musl-tools
       
-      - name: Install Python and cargo-zigbuild (Linux/macOS)
-        if: matrix.use_zigbuild == true && runner.os != 'Windows'
+      - name: Install cargo-zigbuild
+        if: matrix.use_zigbuild == true
         run: |
-          pip install cargo-zigbuild
-      
-      - name: Install Python and cargo-zigbuild (Windows)
-        if: matrix.use_zigbuild == true && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          pip install cargo-zigbuild
+          pip3 install cargo-zigbuild
 
       - name: Build workspace (zigbuild)
         if: matrix.use_zigbuild == true
@@ -173,7 +167,7 @@ jobs:
         run: cargo test --workspace --release --target ${{ matrix.target }}
 
       - name: Prepare release package (Unix)
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && !contains(matrix.target, 'windows')
         run: |
           mkdir -p release-package
           cp target/${{ matrix.target }}/release/yggdrasil release-package/
@@ -185,18 +179,21 @@ jobs:
           cd release-package
           tar -czf ../${{ matrix.artifact_name }}-${{ needs.create-release.outputs.version }}.tar.gz *
 
-      - name: Prepare release package (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
+      - name: Prepare release package (Windows or Windows cross-compiled)
+        if: runner.os == 'Windows' || contains(matrix.target, 'windows')
         run: |
-          New-Item -ItemType Directory -Force -Path release-package
-          Copy-Item target/${{ matrix.target }}/release/yggdrasil.exe release-package/
-          Copy-Item target/${{ matrix.target }}/release/yggdrasilctl.exe release-package/
-          Copy-Item target/${{ matrix.target }}/release/genkeys.exe release-package/
-          Copy-Item target/${{ matrix.target }}/release/yggdrasil-bench.exe release-package/
-          if (Test-Path README.md) { Copy-Item README.md release-package/ }
-          if (Test-Path LICENSE) { Copy-Item LICENSE release-package/ }
-          Compress-Archive -Path release-package/* -DestinationPath ${{ matrix.artifact_name }}-${{ needs.create-release.outputs.version }}.zip
+          mkdir -p release-package
+          cp target/${{ matrix.target }}/release/yggdrasil.exe release-package/ 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/yggdrasilctl.exe release-package/ 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/genkeys.exe release-package/ 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/yggdrasil-bench.exe release-package/ 2>/dev/null || true
+          cp README.md LICENSE release-package/ 2>/dev/null || true
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            cd release-package && powershell Compress-Archive -Path * -DestinationPath ../${{ matrix.artifact_name }}-${{ needs.create-release.outputs.version }}.zip
+          else
+            cd release-package && zip -r ../${{ matrix.artifact_name }}-${{ needs.create-release.outputs.version }}.zip *
+          fi
+        shell: bash
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1

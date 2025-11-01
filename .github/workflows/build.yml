@@ -29,7 +29,7 @@ jobs:
             artifact_name: yggdrasil-linux-amd64
             arch: amd64
             use_zigbuild: false
-          - os: ubuntu-latest
+          - os: macos-latest
             target: aarch64-unknown-linux-gnu
             artifact_name: yggdrasil-linux-arm64
             arch: arm64
@@ -39,7 +39,7 @@ jobs:
             artifact_name: yggdrasil-linux-amd64-musl
             arch: amd64
             use_zigbuild: false
-          - os: ubuntu-latest
+          - os: macos-latest
             target: aarch64-unknown-linux-musl
             artifact_name: yggdrasil-linux-arm64-musl
             arch: arm64
@@ -49,7 +49,7 @@ jobs:
             artifact_name: yggdrasil-windows-amd64
             arch: amd64
             use_zigbuild: false
-          - os: windows-latest
+          - os: macos-latest
             target: aarch64-pc-windows-msvc
             artifact_name: yggdrasil-windows-arm64
             arch: arm64
@@ -99,16 +99,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake libssl-dev pkg-config clang musl-tools
       
-      - name: Install Python and cargo-zigbuild (Linux/macOS)
-        if: matrix.use_zigbuild == true && runner.os != 'Windows'
+      - name: Install cargo-zigbuild
+        if: matrix.use_zigbuild == true
         run: |
-          pip install cargo-zigbuild
-      
-      - name: Install Python and cargo-zigbuild (Windows)
-        if: matrix.use_zigbuild == true && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          pip install cargo-zigbuild
+          pip3 install cargo-zigbuild
           
       - name: Build workspace (zigbuild)
         if: matrix.use_zigbuild == true
@@ -129,7 +123,7 @@ jobs:
           sccache --show-stats
 
       - name: Prepare artifacts (Unix)
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && !contains(matrix.target, 'windows')
         run: |
           mkdir -p artifacts
           cp target/${{ matrix.target }}/release/yggdrasil artifacts/yggdrasil
@@ -139,19 +133,23 @@ jobs:
           chmod +x artifacts/*
           tar -czf ${{ matrix.artifact_name }}.tar.gz -C artifacts .
 
-      - name: Prepare artifacts (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
+      - name: Prepare artifacts (Windows or Windows cross-compiled)
+        if: runner.os == 'Windows' || contains(matrix.target, 'windows')
         run: |
-          New-Item -ItemType Directory -Force -Path artifacts
-          Copy-Item target/${{ matrix.target }}/release/yggdrasil.exe artifacts/
-          Copy-Item target/${{ matrix.target }}/release/yggdrasilctl.exe artifacts/
-          Copy-Item target/${{ matrix.target }}/release/genkeys.exe artifacts/
-          Copy-Item target/${{ matrix.target }}/release/yggdrasil-bench.exe artifacts/
-          Compress-Archive -Path artifacts/* -DestinationPath ${{ matrix.artifact_name }}.zip
+          mkdir -p artifacts
+          cp target/${{ matrix.target }}/release/yggdrasil.exe artifacts/ 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/yggdrasilctl.exe artifacts/ 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/genkeys.exe artifacts/ 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/yggdrasil-bench.exe artifacts/ 2>/dev/null || true
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            cd artifacts && powershell Compress-Archive -Path * -DestinationPath ../${{ matrix.artifact_name }}.zip
+          else
+            cd artifacts && zip -r ../${{ matrix.artifact_name }}.zip *
+          fi
+        shell: bash
 
       - name: Upload artifacts (Unix)
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && !contains(matrix.target, 'windows')
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
@@ -159,7 +157,7 @@ jobs:
           retention-days: 30
 
       - name: Upload artifacts (Windows)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' || contains(matrix.target, 'windows')
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
