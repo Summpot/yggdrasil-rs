@@ -6,16 +6,15 @@ use tempfile::TempDir;
 use tokio::time::sleep;
 use yggdrasil_core::AdminClient;
 
-// Note: yggdrasil-go only supports Unix domain sockets on Unix platforms
-// These tests are automatically skipped on Windows
-#[cfg(unix)]
 struct YggdrasilGoInstance {
     _process: Child,
     _temp_dir: TempDir,
+    #[cfg(unix)]
     socket_path: PathBuf,
+    #[cfg(not(unix))]
+    tcp_addr: String,
 }
 
-#[cfg(unix)]
 impl YggdrasilGoInstance {
     async fn start() -> Option<Self> {
         let go_binary = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -91,16 +90,34 @@ impl YggdrasilGoInstance {
 
         let temp_dir = TempDir::new().ok()?;
         let config_path = temp_dir.path().join("config.hjson");
-        let socket_path = temp_dir.path().join("yggdrasil.sock");
+
+        #[cfg(unix)]
+        let (admin_listen, _client_endpoint) = {
+            let socket_path = temp_dir.path().join("yggdrasil.sock");
+            let admin_listen = format!("unix://{}", socket_path.display());
+            let client_endpoint = socket_path.to_str().unwrap().to_string();
+            (admin_listen, client_endpoint)
+        };
+
+        #[cfg(not(unix))]
+        let (admin_listen, client_endpoint) = {
+            // Use a random high port on Windows
+            use std::sync::atomic::{AtomicU16, Ordering};
+            static PORT_COUNTER: AtomicU16 = AtomicU16::new(19500);
+            let port = PORT_COUNTER.fetch_add(1, Ordering::SeqCst);
+            let addr = format!("127.0.0.1:{}", port);
+            let admin_listen = format!("tcp://{}", addr);
+            (admin_listen, addr)
+        };
 
         let config = format!(
             r#"{{
-  AdminListen: "unix://{}"
+  AdminListen: "{}"
   Listen: []
   MulticastInterfaces: []
   IfName: "none"
 }}"#,
-            socket_path.display()
+            admin_listen
         );
 
         fs::write(&config_path, config).ok()?;
@@ -111,24 +128,53 @@ impl YggdrasilGoInstance {
             .spawn()
             .ok()?;
 
+        // Wait for the admin socket/TCP port to be ready
         for _ in 0..50 {
-            if socket_path.exists() {
-                sleep(Duration::from_millis(100)).await;
-                return Some(Self {
-                    _process: process,
-                    _temp_dir: temp_dir,
-                    socket_path,
-                });
+            #[cfg(unix)]
+            {
+                let socket_path = temp_dir.path().join("yggdrasil.sock");
+                if socket_path.exists() {
+                    sleep(Duration::from_millis(100)).await;
+                    return Some(Self {
+                        _process: process,
+                        _temp_dir: temp_dir,
+                        socket_path,
+                    });
+                }
             }
+
+            #[cfg(not(unix))]
+            {
+                // Try to connect to check if the TCP port is ready
+                if std::net::TcpStream::connect(&client_endpoint).is_ok() {
+                    sleep(Duration::from_millis(100)).await;
+                    return Some(Self {
+                        _process: process,
+                        _temp_dir: temp_dir,
+                        tcp_addr: client_endpoint,
+                    });
+                }
+            }
+
             sleep(Duration::from_millis(100)).await;
         }
 
-        eprintln!("Timeout: Admin socket not created at {:?}", socket_path);
+        eprintln!("Timeout: Admin endpoint not ready");
         None
+    }
+
+    fn client_endpoint(&self) -> String {
+        #[cfg(unix)]
+        {
+            self.socket_path.to_str().unwrap().to_string()
+        }
+        #[cfg(not(unix))]
+        {
+            self.tcp_addr.clone()
+        }
     }
 }
 
-#[cfg(unix)]
 impl Drop for YggdrasilGoInstance {
     fn drop(&mut self) {
         let _ = self._process.kill();
@@ -136,7 +182,6 @@ impl Drop for YggdrasilGoInstance {
     }
 }
 
-#[cfg(unix)]
 #[tokio::test]
 async fn test_get_self_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -147,7 +192,7 @@ async fn test_get_self_compatibility() {
         }
     };
 
-    let client = AdminClient::new(instance.socket_path.to_str().unwrap());
+    let client = AdminClient::new(instance.client_endpoint());
 
     let start = std::time::Instant::now();
     let response = client.get_self().await.expect("getSelf failed");
@@ -165,7 +210,6 @@ async fn test_get_self_compatibility() {
     assert!(!response.subnet.is_empty());
 }
 
-#[cfg(unix)]
 #[tokio::test]
 async fn test_get_peers_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -176,7 +220,7 @@ async fn test_get_peers_compatibility() {
         }
     };
 
-    let client = AdminClient::new(instance.socket_path.to_str().unwrap());
+    let client = AdminClient::new(instance.client_endpoint());
 
     let start = std::time::Instant::now();
     let response = client.get_peers().await.expect("getPeers failed");
@@ -190,7 +234,6 @@ async fn test_get_peers_compatibility() {
     assert!(response.peers.is_empty());
 }
 
-#[cfg(unix)]
 #[tokio::test]
 async fn test_get_paths_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -201,7 +244,7 @@ async fn test_get_paths_compatibility() {
         }
     };
 
-    let client = AdminClient::new(instance.socket_path.to_str().unwrap());
+    let client = AdminClient::new(instance.client_endpoint());
 
     let start = std::time::Instant::now();
     let response = client.get_paths().await.expect("getPaths failed");
@@ -215,7 +258,6 @@ async fn test_get_paths_compatibility() {
     assert!(response.paths.is_empty() || !response.paths.is_empty());
 }
 
-#[cfg(unix)]
 #[tokio::test]
 async fn test_get_sessions_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -226,7 +268,7 @@ async fn test_get_sessions_compatibility() {
         }
     };
 
-    let client = AdminClient::new(instance.socket_path.to_str().unwrap());
+    let client = AdminClient::new(instance.client_endpoint());
 
     let start = std::time::Instant::now();
     let response = client.get_sessions().await.expect("getSessions failed");
@@ -240,7 +282,6 @@ async fn test_get_sessions_compatibility() {
     assert!(response.sessions.is_empty());
 }
 
-#[cfg(unix)]
 #[tokio::test]
 async fn test_list_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -251,7 +292,7 @@ async fn test_list_compatibility() {
         }
     };
 
-    let client = AdminClient::new(instance.socket_path.to_str().unwrap());
+    let client = AdminClient::new(instance.client_endpoint());
 
     let start = std::time::Instant::now();
     let response = client.list().await.expect("list failed");
@@ -270,7 +311,6 @@ async fn test_list_compatibility() {
     assert!(commands.contains(&"getpeers") || commands.contains(&"getPeers"));
 }
 
-#[cfg(unix)]
 #[tokio::test]
 async fn test_add_remove_peer_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -281,7 +321,7 @@ async fn test_add_remove_peer_compatibility() {
         }
     };
 
-    let client = AdminClient::new(instance.socket_path.to_str().unwrap());
+    let client = AdminClient::new(instance.client_endpoint());
 
     let start = std::time::Instant::now();
     let add_response = client
