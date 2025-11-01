@@ -1,11 +1,6 @@
 on:
   workflow_call:
     inputs:
-      run-tests:
-        description: 'Whether to run tests after building'
-        required: false
-        type: boolean
-        default: false
       artifact-prefix:
         description: 'Prefix for artifact names (e.g., "release-" for release builds)'
         required: false
@@ -111,13 +106,6 @@ jobs:
         run: |
           cargo zigbuild --workspace --release --target ${{ matrix.target }}
           sccache --show-stats
-
-      - name: Run tests
-        if: inputs.run-tests
-        env:
-          RUSTC_WRAPPER: sccache
-          SCCACHE_GHA_ENABLED: "true"
-        run: cargo zigbuild test --workspace --release --target ${{ matrix.target }}
 
       - name: Prepare artifacts
         shell: pwsh

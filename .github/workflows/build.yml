@@ -21,7 +21,6 @@ jobs:
     name: Build Binaries
     uses: ./.github/workflows/_build-binaries.yml
     with:
-      run-tests: true
       artifact-prefix: ''
       include-docs: false
 
@@ -178,10 +177,6 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.target }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-test-
-
-      - name: Install cargo-zigbuild
-        run: |
-          pip3 install cargo-zigbuild --break-system-packages
 
       - name: Run tests
         env:

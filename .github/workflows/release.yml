@@ -51,7 +51,6 @@ jobs:
     needs: create-release
     uses: ./.github/workflows/_build-binaries.yml
     with:
-      run-tests: false
       artifact-prefix: ''
       include-docs: true
 
