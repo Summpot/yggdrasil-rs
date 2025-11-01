@@ -59,36 +59,49 @@ jobs:
             artifact_name: yggdrasil-linux-amd64
             asset_ext: tar.gz
             arch: amd64
+            use_zigbuild: false
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             artifact_name: yggdrasil-linux-arm64
             asset_ext: tar.gz
             arch: arm64
+            use_zigbuild: true
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             artifact_name: yggdrasil-linux-amd64-musl
             asset_ext: tar.gz
             arch: amd64
+            use_zigbuild: false
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
             artifact_name: yggdrasil-linux-arm64-musl
             asset_ext: tar.gz
             arch: arm64
+            use_zigbuild: true
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: yggdrasil-windows-amd64
             asset_ext: zip
             arch: amd64
+            use_zigbuild: false
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            artifact_name: yggdrasil-windows-arm64
+            asset_ext: zip
+            arch: arm64
+            use_zigbuild: true
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact_name: yggdrasil-macos-amd64
             asset_ext: tar.gz
             arch: amd64
+            use_zigbuild: false
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact_name: yggdrasil-macos-arm64
             asset_ext: tar.gz
             arch: arm64
+            use_zigbuild: false
 
     steps:
       - name: Checkout code
@@ -122,29 +135,30 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev pkg-config clang lld musl-tools
-          
-      - name: Install cross-compilation toolchain (Linux ARM64)
-        if: runner.os == 'Linux' && (matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'aarch64-unknown-linux-musl')
+          sudo apt-get install -y cmake libssl-dev pkg-config clang musl-tools
+      
+      - name: Install Python and cargo-zigbuild (Linux/macOS)
+        if: matrix.use_zigbuild == true && runner.os != 'Windows'
         run: |
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-
-      - name: Configure cargo for ARM64 cross-compilation
-        if: runner.os == 'Linux' && (matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'aarch64-unknown-linux-musl')
+          pip install cargo-zigbuild
+      
+      - name: Install Python and cargo-zigbuild (Windows)
+        if: matrix.use_zigbuild == true && runner.os == 'Windows'
+        shell: pwsh
         run: |
-          mkdir -p .cargo
-          cat >> .cargo/config.toml << 'EOF'
-          
-          [target.aarch64-unknown-linux-gnu]
-          linker = "aarch64-linux-gnu-gcc"
-          
-          [target.aarch64-unknown-linux-musl]
-          linker = "aarch64-linux-gnu-gcc"
-          rustflags = ["-C", "target-feature=+crt-static"]
-          EOF
-          cat .cargo/config.toml
+          pip install cargo-zigbuild
 
-      - name: Build workspace
+      - name: Build workspace (zigbuild)
+        if: matrix.use_zigbuild == true
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_GHA_ENABLED: "true"
+        run: |
+          cargo zigbuild --workspace --release --target ${{ matrix.target }}
+          sccache --show-stats
+
+      - name: Build workspace (normal)
+        if: matrix.use_zigbuild == false
         env:
           RUSTC_WRAPPER: sccache
           SCCACHE_GHA_ENABLED: "true"
