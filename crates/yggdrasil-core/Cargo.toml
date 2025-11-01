@@ -7,6 +7,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+quinn.workspace = true
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -24,22 +25,21 @@ log.workspace = true
 hex.workspace = true
 bytes.workspace = true
 parking_lot.workspace = true
-blake2 = "0.10.6"
-sha2 = "0.10.9"
-nix = { version = "0.30.1", features = ["socket"] }
-rcgen = "0.14.5"
-pem = "3.0.6"
-pkcs8 = { version = "0.10.2", features = ["alloc", "pem"] }
-time = "0.3.44"
-quinn = "0.11.9"
-rustls = { version = "0.23.34", features = ["aws_lc_rs"] }
-rustls-pemfile = "2.2.0"
-tokio-tungstenite = "0.28.0"
-futures-util = "0.3.31"
-siphasher = "1.0.1"
+blake2.workspace = true
+sha2.workspace = true
+nix.workspace = true
+rcgen.workspace = true
+pem.workspace = true
+pkcs8.workspace = true
+time.workspace = true
+rustls.workspace = true
+rustls-pemfile.workspace = true
+tokio-tungstenite.workspace = true
+futures-util.workspace = true
+siphasher.workspace = true
 
 [dev-dependencies]
 env_logger.workspace = true
-tempfile = "3.23.0"
-testcontainers-modules = { version = "0.13.0", features = ["postgres"] }
-port_check = "0.3.0"
+tempfile.workspace = true
+testcontainers-modules.workspace = true
+port_check.workspace = true
