@@ -95,12 +95,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
       
-      - name: Install aarch64-linux-gnu-gcc
-        if: always() && contains(matrix.os, 'linux')
+      - name: Install cargo-zigbuild
+        if: always() && contains(matrix.target, 'linux')
         run: |
-          apt install aarch64-linux-gnu-gcc aarch64-linux-musl-gcc
+          pip3 install cargo-zigbuild --break-system-packages
+          
+      - name: Build workspace (zigbuild)
+        if: always() && contains(matrix.target, 'linux')
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_GHA_ENABLED: "true"
+        run: |
+          cargo zigbuild --workspace --release --target ${{ matrix.target }}
+          sccache --show-stats
 
-      - name: Build workspace
+      - name: Build workspace (normal)
+        if: always() && !contains(matrix.target, 'linux')
         env:
           RUSTC_WRAPPER: sccache
           SCCACHE_GHA_ENABLED: "true"
