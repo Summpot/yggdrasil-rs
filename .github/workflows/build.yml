@@ -99,20 +99,11 @@ jobs:
           cat >> .cargo/config.toml << 'EOF'
           
           [target.aarch64-unknown-linux-gnu]
-          linker = "clang"
-          rustflags = [
-            "-C", "link-arg=--target=aarch64-unknown-linux-gnu",
-            "-C", "link-arg=-fuse-ld=lld",
-            "-C", "link-arg=--sysroot=/usr/aarch64-linux-gnu"
-          ]
+          linker = "aarch64-linux-gnu-gcc"
           
           [target.aarch64-unknown-linux-musl]
-          linker = "clang"
-          rustflags = [
-            "-C", "link-arg=--target=aarch64-unknown-linux-musl",
-            "-C", "link-arg=-fuse-ld=lld",
-            "-C", "target-feature=+crt-static"
-          ]
+          linker = "aarch64-linux-gnu-gcc"
+          rustflags = ["-C", "target-feature=+crt-static"]
           EOF
           cat .cargo/config.toml
 
