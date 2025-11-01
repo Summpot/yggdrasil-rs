@@ -1,8 +1,8 @@
 use anyhow::Result;
 use ed25519_dalek::VerifyingKey;
 use log::{info, warn};
-use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, AES_256_GCM};
-use ring::rand::{SecureRandom, SystemRandom};
+use aws_lc_rs::aead::{Aad, LessSafeKey, Nonce, UnboundKey, AES_256_GCM};
+use aws_lc_rs::rand::{SecureRandom, SystemRandom};
 use std::collections::HashMap;
 use std::net::Ipv6Addr;
 use std::sync::Arc;

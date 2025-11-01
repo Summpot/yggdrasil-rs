@@ -43,13 +43,12 @@ impl Crypto {
 /// Key exchange
 pub mod key_exchange {
     use anyhow::Result;
-    use ring::agreement::{agree_ephemeral, EphemeralPrivateKey, UnparsedPublicKey, X25519};
-    use ring::rand::SystemRandom;
+    use aws_lc_rs::agreement::{agree, PrivateKey, UnparsedPublicKey, X25519};
+    use aws_lc_rs::error::Unspecified;
 
     /// Generate key exchange keypair
-    pub fn generate_keypair() -> Result<(EphemeralPrivateKey, Vec<u8>)> {
-        let rng = SystemRandom::new();
-        let private_key = EphemeralPrivateKey::generate(&X25519, &rng)
+    pub fn generate_keypair() -> Result<(PrivateKey, Vec<u8>)> {
+        let private_key = PrivateKey::generate(&X25519)
             .map_err(|_| anyhow::anyhow!("Failed to generate private key"))?;
 
         let public_key = private_key
@@ -60,20 +59,26 @@ pub mod key_exchange {
     }
 
     /// Perform key exchange
-    pub fn exchange(private_key: EphemeralPrivateKey, peer_public_key: &[u8]) -> Result<Vec<u8>> {
+    pub fn exchange(private_key: PrivateKey, peer_public_key: &[u8]) -> Result<Vec<u8>> {
         let peer_public_key = UnparsedPublicKey::new(&X25519, peer_public_key);
 
-        agree_ephemeral(private_key, &peer_public_key, |key_material| {
-            Ok(key_material.to_vec())
-        })
-        .map_err(|_| anyhow::anyhow!("Key exchange failed"))?
+        // Perform key agreement with identity KDF
+        let shared_secret = agree(
+            &private_key,
+            peer_public_key,
+            Unspecified,
+            |key_material: &[u8]| Ok::<Vec<u8>, Unspecified>(key_material.to_vec()),
+        )
+        .map_err(|_| anyhow::anyhow!("Key exchange failed"))?;
+        
+        Ok(shared_secret)
     }
 }
 
 /// Encryption and decryption
 pub mod cipher {
     use anyhow::Result;
-    use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, AES_256_GCM};
+    use aws_lc_rs::aead::{Aad, LessSafeKey, Nonce, UnboundKey, AES_256_GCM};
 
     /// Encrypt data using AES-256-GCM
     pub fn encrypt(key: &[u8], nonce: &[u8; 12], plaintext: &[u8], aad: &[u8]) -> Result<Vec<u8>> {
