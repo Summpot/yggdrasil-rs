@@ -4,6 +4,21 @@ use std::time::Duration;
 use tokio::time::sleep;
 use yggdrasil_core::{Config, Core};
 
+// Helper function to create admin endpoint appropriate for the platform
+#[cfg(unix)]
+fn create_admin_endpoint(name: &str) -> String {
+    format!("unix:///tmp/yggdrasil-{}.sock", name)
+}
+
+#[cfg(not(unix))]
+fn create_admin_endpoint(name: &str) -> String {
+    use std::sync::atomic::{AtomicU16, Ordering};
+    static PORT_COUNTER: AtomicU16 = AtomicU16::new(19100);
+    
+    let port = PORT_COUNTER.fetch_add(1, Ordering::SeqCst);
+    format!("tcp://127.0.0.1:{}", port)
+}
+
 #[tokio::test]
 #[ignore] // Run manually with: cargo test websocket_test -- --ignored
 async fn test_websocket_listener() -> Result<()> {
@@ -13,7 +28,7 @@ async fn test_websocket_listener() -> Result<()> {
     let mut config = Config::generate()?;
     config.listen = vec!["ws://127.0.0.1:9001".to_string()];
     config.peers = vec![];
-    config.admin_listen = Some("unix:///tmp/yggdrasil-ws-test.sock".to_string());
+    config.admin_listen = Some(create_admin_endpoint("ws-test"));
     config.if_name = "none".to_string();
 
     // Start core
@@ -40,13 +55,13 @@ async fn test_websocket_connection() -> Result<()> {
     let mut config1 = Config::generate()?;
     config1.listen = vec!["ws://127.0.0.1:9002".to_string()];
     config1.peers = vec![];
-    config1.admin_listen = Some("unix:///tmp/yggdrasil-ws1.sock".to_string());
+    config1.admin_listen = Some(create_admin_endpoint("ws1"));
     config1.if_name = "none".to_string();
 
     let mut config2 = Config::generate()?;
     config2.listen = vec![];
     config2.peers = vec!["ws://127.0.0.1:9002".to_string()];
-    config2.admin_listen = Some("unix:///tmp/yggdrasil-ws2.sock".to_string());
+    config2.admin_listen = Some(create_admin_endpoint("ws2"));
     config2.if_name = "none".to_string();
 
     // Start both cores
@@ -82,13 +97,13 @@ async fn test_wss_support() -> Result<()> {
     let mut config1 = Config::generate()?;
     config1.listen = vec!["wss://127.0.0.1:9443".to_string()];
     config1.peers = vec![];
-    config1.admin_listen = Some("unix:///tmp/yggdrasil-wss1.sock".to_string());
+    config1.admin_listen = Some(create_admin_endpoint("wss1"));
     config1.if_name = "none".to_string();
 
     let mut config2 = Config::generate()?;
     config2.listen = vec![];
     config2.peers = vec!["wss://127.0.0.1:9443".to_string()];
-    config2.admin_listen = Some("unix:///tmp/yggdrasil-wss2.sock".to_string());
+    config2.admin_listen = Some(create_admin_endpoint("wss2"));
     config2.if_name = "none".to_string();
 
     println!("Starting WSS (WebSocket Secure) test...");

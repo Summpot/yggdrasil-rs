@@ -6,12 +6,16 @@ use tempfile::TempDir;
 use tokio::time::sleep;
 use yggdrasil_core::AdminClient;
 
+// Note: yggdrasil-go only supports Unix domain sockets on Unix platforms
+// These tests are automatically skipped on Windows
+#[cfg(unix)]
 struct YggdrasilGoInstance {
     _process: Child,
     _temp_dir: TempDir,
     socket_path: PathBuf,
 }
 
+#[cfg(unix)]
 impl YggdrasilGoInstance {
     async fn start() -> Option<Self> {
         let go_binary = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -124,6 +128,7 @@ impl YggdrasilGoInstance {
     }
 }
 
+#[cfg(unix)]
 impl Drop for YggdrasilGoInstance {
     fn drop(&mut self) {
         let _ = self._process.kill();
@@ -131,6 +136,7 @@ impl Drop for YggdrasilGoInstance {
     }
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn test_get_self_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -159,6 +165,7 @@ async fn test_get_self_compatibility() {
     assert!(!response.subnet.is_empty());
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn test_get_peers_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -183,6 +190,7 @@ async fn test_get_peers_compatibility() {
     assert!(response.peers.is_empty());
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn test_get_paths_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -207,6 +215,7 @@ async fn test_get_paths_compatibility() {
     assert!(response.paths.is_empty() || !response.paths.is_empty());
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn test_get_sessions_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -231,6 +240,7 @@ async fn test_get_sessions_compatibility() {
     assert!(response.sessions.is_empty());
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn test_list_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
@@ -260,6 +270,7 @@ async fn test_list_compatibility() {
     assert!(commands.contains(&"getpeers") || commands.contains(&"getPeers"));
 }
 
+#[cfg(unix)]
 #[tokio::test]
 async fn test_add_remove_peer_compatibility() {
     let instance = match YggdrasilGoInstance::start().await {
