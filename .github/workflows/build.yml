@@ -102,7 +102,7 @@ jobs:
       - name: Install cargo-zigbuild
         if: matrix.use_zigbuild == true
         run: |
-          pip3 install cargo-zigbuild
+          pip3 install cargo-zigbuild --break-system-packages
           
       - name: Build workspace (zigbuild)
         if: matrix.use_zigbuild == true
