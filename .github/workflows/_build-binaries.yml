@@ -59,7 +59,7 @@ jobs:
             artifact_name: yggdrasil-windows-arm64
             artifact_ext: zip
             arch: arm64
-          - os: macos-15-intel
+          - os: macos-latest
             target: x86_64-apple-darwin
             artifact_name: yggdrasil-macos-amd64
             artifact_ext: tar.gz
