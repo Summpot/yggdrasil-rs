@@ -100,10 +100,11 @@ jobs:
         run: |
           pip3 install cargo-zigbuild --break-system-packages
 
-      - name: Setup LLVM
-        uses: ZhongRuoyu/setup-llvm@v0
+      - name: Install LLVM and Clang
+        if: always() && contains(matrix.target, 'windows')
+        uses: KyleMayes/install-llvm-action@v2
         with:
-          llvm-version: 17
+          version: "21"
           
       - name: Build workspace (zigbuild)
         if: always() && contains(matrix.target, 'linux')
