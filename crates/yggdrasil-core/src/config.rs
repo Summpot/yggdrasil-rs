@@ -167,7 +167,7 @@ fn default_multicast_interfaces() -> Vec<MulticastInterfaceConfig> {
 // Matches yggdrasil-go behavior: Unix systems use Unix sockets, Windows uses TCP
 #[cfg(unix)]
 fn default_admin_listen() -> String {
-    "unix:///var/run/yggdrasil.sock".to_string()
+    "unix:///var/run/yggdrasil/yggdrasil.sock".to_string()
 }
 
 #[cfg(not(unix))]
