@@ -100,11 +100,10 @@ jobs:
         run: |
           pip3 install cargo-zigbuild --break-system-packages
 
-      - name: Install msbuild
-        if: always() && contains(matrix.target, 'windows')
-        uses: microsoft/setup-msbuild@v2
+      - name: Setup LLVM
+        uses: ZhongRuoyu/setup-llvm@v0
         with:
-          msbuild-architecture: ${{ matrix.arch }}
+          llvm-version: 17
           
       - name: Build workspace (zigbuild)
         if: always() && contains(matrix.target, 'linux')
