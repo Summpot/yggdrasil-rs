@@ -54,11 +54,6 @@ jobs:
             artifact_name: yggdrasil-windows-amd64
             artifact_ext: zip
             arch: amd64
-          - os: windows-latest
-            target: aarch64-pc-windows-msvc
-            artifact_name: yggdrasil-windows-arm64
-            artifact_ext: zip
-            arch: arm64
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact_name: yggdrasil-macos-amd64
@@ -99,12 +94,6 @@ jobs:
         if: always() && contains(matrix.target, 'linux')
         run: |
           pip3 install cargo-zigbuild --break-system-packages
-
-      - name: Install LLVM and Clang
-        if: always() && contains(matrix.target, 'windows')
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "21"
           
       - name: Build workspace (zigbuild)
         if: always() && contains(matrix.target, 'linux')
