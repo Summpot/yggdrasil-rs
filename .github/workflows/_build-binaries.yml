@@ -1,0 +1,166 @@
+on:
+  workflow_call:
+    inputs:
+      artifact-prefix:
+        description: 'Prefix for artifact names (e.g., "release-" for release builds)'
+        required: false
+        type: string
+        default: ''
+      include-docs:
+        description: 'Whether to include README.md and LICENSE in artifacts'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      artifact-names:
+        description: 'JSON array of artifact names'
+        value: ${{ jobs.build-binaries.outputs.artifact-names }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-binaries:
+    name: Build on ${{ matrix.os }} (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    outputs:
+      artifact-names: ${{ steps.set-outputs.outputs.artifact-names }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: yggdrasil-linux-amd64
+            artifact_ext: tar.gz
+            arch: amd64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact_name: yggdrasil-linux-arm64
+            artifact_ext: tar.gz
+            arch: arm64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact_name: yggdrasil-linux-amd64-musl
+            artifact_ext: tar.gz
+            arch: amd64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            artifact_name: yggdrasil-linux-arm64-musl
+            artifact_ext: tar.gz
+            arch: arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: yggdrasil-windows-amd64
+            artifact_ext: zip
+            arch: amd64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: yggdrasil-macos-amd64
+            artifact_ext: tar.gz
+            arch: amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: yggdrasil-macos-arm64
+            artifact_ext: tar.gz
+            arch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Setup Rust cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-
+      
+      - name: Install cargo-zigbuild
+        if: always() && contains(matrix.target, 'linux')
+        run: |
+          pip3 install cargo-zigbuild --break-system-packages
+          
+      - name: Build workspace (zigbuild)
+        if: always() && contains(matrix.target, 'linux')
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_GHA_ENABLED: "true"
+        run: |
+          cargo zigbuild --workspace --release --target ${{ matrix.target }}
+          sccache --show-stats
+
+      - name: Build workspace (normal)
+        if: always() && !contains(matrix.target, 'linux')
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_GHA_ENABLED: "true"
+        run: |
+          cargo build --workspace --release --target ${{ matrix.target }}
+          sccache --show-stats
+
+      - name: Prepare artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts
+          
+          $target = "${{ matrix.target }}"
+          $basePath = "target/$target/release"
+          
+          # Copy binaries
+          if ($target -like "*windows*") {
+            Copy-Item "$basePath/yggdrasil.exe" artifacts/ -ErrorAction SilentlyContinue
+            Copy-Item "$basePath/yggdrasilctl.exe" artifacts/ -ErrorAction SilentlyContinue
+            Copy-Item "$basePath/genkeys.exe" artifacts/ -ErrorAction SilentlyContinue
+            Copy-Item "$basePath/yggdrasil-bench.exe" artifacts/ -ErrorAction SilentlyContinue
+          } else {
+            Copy-Item "$basePath/yggdrasil" artifacts/ -ErrorAction SilentlyContinue
+            Copy-Item "$basePath/yggdrasilctl" artifacts/ -ErrorAction SilentlyContinue
+            Copy-Item "$basePath/genkeys" artifacts/ -ErrorAction SilentlyContinue
+            Copy-Item "$basePath/yggdrasil-bench" artifacts/ -ErrorAction SilentlyContinue
+            
+            if ($IsMacOS) {
+              chmod +x artifacts/*
+            }
+          }
+          
+          # Copy documentation if requested
+          if ("${{ inputs.include-docs }}" -eq "true") {
+            Copy-Item "README.md" artifacts/ -ErrorAction SilentlyContinue
+            Copy-Item "LICENSE" artifacts/ -ErrorAction SilentlyContinue
+          }
+          
+          # Create archive
+          Set-Location artifacts
+          if ($target -like "*windows*") {
+            Compress-Archive -Path * -DestinationPath ../${{ inputs.artifact-prefix }}${{ matrix.artifact_name }}.${{ matrix.artifact_ext }}
+          } else {
+            tar -czf ../${{ inputs.artifact-prefix }}${{ matrix.artifact_name }}.${{ matrix.artifact_ext }} *
+          }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-prefix }}${{ matrix.artifact_name }}
+          path: ${{ inputs.artifact-prefix }}${{ matrix.artifact_name }}.${{ matrix.artifact_ext }}
+          retention-days: 30
+
+      - name: Set outputs
+        id: set-outputs
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          echo 'artifact-names=["yggdrasil-linux-amd64","yggdrasil-linux-arm64","yggdrasil-linux-amd64-musl","yggdrasil-linux-arm64-musl","yggdrasil-windows-amd64","yggdrasil-windows-arm64","yggdrasil-macos-amd64","yggdrasil-macos-arm64"]' >> $GITHUB_OUTPUT

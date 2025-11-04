@@ -1,11 +1,11 @@
 use anyhow::Result;
-use log::{info, warn, debug};
-use tokio::net::UdpSocket;
+use log::{debug, info, warn};
 use std::net::{Ipv6Addr, SocketAddr};
+use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
 /// Multicast discovery
-/// 
+///
 /// Used to automatically discover other Yggdrasil nodes on local network
 pub struct Multicast {
     enabled: bool,
@@ -22,9 +22,9 @@ impl Multicast {
         // Multicast address used by Yggdrasil
         let multicast_addr = Ipv6Addr::new(0xff02, 0, 0, 0, 0, 0, 0, 0x114);
         let multicast_port = 9001;
-        
+
         let (tx, _rx) = mpsc::channel(256);
-        
+
         Multicast {
             enabled,
             interfaces,
@@ -34,40 +34,48 @@ impl Multicast {
             tx: Some(tx),
         }
     }
-    
+
     /// Start multicast discovery
     pub async fn start(&self) -> Result<()> {
         if !self.enabled {
             info!("Multicast discovery is disabled");
             return Ok(());
         }
-        
-        info!("Starting multicast discovery (interval: {}s)", self.interval);
-        info!("Multicast address: {}:{}", self.multicast_addr, self.multicast_port);
-        
+
+        info!(
+            "Starting multicast discovery (interval: {}s)",
+            self.interval
+        );
+        info!(
+            "Multicast address: {}:{}",
+            self.multicast_addr, self.multicast_port
+        );
+
         let multicast_addr = self.multicast_addr;
         let multicast_port = self.multicast_port;
         let interval = self.interval;
         let interfaces = self.interfaces.clone();
-        
+
         // Start multicast listener task
         tokio::spawn(async move {
-            if let Err(e) = Self::listen_multicast(multicast_addr, multicast_port, interfaces.clone()).await {
+            if let Err(e) =
+                Self::listen_multicast(multicast_addr, multicast_port, interfaces.clone()).await
+            {
                 warn!("Multicast listen error: {}", e);
             }
         });
-        
+
         // Start multicast sender task
         tokio::spawn(async move {
             if let Err(e) = Self::send_multicast(multicast_addr, multicast_port, interval).await {
                 warn!("Multicast send error: {}", e);
             }
         });
-        
+
         info!("Multicast discovery started");
         Ok(())
     }
-    
+
     /// Listen for multicast messages
     async fn listen_multicast(
         multicast_addr: Ipv6Addr,
@@ -75,20 +83,20 @@ impl Multicast {
         _interfaces: Vec<String>,
     ) -> Result<()> {
         let bind_addr = format!("[::]:{}", port);
-        
+
         match UdpSocket::bind(&bind_addr).await {
             Ok(socket) => {
                 info!("Multicast listener bound to {}", bind_addr);
-                
+
                 // Join multicast group
                 if let Err(e) = socket.join_multicast_v6(&multicast_addr, 0) {
                     warn!("Failed to join multicast group: {}", e);
                 } else {
                     info!("Joined multicast group: {}", multicast_addr);
                 }
-                
+
                 let mut buf = vec![0u8; 65535];
-                
+
                 loop {
                     match socket.recv_from(&mut buf).await {
                         Ok((len, addr)) => {
@@ -104,28 +112,27 @@ impl Multicast {
                 }
             }
             Err(e) => {
-                warn!("Failed to bind multicast listener (may need elevated privileges): {}", e);
+                warn!(
+                    "Failed to bind multicast listener (may need elevated privileges): {}",
+                    e
+                );
                 Ok(())
             }
         }
     }
-    
+
     /// Send multicast announcement
-    async fn send_multicast(
-        multicast_addr: Ipv6Addr,
-        port: u16,
-        interval: u64,
-    ) -> Result<()> {
+    async fn send_multicast(multicast_addr: Ipv6Addr, port: u16, interval: u64) -> Result<()> {
         match UdpSocket::bind("[::]:0").await {
             Ok(socket) => {
                 info!("Multicast sender created");
-                
+
                 let dest_addr = SocketAddr::new(multicast_addr.into(), port);
-                
+
                 loop {
                     // Construct announcement message (simplified version)
                     let announcement = b"YGGDRASIL_ANNOUNCE";
-                    
+
                     match socket.send_to(announcement, dest_addr).await {
                         Ok(_) => {
                             debug!("Sent multicast announcement to {}", dest_addr);
@@ -134,7 +141,7 @@ impl Multicast {
                             warn!("Failed to send multicast announcement: {}", e);
                         }
                     }
-                    
+
                     tokio::time::sleep(tokio::time::Duration::from_secs(interval)).await;
                 }
             }
@@ -144,18 +151,18 @@ impl Multicast {
             }
         }
     }
-    
+
     /// Stop multicast discovery
     pub async fn stop(&mut self) -> Result<()> {
         if !self.enabled {
             return Ok(());
         }
-        
+
         info!("Stopping multicast discovery");
-        
+
         // Close channel
         self.tx = None;
-        
+
         info!("Multicast discovery stopped");
         Ok(())
     }
@@ -164,7 +171,7 @@ impl Multicast {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_multicast_creation() {
         let mc = Multicast::new(true, vec![".*".to_string()], 30);
@@ -172,4 +179,3 @@ mod tests {
         assert_eq!(mc.interval, 30);
     }
 }
-

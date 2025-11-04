@@ -1,10 +1,10 @@
 #![forbid(unsafe_code)]
 
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fs;
 use std::path::Path;
-use anyhow::{Context, Result};
 
 /// Datadog Dashboard configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -302,8 +302,7 @@ pub fn generate_dashboard_json() -> Result<String> {
         ]
     });
 
-    serde_json::to_string_pretty(&dashboard)
-        .context("Failed to serialize dashboard JSON")
+    serde_json::to_string_pretty(&dashboard).context("Failed to serialize dashboard JSON")
 }
 
 /// Save dashboard JSON to file

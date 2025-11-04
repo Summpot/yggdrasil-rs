@@ -1,3 +1,3 @@
 pub mod config;
 
-pub use config::{Protocol, Overlay, Scenario, ScenarioConfig};
+pub use config::{Overlay, Protocol, Scenario, ScenarioConfig};

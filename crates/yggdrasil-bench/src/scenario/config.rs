@@ -1,10 +1,10 @@
 #![forbid(unsafe_code)]
 
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs;
 use std::path::Path;
-use anyhow::{Context, Result};
 
 /// Protocol transport type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -13,8 +13,8 @@ pub enum Protocol {
     Tcp,
     Tls,
     Quic,
-    Ws,   // WebSocket
-    Wss,  // WebSocket Secure
+    Ws,  // WebSocket
+    Wss, // WebSocket Secure
 }
 
 impl fmt::Display for Protocol {
@@ -87,10 +87,10 @@ impl ScenarioConfig {
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let content = fs::read_to_string(path.as_ref())
             .with_context(|| format!("Failed to read scenario file: {:?}", path.as_ref()))?;
-        
-        let config: ScenarioConfig = toml::from_str(&content)
-            .context("Failed to parse scenario TOML")?;
-        
+
+        let config: ScenarioConfig =
+            toml::from_str(&content).context("Failed to parse scenario TOML")?;
+
         Ok(config)
     }
 
@@ -135,7 +135,7 @@ impl ScenarioConfig {
     /// Generate lightweight scenario matrix for PR testing
     pub fn lightweight_matrix() -> Self {
         let mut config = Self::default_matrix();
-        
+
         // Reduce duration and samples for faster PR testing
         for scenario in &mut config.scenarios {
             scenario.sample_duration_secs = 10;
@@ -145,8 +145,8 @@ impl ScenarioConfig {
 
         // Keep only subset of combinations
         config.scenarios.retain(|s| {
-            matches!(s.proto, Protocol::Tcp | Protocol::Quic) &&
-            matches!(s.overlay, Overlay::Ipv6 | Overlay::Tcp)
+            matches!(s.proto, Protocol::Tcp | Protocol::Quic)
+                && matches!(s.overlay, Overlay::Ipv6 | Overlay::Tcp)
         });
 
         config
@@ -187,7 +187,7 @@ mod tests {
     fn test_lightweight_matrix() {
         let config = ScenarioConfig::lightweight_matrix();
         assert!(config.scenario_count() < ScenarioConfig::default_matrix().scenario_count());
-        
+
         for scenario in &config.scenarios {
             assert!(scenario.sample_duration_secs <= 10);
             assert!(scenario.warmup_count <= 100);

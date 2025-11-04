@@ -8,15 +8,15 @@ repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-chrono = "0.4.42"
+chrono.workspace = true
 clap = { workspace = true, features = ["derive"] }
-datadog-api-client = { version = "0.21.0", default-features = false, features = ["rustls-tls"] }
+datadog-api-client.workspace = true
 env_logger.workspace = true
-hdrhistogram = "7.5.4"
+hdrhistogram.workspace = true
 log.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-statrs = "0.18.0"
+statrs.workspace = true
 tokio = { workspace = true, features = ["full"] }
 toml.workspace = true
-yggdrasil-core = { version = "0.1.0", path = "../yggdrasil-core" }
+yggdrasil-core.workspace = true

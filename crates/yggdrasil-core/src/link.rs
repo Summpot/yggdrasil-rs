@@ -1,20 +1,22 @@
+use crate::config::Config;
+use crate::handshake;
 use anyhow::Result;
-use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{mpsc, RwLock};
-use tokio::io::AsyncWriteExt;
+use bytes::Bytes;
+use ed25519_dalek::{SigningKey, VerifyingKey};
+use futures_util::{SinkExt, StreamExt};
+use log::{debug, error, info, warn};
+use quinn::{Connection, Endpoint, RecvStream, SendStream, ServerConfig};
+use rustls::pki_types::CertificateDer;
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::collections::HashMap;
-use log::{info, error, debug, warn};
-use ed25519_dalek::{SigningKey, VerifyingKey};
-use crate::handshake;
-use crate::config::Config;
 use std::time::Duration;
-use quinn::{Endpoint, ServerConfig, Connection, RecvStream, SendStream};
-use rustls::pki_types::CertificateDer;
-use tokio_tungstenite::{accept_async, connect_async, tungstenite::protocol::Message, WebSocketStream};
-use futures_util::{StreamExt, SinkExt};
-use bytes::Bytes;
+use tokio::io::AsyncWriteExt;
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::{mpsc, RwLock};
+use tokio_tungstenite::{
+    accept_async, connect_async, tungstenite::protocol::Message, WebSocketStream,
+};
 
 #[cfg(target_os = "linux")]
 use nix::sys::socket::{setsockopt, sockopt::BindToDevice};
@@ -67,7 +69,7 @@ impl LinkManager {
         config: Arc<Config>,
     ) -> (Self, mpsc::Receiver<LinkEvent>) {
         let (tx, rx) = mpsc::channel(1024);
-        
+
         (
             LinkManager {
                 listen_addrs,
@@ -83,7 +85,7 @@ impl LinkManager {
             rx,
         )
     }
-    
+
     /// Start link manager
     pub async fn start(&self) -> Result<()> {
         // Start listeners
@@ -102,7 +104,7 @@ impl LinkManager {
                 self.start_websocket_listener(listen_addr, true).await?;
             }
         }
-        
+
         // Connect to regular peers
         for peer_addr in &self.peer_addrs {
             if peer_addr.starts_with("tcp://") {
@@ -117,7 +119,7 @@ impl LinkManager {
                 self.connect_websocket(peer_addr).await?;
             }
         }
-        
+
         // Connect to interface-specific peers
         for (interface, peers) in &self.interface_peers {
             for peer_addr in peers {
@@ -127,30 +129,36 @@ impl LinkManager {
                     self.connect_tcp(addr, Some(interface.clone())).await?;
                 } else if peer_addr.starts_with("quic://") {
                     let addr = peer_addr.trim_start_matches("quic://");
-                    info!("Connecting to peer {} via interface {} (QUIC)", addr, interface);
+                    info!(
+                        "Connecting to peer {} via interface {} (QUIC)",
+                        addr, interface
+                    );
                     self.connect_quic(addr).await?;
                 } else if peer_addr.starts_with("ws://") || peer_addr.starts_with("wss://") {
-                    info!("Connecting to peer {} via interface {} (WebSocket)", peer_addr, interface);
+                    info!(
+                        "Connecting to peer {} via interface {} (WebSocket)",
+                        peer_addr, interface
+                    );
                     self.connect_websocket(peer_addr).await?;
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Start TCP listener
     async fn start_tcp_listener(&self, addr: &str) -> Result<()> {
         let listener = TcpListener::bind(addr).await?;
         let local_addr = listener.local_addr()?;
         info!("TCP listener started on {}", local_addr);
-        
+
         let tx = self.tx.clone();
         let signing_key = self.signing_key.clone();
         let priority = self.priority;
         let connections = self.connections.clone();
         let allowed_keys = self.allowed_public_keys.clone();
-        
+
         tokio::spawn(async move {
             loop {
                 match listener.accept().await {
@@ -160,12 +168,12 @@ impl LinkManager {
                             error!("Failed to send connection event: {}", e);
                             break;
                         }
-                        
+
                         let tx_clone = tx.clone();
                         let signing_key_clone = signing_key.clone();
                         let connections_clone = connections.clone();
                         let allowed_keys_clone = allowed_keys.clone();
-                        
+
                         tokio::spawn(async move {
                             if let Err(e) = handle_tcp_connection(
                                 stream,
@@ -176,7 +184,9 @@ impl LinkManager {
                                 connections_clone,
                                 Some(&allowed_keys_clone),
                                 true, // is_inbound
-                            ).await {
+                            )
+                            .await
+                            {
                                 error!("Error handling connection from {}: {}", peer_addr, e);
                             }
                         });
@@ -187,54 +197,60 @@ impl LinkManager {
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Start QUIC listener
     async fn start_quic_listener(&self, addr: &str) -> Result<()> {
         // Get certificate and key from config
-        let cert = self.config.certificate.as_ref()
+        let cert = self
+            .config
+            .certificate
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("No TLS certificate available"))?;
-        let key_pair = self.config.certificate_key_pair.as_ref()
+        let key_pair = self
+            .config
+            .certificate_key_pair
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("No TLS certificate key pair available"))?;
-        
+
         // Get certificate and key DER
         let cert_der = cert.der();
         let key_der = key_pair.serialized_der();
-        
+
         // Convert to rustls types
         let cert_chain = vec![CertificateDer::from(cert_der.to_vec())];
         let private_key = rustls::pki_types::PrivateKeyDer::try_from(key_der.to_vec())
             .map_err(|e| anyhow::anyhow!("Failed to parse private key: {}", e))?;
-        
+
         // Install default crypto provider if not already installed
         let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
-        
+
         // Create rustls server config
         let mut crypto = rustls::ServerConfig::builder()
             .with_no_client_auth()
             .with_single_cert(cert_chain, private_key)?;
-        
+
         crypto.alpn_protocols = vec![b"yggdrasil".to_vec()];
-        
+
         // Create QUIC server config using QuicServerConfig wrapper
         let server_config = ServerConfig::with_crypto(Arc::new(
-            quinn::crypto::rustls::QuicServerConfig::try_from(crypto)?
+            quinn::crypto::rustls::QuicServerConfig::try_from(crypto)?,
         ));
-        
+
         // Bind endpoint
         let socket_addr: SocketAddr = addr.parse()?;
         let endpoint = Endpoint::server(server_config, socket_addr)?;
-        
+
         info!("QUIC listener started on {}", endpoint.local_addr()?);
-        
+
         let tx = self.tx.clone();
         let signing_key = self.signing_key.clone();
         let priority = self.priority;
         let connections = self.connections.clone();
         let allowed_keys = self.allowed_public_keys.clone();
-        
+
         tokio::spawn(async move {
             loop {
                 match endpoint.accept().await {
@@ -243,18 +259,20 @@ impl LinkManager {
                         let signing_key_clone = signing_key.clone();
                         let connections_clone = connections.clone();
                         let allowed_keys_clone = allowed_keys.clone();
-                        
+
                         tokio::spawn(async move {
                             match incoming.await {
                                 Ok(connection) => {
                                     let peer_addr = connection.remote_address();
                                     info!("Accepted QUIC connection from {}", peer_addr);
-                                    
-                                    if let Err(e) = tx_clone.send(LinkEvent::Connected(peer_addr)).await {
+
+                                    if let Err(e) =
+                                        tx_clone.send(LinkEvent::Connected(peer_addr)).await
+                                    {
                                         error!("Failed to send connection event: {}", e);
                                         return;
                                     }
-                                    
+
                                     if let Err(e) = handle_quic_connection(
                                         connection,
                                         peer_addr,
@@ -263,8 +281,13 @@ impl LinkManager {
                                         priority,
                                         connections_clone,
                                         Some(&allowed_keys_clone),
-                                    ).await {
-                                        error!("Error handling QUIC connection from {}: {}", peer_addr, e);
+                                    )
+                                    .await
+                                    {
+                                        error!(
+                                            "Error handling QUIC connection from {}: {}",
+                                            peer_addr, e
+                                        );
                                     }
                                 }
                                 Err(e) => {
@@ -280,45 +303,45 @@ impl LinkManager {
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Start WebSocket listener
     async fn start_websocket_listener(&self, addr: &str, use_tls: bool) -> Result<()> {
         let listener = TcpListener::bind(addr).await?;
         let local_addr = listener.local_addr()?;
-        
+
         if use_tls {
             info!("WebSocket Secure (WSS) listener started on {}", local_addr);
         } else {
             info!("WebSocket (WS) listener started on {}", local_addr);
         }
-        
+
         let tx = self.tx.clone();
         let signing_key = self.signing_key.clone();
         let priority = self.priority;
         let connections = self.connections.clone();
         let allowed_keys = self.allowed_public_keys.clone();
         let config = self.config.clone();
-        
+
         tokio::spawn(async move {
             loop {
                 match listener.accept().await {
                     Ok((stream, peer_addr)) => {
                         info!("Accepted WebSocket connection from {}", peer_addr);
-                        
+
                         if let Err(e) = tx.send(LinkEvent::Connected(peer_addr)).await {
                             error!("Failed to send connection event: {}", e);
                             break;
                         }
-                        
+
                         let tx_clone = tx.clone();
                         let signing_key_clone = signing_key.clone();
                         let connections_clone = connections.clone();
                         let allowed_keys_clone = allowed_keys.clone();
                         let config_clone = config.clone();
-                        
+
                         tokio::spawn(async move {
                             if let Err(e) = handle_websocket_connection(
                                 stream,
@@ -330,8 +353,13 @@ impl LinkManager {
                                 Some(&allowed_keys_clone),
                                 use_tls,
                                 Some(config_clone),
-                            ).await {
-                                error!("Error handling WebSocket connection from {}: {}", peer_addr, e);
+                            )
+                            .await
+                            {
+                                error!(
+                                    "Error handling WebSocket connection from {}: {}",
+                                    peer_addr, e
+                                );
                             }
                         });
                     }
@@ -341,24 +369,24 @@ impl LinkManager {
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Connect to WebSocket peer
     async fn connect_websocket(&self, uri: &str) -> Result<()> {
         info!("Attempting to connect to WebSocket peer: {}", uri);
-        
+
         let tx = self.tx.clone();
         let uri_str = uri.to_string();
         let signing_key = self.signing_key.clone();
         let priority = self.priority;
         let connections = self.connections.clone();
         let _config = self.config.clone();
-        
+
         tokio::spawn(async move {
             let _use_tls = uri_str.starts_with("wss://");
-            
+
             match connect_async(&uri_str).await {
                 Ok((ws_stream, _)) => {
                     // Extract peer address from WebSocket stream
@@ -369,7 +397,7 @@ impl LinkManager {
                             return;
                         }
                     };
-                    
+
                     let peer_addr = match peer_addr {
                         Ok(addr) => addr,
                         Err(e) => {
@@ -377,14 +405,14 @@ impl LinkManager {
                             return;
                         }
                     };
-                    
+
                     info!("WebSocket connected to peer: {}", peer_addr);
-                    
+
                     if let Err(e) = tx.send(LinkEvent::Connected(peer_addr)).await {
                         error!("Failed to send connection event: {}", e);
                         return;
                     }
-                    
+
                     // Handle WebSocket connection (client mode)
                     if let Err(e) = handle_websocket_stream(
                         ws_stream,
@@ -394,8 +422,13 @@ impl LinkManager {
                         priority,
                         connections,
                         None, // No whitelist for outgoing connections
-                    ).await {
-                        error!("Error handling WebSocket connection to {}: {}", peer_addr, e);
+                    )
+                    .await
+                    {
+                        error!(
+                            "Error handling WebSocket connection to {}: {}",
+                            peer_addr, e
+                        );
                     }
                 }
                 Err(e) => {
@@ -403,22 +436,27 @@ impl LinkManager {
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Connect to TCP peer
     async fn connect_tcp(&self, addr: &str, interface: Option<String>) -> Result<()> {
-        info!("Attempting to connect to TCP peer: {}{}", 
-              addr,
-              interface.as_ref().map(|i| format!(" via {}", i)).unwrap_or_default());
-        
+        info!(
+            "Attempting to connect to TCP peer: {}{}",
+            addr,
+            interface
+                .as_ref()
+                .map(|i| format!(" via {}", i))
+                .unwrap_or_default()
+        );
+
         let tx = self.tx.clone();
         let addr_str = addr.to_string();
         let signing_key = self.signing_key.clone();
         let priority = self.priority;
         let connections = self.connections.clone();
-        
+
         tokio::spawn(async move {
             // Create socket and bind to interface if specified
             let stream = if let Some(iface) = interface {
@@ -426,19 +464,30 @@ impl LinkManager {
             } else {
                 TcpStream::connect(&addr_str).await
             };
-            
+
             match stream {
                 Ok(stream) => {
                     let peer_addr = stream.peer_addr().unwrap();
                     info!("Connected to peer: {}", peer_addr);
-                    
+
                     if let Err(e) = tx.send(LinkEvent::Connected(peer_addr)).await {
                         error!("Failed to send connection event: {}", e);
                         return;
                     }
-                    
+
                     // For outgoing connections, don't validate public keys (whitelist only for incoming)
-                    if let Err(e) = handle_tcp_connection(stream, peer_addr, tx, signing_key, priority, connections, None, false).await {
+                    if let Err(e) = handle_tcp_connection(
+                        stream,
+                        peer_addr,
+                        tx,
+                        signing_key,
+                        priority,
+                        connections,
+                        None,
+                        false,
+                    )
+                    .await
+                    {
                         error!("Error handling connection to {}: {}", peer_addr, e);
                     }
                 }
@@ -447,54 +496,54 @@ impl LinkManager {
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Connect to QUIC peer
     async fn connect_quic(&self, addr: &str) -> Result<()> {
         info!("Attempting to connect to QUIC peer: {}", addr);
-        
+
         let tx = self.tx.clone();
         let addr_str = addr.to_string();
         let signing_key = self.signing_key.clone();
         let priority = self.priority;
         let connections = self.connections.clone();
-        
+
         tokio::spawn(async move {
             // Install default crypto provider if not already installed
             let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
-            
+
             // Create client config with self-signed cert acceptance
             let mut crypto = rustls::ClientConfig::builder()
                 .dangerous()
                 .with_custom_certificate_verifier(Arc::new(AcceptAnyCertVerifier))
                 .with_no_client_auth();
-            
+
             // Set ALPN protocol
             crypto.alpn_protocols = vec![b"yggdrasil".to_vec()];
-            
+
             let client_config = quinn::ClientConfig::new(Arc::new(
                 quinn::crypto::rustls::QuicClientConfig::try_from(crypto)
-                    .expect("Failed to create QUIC client config")
+                    .expect("Failed to create QUIC client config"),
             ));
-            
+
             let mut endpoint = quinn::Endpoint::client("[::]:0".parse().unwrap())
                 .expect("Failed to create client endpoint");
             endpoint.set_default_client_config(client_config);
-            
+
             match endpoint.connect(addr_str.parse().unwrap(), "localhost") {
                 Ok(connecting) => {
                     match connecting.await {
                         Ok(connection) => {
                             let peer_addr = connection.remote_address();
                             info!("QUIC connected to peer: {}", peer_addr);
-                            
+
                             if let Err(e) = tx.send(LinkEvent::Connected(peer_addr)).await {
                                 error!("Failed to send connection event: {}", e);
                                 return;
                             }
-                            
+
                             // Handle the QUIC connection (client initiates stream)
                             if let Err(e) = handle_quic_connection_client(
                                 connection,
@@ -503,7 +552,9 @@ impl LinkManager {
                                 signing_key,
                                 priority,
                                 connections,
-                            ).await {
+                            )
+                            .await
+                            {
                                 error!("Error handling QUIC connection to {}: {}", peer_addr, e);
                             }
                         }
@@ -517,14 +568,14 @@ impl LinkManager {
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Send data to peer by address
     pub async fn send_to_peer(&self, addr: &SocketAddr, data: Vec<u8>) -> Result<()> {
         let connections = self.connections.read().await;
-        
+
         if let Some(tx) = connections.get(addr) {
             let data_len = data.len();
             if let Err(e) = tx.send(data).await {
@@ -538,14 +589,15 @@ impl LinkManager {
             anyhow::bail!("No connection for peer {}", addr);
         }
     }
-    
+
     /// Dynamically add a peer connection
     pub async fn add_peer_dynamic(&self, uri: &str, interface: Option<&str>) -> Result<()> {
         info!("Dynamically adding peer: {}", uri);
-        
+
         if uri.starts_with("tcp://") {
             let addr = uri.trim_start_matches("tcp://");
-            self.connect_tcp(addr, interface.map(|s| s.to_string())).await?;
+            self.connect_tcp(addr, interface.map(|s| s.to_string()))
+                .await?;
         } else if uri.starts_with("quic://") {
             let addr = uri.trim_start_matches("quic://");
             self.connect_quic(addr).await?;
@@ -554,14 +606,14 @@ impl LinkManager {
         } else {
             return Err(anyhow::anyhow!("Unsupported URI scheme: {}", uri));
         }
-        
+
         Ok(())
     }
-    
+
     /// Dynamically remove a peer connection
     pub async fn remove_peer_dynamic(&self, uri: &str, _interface: Option<&str>) -> Result<()> {
         info!("Dynamically removing peer: {}", uri);
-        
+
         // Parse URI to extract address
         let addr_str = if uri.starts_with("tcp://") {
             uri.trim_start_matches("tcp://")
@@ -574,11 +626,12 @@ impl LinkManager {
         } else {
             return Err(anyhow::anyhow!("Unsupported URI scheme: {}", uri));
         };
-        
+
         // Parse socket address
-        let socket_addr: SocketAddr = addr_str.parse()
+        let socket_addr: SocketAddr = addr_str
+            .parse()
             .map_err(|e| anyhow::anyhow!("Invalid address: {}", e))?;
-        
+
         // Remove connection
         let mut connections = self.connections.write().await;
         if connections.remove(&socket_addr).is_some() {
@@ -611,7 +664,7 @@ async fn handle_quic_connection(
             return Err(anyhow::anyhow!("Failed to accept stream: {}", e));
         }
     };
-    
+
     // Perform handshake over QUIC stream
     info!("Starting handshake with {} over QUIC", peer_addr);
     let peer_meta = match perform_quic_handshake(
@@ -622,10 +675,15 @@ async fn handle_quic_connection(
         b"",
         Duration::from_secs(6),
         allowed_public_keys,
-    ).await {
+    )
+    .await
+    {
         Ok(meta) => {
-            info!("QUIC handshake successful with {}, peer key: {}", 
-                  peer_addr, hex::encode(meta.public_key.to_bytes()));
+            info!(
+                "QUIC handshake successful with {}, peer key: {}",
+                peer_addr,
+                hex::encode(meta.public_key.to_bytes())
+            );
             meta
         }
         Err(e) => {
@@ -634,27 +692,28 @@ async fn handle_quic_connection(
             return Err(e);
         }
     };
-    
+
     // Notify handshake complete (inbound connection)
     tx.send(LinkEvent::HandshakeComplete(
         peer_addr,
         peer_meta.public_key,
         peer_meta.priority,
         true, // is_inbound
-    )).await?;
-    
+    ))
+    .await?;
+
     // Create channel for sending data
     let (write_tx, mut write_rx) = mpsc::channel::<Vec<u8>>(100);
-    
+
     // Store connection
     {
         let mut conns = connections.write().await;
         conns.insert(peer_addr, write_tx);
     }
-    
+
     // We need to open a new stream for ongoing communication
     let (mut send_stream, mut recv_stream) = connection.open_bi().await?;
-    
+
     // Spawn write task
     let peer_addr_clone = peer_addr;
     let tx_clone = tx.clone();
@@ -670,23 +729,28 @@ async fn handle_quic_connection(
                 break;
             }
         }
-        
+
         // Remove connection on write failure
         {
             let mut conns = connections_clone.write().await;
             conns.remove(&peer_addr_clone);
         }
-        
-        let _ = tx_clone.send(LinkEvent::Disconnected(peer_addr_clone)).await;
+
+        let _ = tx_clone
+            .send(LinkEvent::Disconnected(peer_addr_clone))
+            .await;
     });
-    
+
     // Read loop
     let mut buffer = vec![0u8; 65535];
     loop {
         match recv_stream.read(&mut buffer).await {
             Ok(Some(n)) => {
                 debug!("Received {} bytes from {} over QUIC", n, peer_addr);
-                if let Err(e) = tx.send(LinkEvent::DataReceived(peer_addr, buffer[..n].to_vec())).await {
+                if let Err(e) = tx
+                    .send(LinkEvent::DataReceived(peer_addr, buffer[..n].to_vec()))
+                    .await
+                {
                     error!("Failed to send data event: {}", e);
                     break;
                 }
@@ -702,15 +766,15 @@ async fn handle_quic_connection(
             }
         }
     }
-    
+
     // Cleanup
     {
         let mut conns = connections.write().await;
         conns.remove(&peer_addr);
     }
-    
+
     tx.send(LinkEvent::Disconnected(peer_addr)).await?;
-    
+
     Ok(())
 }
 
@@ -732,7 +796,7 @@ async fn handle_quic_connection_client(
             return Err(anyhow::anyhow!("Failed to open stream: {}", e));
         }
     };
-    
+
     // Perform handshake over QUIC stream
     info!("Starting handshake with {} over QUIC (client)", peer_addr);
     let peer_meta = match perform_quic_handshake(
@@ -743,10 +807,15 @@ async fn handle_quic_connection_client(
         b"",
         Duration::from_secs(6),
         None, // No whitelist for outgoing connections
-    ).await {
+    )
+    .await
+    {
         Ok(meta) => {
-            info!("QUIC handshake successful with {}, peer key: {}", 
-                  peer_addr, hex::encode(meta.public_key.to_bytes()));
+            info!(
+                "QUIC handshake successful with {}, peer key: {}",
+                peer_addr,
+                hex::encode(meta.public_key.to_bytes())
+            );
             meta
         }
         Err(e) => {
@@ -755,15 +824,16 @@ async fn handle_quic_connection_client(
             return Err(e);
         }
     };
-    
+
     // Notify handshake complete (outbound connection)
     tx.send(LinkEvent::HandshakeComplete(
         peer_addr,
         peer_meta.public_key,
         peer_meta.priority,
         false, // is_inbound
-    )).await?;
-    
+    ))
+    .await?;
+
     // Get streams again after handshake
     let (mut send_stream, mut recv_stream) = match connection.open_bi().await {
         Ok(streams) => streams,
@@ -772,14 +842,14 @@ async fn handle_quic_connection_client(
             return Err(anyhow::anyhow!("Failed to open data stream: {}", e));
         }
     };
-    
+
     // Setup write channel
     let (write_tx, mut write_rx) = mpsc::channel::<Vec<u8>>(100);
     {
         let mut conns = connections.write().await;
         conns.insert(peer_addr, write_tx);
     }
-    
+
     // Write task
     let tx_clone = tx.clone();
     let peer_addr_clone = peer_addr;
@@ -791,23 +861,28 @@ async fn handle_quic_connection_client(
                 break;
             }
         }
-        
+
         // Remove connection on write failure
         {
             let mut conns = connections_clone.write().await;
             conns.remove(&peer_addr_clone);
         }
-        
-        let _ = tx_clone.send(LinkEvent::Disconnected(peer_addr_clone)).await;
+
+        let _ = tx_clone
+            .send(LinkEvent::Disconnected(peer_addr_clone))
+            .await;
     });
-    
+
     // Read loop
     let mut buffer = vec![0u8; 65535];
     loop {
         match recv_stream.read(&mut buffer).await {
             Ok(Some(n)) => {
                 debug!("Received {} bytes from {} over QUIC", n, peer_addr);
-                if let Err(e) = tx.send(LinkEvent::DataReceived(peer_addr, buffer[..n].to_vec())).await {
+                if let Err(e) = tx
+                    .send(LinkEvent::DataReceived(peer_addr, buffer[..n].to_vec()))
+                    .await
+                {
                     error!("Failed to send data event: {}", e);
                     break;
                 }
@@ -823,15 +898,15 @@ async fn handle_quic_connection_client(
             }
         }
     }
-    
+
     // Cleanup
     {
         let mut conns = connections.write().await;
         conns.remove(&peer_addr);
     }
-    
+
     tx.send(LinkEvent::Disconnected(peer_addr)).await?;
-    
+
     Ok(())
 }
 
@@ -850,7 +925,7 @@ async fn perform_quic_handshake(
         send: SendStream,
         recv: RecvStream,
     }
-    
+
     impl tokio::io::AsyncRead for QuicStream {
         fn poll_read(
             mut self: std::pin::Pin<&mut Self>,
@@ -861,7 +936,7 @@ async fn perform_quic_handshake(
             Pin::new(&mut self.recv).poll_read(cx, buf)
         }
     }
-    
+
     impl tokio::io::AsyncWrite for QuicStream {
         fn poll_write(
             mut self: std::pin::Pin<&mut Self>,
@@ -871,13 +946,13 @@ async fn perform_quic_handshake(
             use std::pin::Pin;
             match Pin::new(&mut self.send).poll_write(cx, buf) {
                 std::task::Poll::Ready(Ok(n)) => std::task::Poll::Ready(Ok(n)),
-                std::task::Poll::Ready(Err(e)) => std::task::Poll::Ready(Err(
-                    std::io::Error::new(std::io::ErrorKind::Other, e)
-                )),
+                std::task::Poll::Ready(Err(e)) => {
+                    std::task::Poll::Ready(Err(std::io::Error::new(std::io::ErrorKind::Other, e)))
+                }
                 std::task::Poll::Pending => std::task::Poll::Pending,
             }
         }
-        
+
         fn poll_flush(
             mut self: std::pin::Pin<&mut Self>,
             cx: &mut std::task::Context<'_>,
@@ -885,13 +960,13 @@ async fn perform_quic_handshake(
             use std::pin::Pin;
             match Pin::new(&mut self.send).poll_flush(cx) {
                 std::task::Poll::Ready(Ok(())) => std::task::Poll::Ready(Ok(())),
-                std::task::Poll::Ready(Err(e)) => std::task::Poll::Ready(Err(
-                    std::io::Error::new(std::io::ErrorKind::Other, e)
-                )),
+                std::task::Poll::Ready(Err(e)) => {
+                    std::task::Poll::Ready(Err(std::io::Error::new(std::io::ErrorKind::Other, e)))
+                }
                 std::task::Poll::Pending => std::task::Poll::Pending,
             }
         }
-        
+
         fn poll_shutdown(
             mut self: std::pin::Pin<&mut Self>,
             cx: &mut std::task::Context<'_>,
@@ -899,16 +974,16 @@ async fn perform_quic_handshake(
             use std::pin::Pin;
             match Pin::new(&mut self.send).poll_shutdown(cx) {
                 std::task::Poll::Ready(Ok(())) => std::task::Poll::Ready(Ok(())),
-                std::task::Poll::Ready(Err(e)) => std::task::Poll::Ready(Err(
-                    std::io::Error::new(std::io::ErrorKind::Other, e)
-                )),
+                std::task::Poll::Ready(Err(e)) => {
+                    std::task::Poll::Ready(Err(std::io::Error::new(std::io::ErrorKind::Other, e)))
+                }
                 std::task::Poll::Pending => std::task::Poll::Pending,
             }
         }
     }
-    
+
     let mut stream = QuicStream { send, recv };
-    
+
     handshake::perform_handshake_with_validation(
         &mut stream,
         signing_key,
@@ -916,7 +991,8 @@ async fn perform_quic_handshake(
         password,
         timeout,
         allowed_public_keys,
-    ).await
+    )
+    .await
 }
 
 /// Handle TCP connection
@@ -931,9 +1007,13 @@ async fn handle_tcp_connection(
     is_inbound: bool,
 ) -> Result<()> {
     use tokio::io::AsyncReadExt;
-    
+
     // Perform handshake with optional whitelist validation
-    info!("Starting handshake with {} ({}bound)", peer_addr, if is_inbound { "in" } else { "out" });
+    info!(
+        "Starting handshake with {} ({}bound)",
+        peer_addr,
+        if is_inbound { "in" } else { "out" }
+    );
     let peer_meta = match handshake::perform_handshake_with_validation(
         &mut stream,
         &signing_key,
@@ -941,10 +1021,15 @@ async fn handle_tcp_connection(
         b"", // Empty password for now
         Duration::from_secs(6),
         allowed_public_keys,
-    ).await {
+    )
+    .await
+    {
         Ok(meta) => {
-            info!("Handshake successful with {}, peer key: {}", 
-                  peer_addr, hex::encode(meta.public_key.to_bytes()));
+            info!(
+                "Handshake successful with {}, peer key: {}",
+                peer_addr,
+                hex::encode(meta.public_key.to_bytes())
+            );
             meta
         }
         Err(e) => {
@@ -953,27 +1038,28 @@ async fn handle_tcp_connection(
             return Err(e);
         }
     };
-    
+
     // Notify handshake complete
     tx.send(LinkEvent::HandshakeComplete(
         peer_addr,
         peer_meta.public_key,
         peer_meta.priority,
         is_inbound,
-    )).await?;
-    
+    ))
+    .await?;
+
     // Split stream for read/write
     let (mut read_half, mut write_half) = stream.into_split();
-    
+
     // Create channel for sending data
     let (write_tx, mut write_rx) = mpsc::channel::<Vec<u8>>(100);
-    
+
     // Store connection
     {
         let mut conns = connections.write().await;
         conns.insert(peer_addr, write_tx);
     }
-    
+
     // Spawn write task
     let peer_addr_clone = peer_addr;
     let tx_clone = tx.clone();
@@ -989,16 +1075,18 @@ async fn handle_tcp_connection(
                 break;
             }
         }
-        
+
         // Remove connection on write failure
         {
             let mut conns = connections_clone.write().await;
             conns.remove(&peer_addr_clone);
         }
-        
-        let _ = tx_clone.send(LinkEvent::Disconnected(peer_addr_clone)).await;
+
+        let _ = tx_clone
+            .send(LinkEvent::Disconnected(peer_addr_clone))
+            .await;
     });
-    
+
     // Read loop
     let mut buffer = vec![0u8; 65535];
     loop {
@@ -1010,7 +1098,10 @@ async fn handle_tcp_connection(
             }
             Ok(n) => {
                 debug!("Received {} bytes from {}", n, peer_addr);
-                if let Err(e) = tx.send(LinkEvent::DataReceived(peer_addr, buffer[..n].to_vec())).await {
+                if let Err(e) = tx
+                    .send(LinkEvent::DataReceived(peer_addr, buffer[..n].to_vec()))
+                    .await
+                {
                     error!("Failed to send data event: {}", e);
                     break;
                 }
@@ -1021,15 +1112,15 @@ async fn handle_tcp_connection(
             }
         }
     }
-    
+
     // Cleanup
     {
         let mut conns = connections.write().await;
         conns.remove(&peer_addr);
     }
-    
+
     tx.send(LinkEvent::Disconnected(peer_addr)).await?;
-    
+
     Ok(())
 }
 
@@ -1037,37 +1128,43 @@ async fn handle_tcp_connection(
 async fn connect_tcp_with_interface(addr: &str, interface: &str) -> std::io::Result<TcpStream> {
     #[cfg(target_os = "linux")]
     {
+        use std::ffi::OsString;
         use std::net::ToSocketAddrs;
         use tokio::net::TcpSocket;
-        use std::ffi::OsString;
-        
+
         // Parse address
-        let socket_addr = addr.to_socket_addrs()?.next()
-            .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid address"))?;
-        
+        let socket_addr = addr.to_socket_addrs()?.next().ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid address")
+        })?;
+
         // Create socket
         let socket = if socket_addr.is_ipv4() {
             TcpSocket::new_v4()?
         } else {
             TcpSocket::new_v6()?
         };
-        
+
         // Bind to interface using SO_BINDTODEVICE
         if let Err(e) = setsockopt(&socket, BindToDevice, &OsString::from(interface)) {
             warn!("Failed to bind to device {}: {}", interface, e);
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, 
-                format!("Failed to bind to device: {}", e)));
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Failed to bind to device: {}", e),
+            ));
         }
-        
+
         info!("Socket bound to interface: {}", interface);
-        
+
         // Connect
         socket.connect(socket_addr).await
     }
-    
+
     #[cfg(not(target_os = "linux"))]
     {
-        warn!("Interface binding not supported on this platform, ignoring interface: {}", interface);
+        warn!(
+            "Interface binding not supported on this platform, ignoring interface: {}",
+            interface
+        );
         TcpStream::connect(addr).await
     }
 }
@@ -1076,7 +1173,7 @@ async fn connect_tcp_with_interface(addr: &str, interface: &str) -> std::io::Res
 mod tests {
     use super::*;
     use port_check::free_local_port;
-    
+
     #[tokio::test]
     async fn test_link_manager_creation() {
         let listen_addrs = vec!["tcp://[::]:0".to_string()];
@@ -1085,22 +1182,30 @@ mod tests {
         let allowed_keys = vec![];
         let signing_key = SigningKey::from_bytes(&[1u8; 32]);
         let config = Arc::new(Config::generate().unwrap());
-        
-        let (manager, _rx) = LinkManager::new(listen_addrs, peer_addrs, interface_peers, allowed_keys, signing_key, 0, config);
+
+        let (manager, _rx) = LinkManager::new(
+            listen_addrs,
+            peer_addrs,
+            interface_peers,
+            allowed_keys,
+            signing_key,
+            0,
+            config,
+        );
         assert_eq!(manager.listen_addrs.len(), 1);
     }
-    
+
     #[tokio::test]
     async fn test_tcp_listener() {
         // Test TCP listener accepts connections with dynamic port
         let signing_key = SigningKey::from_bytes(&[1u8; 32]);
         let config = Arc::new(Config::generate().unwrap());
-        
+
         // Get a free port using port_check
         let actual_port = free_local_port().expect("No free port available");
-        
+
         let listen_addr = format!("tcp://127.0.0.1:{}", actual_port);
-        
+
         let (manager, mut rx) = LinkManager::new(
             vec![listen_addr],
             vec![],
@@ -1110,58 +1215,58 @@ mod tests {
             0,
             config,
         );
-        
+
         // Start listener
         manager.start().await.unwrap();
-        
+
         // Give listener time to start
         tokio::time::sleep(Duration::from_millis(100)).await;
-        
+
         // Connect as client using the dynamically allocated port
         let connect_addr = format!("127.0.0.1:{}", actual_port);
         if let Ok(_stream) = TcpStream::connect(&connect_addr).await {
             // Wait for connection event
             tokio::time::sleep(Duration::from_millis(100)).await;
-            
+
             // Check if connection event was received
-            if let Ok(event) = tokio::time::timeout(
-                Duration::from_secs(1),
-                rx.recv()
-            ).await {
+            if let Ok(event) = tokio::time::timeout(Duration::from_secs(1), rx.recv()).await {
                 if let Some(LinkEvent::Connected(_)) = event {
                     // Test passed
                     return;
                 }
             }
         }
-        
+
         // If we get here, test failed but don't panic
         // since port might be in use
         println!("TCP listener test completed (may need retry with different port)");
     }
-    
+
     #[tokio::test]
     async fn test_peer_connection() {
         // Test connecting to peer with dynamic port
         let signing_key = SigningKey::from_bytes(&[2u8; 32]);
         let config = Arc::new(Config::generate().unwrap());
-        
+
         // Get a free port using port_check
         let actual_port = free_local_port().expect("No free port available");
-        
+
         // Start a listener on the allocated port
         let listener = TcpListener::bind(format!("127.0.0.1:{}", actual_port)).await;
-        
+
         if listener.is_err() {
-            println!("Peer connection test skipped: cannot bind listener on port {}", actual_port);
+            println!(
+                "Peer connection test skipped: cannot bind listener on port {}",
+                actual_port
+            );
             return;
         }
-        
+
         let listener = listener.unwrap();
-        
+
         // Create manager that will connect to this port
         let peer_addr = format!("tcp://127.0.0.1:{}", actual_port);
-        
+
         let (manager, mut rx) = LinkManager::new(
             vec![],
             vec![peer_addr],
@@ -1171,7 +1276,7 @@ mod tests {
             0,
             config,
         );
-        
+
         // Spawn listener task
         tokio::spawn(async move {
             if let Ok((_stream, _)) = listener.accept().await {
@@ -1179,24 +1284,23 @@ mod tests {
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
         });
-        
+
         // Give listener time to start
         tokio::time::sleep(Duration::from_millis(100)).await;
-        
+
         // Connect to peers
         manager.start().await.unwrap();
-        
+
         // Wait for connection event
-        if let Ok(Some(LinkEvent::Connected(_))) = tokio::time::timeout(
-            Duration::from_secs(2),
-            rx.recv()
-        ).await {
+        if let Ok(Some(LinkEvent::Connected(_))) =
+            tokio::time::timeout(Duration::from_secs(2), rx.recv()).await
+        {
             println!("Peer connection test passed");
         } else {
             println!("Peer connection test completed (timeout or no connection)");
         }
     }
-    
+
     #[tokio::test]
     async fn test_data_transfer() {
         // Add overall timeout to prevent hanging
@@ -1205,12 +1309,12 @@ mod tests {
             let signing_key1 = SigningKey::from_bytes(&[3u8; 32]);
             let signing_key2 = SigningKey::from_bytes(&[4u8; 32]);
             let config = Arc::new(Config::generate().unwrap());
-            
+
             // Get a free port using port_check
             let test_port = free_local_port().expect("No free port available");
-            
+
             let listen_addr = format!("tcp://127.0.0.1:{}", test_port);
-            
+
             let (manager1, mut rx1) = LinkManager::new(
                 vec![listen_addr.clone()],
                 vec![],
@@ -1220,7 +1324,7 @@ mod tests {
                 0,
                 config.clone(),
             );
-            
+
             let (_manager2, _rx2) = LinkManager::new(
                 vec![],
                 vec![],
@@ -1230,20 +1334,20 @@ mod tests {
                 0,
                 config,
             );
-            
+
             // Start listener
             if let Err(e) = manager1.start().await {
                 println!("Data transfer test: Failed to start listener: {}", e);
                 println!("Data transfer test completed (listener start failed)");
                 return;
             }
-            
+
             // Give listener time to start
             tokio::time::sleep(Duration::from_millis(200)).await;
-            
+
             // Create test data
             let test_data = b"Hello Yggdrasil!".to_vec();
-            
+
             // Connect to the listener using the dynamically allocated port
             let listener_addr = format!("127.0.0.1:{}", test_port);
             match TcpStream::connect(&listener_addr).await {
@@ -1253,7 +1357,7 @@ mod tests {
                         println!("Data transfer test: Failed to send data: {}", e);
                         return;
                     }
-                    
+
                     // Wait for data reception with timeout
                     match tokio::time::timeout(Duration::from_secs(2), rx1.recv()).await {
                         Ok(Some(LinkEvent::DataReceived(_, data))) => {
@@ -1277,7 +1381,7 @@ mod tests {
                 }
             }
         };
-        
+
         // Add overall timeout to prevent test from hanging
         match tokio::time::timeout(Duration::from_secs(10), test_future).await {
             Ok(_) => {
@@ -1311,9 +1415,9 @@ async fn handle_websocket_connection(
             return Err(anyhow::anyhow!("WebSocket upgrade failed: {}", e));
         }
     };
-    
+
     info!("WebSocket connection upgraded from {}", peer_addr);
-    
+
     handle_websocket_stream(
         ws_stream,
         peer_addr,
@@ -1322,7 +1426,8 @@ async fn handle_websocket_connection(
         priority,
         connections,
         allowed_public_keys,
-    ).await
+    )
+    .await
 }
 
 /// Handle WebSocket stream (common for both client and server)
@@ -1340,14 +1445,14 @@ where
 {
     // Perform handshake over WebSocket
     info!("Starting handshake with {} over WebSocket", peer_addr);
-    
+
     // Create a custom stream wrapper for handshake
     struct WebSocketHandshakeStream<S> {
         ws: WebSocketStream<S>,
         read_buffer: Vec<u8>,
         read_pos: usize,
     }
-    
+
     impl<S> WebSocketHandshakeStream<S>
     where
         S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin,
@@ -1360,7 +1465,7 @@ where
             }
         }
     }
-    
+
     impl<S> tokio::io::AsyncRead for WebSocketHandshakeStream<S>
     where
         S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin,
@@ -1376,15 +1481,15 @@ where
                 let to_copy = remaining.min(buf.remaining());
                 buf.put_slice(&self.read_buffer[self.read_pos..self.read_pos + to_copy]);
                 self.read_pos += to_copy;
-                
+
                 if self.read_pos >= self.read_buffer.len() {
                     self.read_buffer.clear();
                     self.read_pos = 0;
                 }
-                
+
                 return std::task::Poll::Ready(Ok(()));
             }
-            
+
             // Read next WebSocket message
             match self.ws.poll_next_unpin(cx) {
                 std::task::Poll::Ready(Some(Ok(msg))) => {
@@ -1392,18 +1497,16 @@ where
                         Message::Binary(data) => {
                             let to_copy = data.len().min(buf.remaining());
                             buf.put_slice(&data[..to_copy]);
-                            
+
                             // Buffer any remaining data
                             if to_copy < data.len() {
                                 self.read_buffer = data[to_copy..].to_vec();
                                 self.read_pos = 0;
                             }
-                            
+
                             std::task::Poll::Ready(Ok(()))
                         }
-                        Message::Close(_) => {
-                            std::task::Poll::Ready(Ok(()))
-                        }
+                        Message::Close(_) => std::task::Poll::Ready(Ok(())),
                         _ => {
                             // Ignore non-binary messages during handshake
                             cx.waker().wake_by_ref();
@@ -1411,20 +1514,15 @@ where
                         }
                     }
                 }
-                std::task::Poll::Ready(Some(Err(e))) => {
-                    std::task::Poll::Ready(Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        e.to_string(),
-                    )))
-                }
-                std::task::Poll::Ready(None) => {
-                    std::task::Poll::Ready(Ok(()))
-                }
+                std::task::Poll::Ready(Some(Err(e))) => std::task::Poll::Ready(Err(
+                    std::io::Error::new(std::io::ErrorKind::Other, e.to_string()),
+                )),
+                std::task::Poll::Ready(None) => std::task::Poll::Ready(Ok(())),
                 std::task::Poll::Pending => std::task::Poll::Pending,
             }
         }
     }
-    
+
     impl<S> tokio::io::AsyncWrite for WebSocketHandshakeStream<S>
     where
         S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin,
@@ -1436,60 +1534,52 @@ where
         ) -> std::task::Poll<std::io::Result<usize>> {
             let msg = Message::Binary(Bytes::copy_from_slice(buf));
             match self.ws.poll_ready_unpin(cx) {
-                std::task::Poll::Ready(Ok(())) => {
-                    match self.ws.start_send_unpin(msg) {
-                        Ok(()) => std::task::Poll::Ready(Ok(buf.len())),
-                        Err(e) => std::task::Poll::Ready(Err(std::io::Error::new(
-                            std::io::ErrorKind::Other,
-                            e.to_string(),
-                        ))),
-                    }
-                }
-                std::task::Poll::Ready(Err(e)) => {
-                    std::task::Poll::Ready(Err(std::io::Error::new(
+                std::task::Poll::Ready(Ok(())) => match self.ws.start_send_unpin(msg) {
+                    Ok(()) => std::task::Poll::Ready(Ok(buf.len())),
+                    Err(e) => std::task::Poll::Ready(Err(std::io::Error::new(
                         std::io::ErrorKind::Other,
                         e.to_string(),
-                    )))
-                }
+                    ))),
+                },
+                std::task::Poll::Ready(Err(e)) => std::task::Poll::Ready(Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    e.to_string(),
+                ))),
                 std::task::Poll::Pending => std::task::Poll::Pending,
             }
         }
-        
+
         fn poll_flush(
             mut self: std::pin::Pin<&mut Self>,
             cx: &mut std::task::Context<'_>,
         ) -> std::task::Poll<std::io::Result<()>> {
             match self.ws.poll_flush_unpin(cx) {
                 std::task::Poll::Ready(Ok(())) => std::task::Poll::Ready(Ok(())),
-                std::task::Poll::Ready(Err(e)) => {
-                    std::task::Poll::Ready(Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        e.to_string(),
-                    )))
-                }
+                std::task::Poll::Ready(Err(e)) => std::task::Poll::Ready(Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    e.to_string(),
+                ))),
                 std::task::Poll::Pending => std::task::Poll::Pending,
             }
         }
-        
+
         fn poll_shutdown(
             mut self: std::pin::Pin<&mut Self>,
             cx: &mut std::task::Context<'_>,
         ) -> std::task::Poll<std::io::Result<()>> {
             match self.ws.poll_close_unpin(cx) {
                 std::task::Poll::Ready(Ok(())) => std::task::Poll::Ready(Ok(())),
-                std::task::Poll::Ready(Err(e)) => {
-                    std::task::Poll::Ready(Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        e.to_string(),
-                    )))
-                }
+                std::task::Poll::Ready(Err(e)) => std::task::Poll::Ready(Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    e.to_string(),
+                ))),
                 std::task::Poll::Pending => std::task::Poll::Pending,
             }
         }
     }
-    
+
     let mut handshake_stream = WebSocketHandshakeStream::new(ws_stream);
-    
+
     // Perform handshake
     let peer_meta = match handshake::perform_handshake_with_validation(
         &mut handshake_stream,
@@ -1498,10 +1588,15 @@ where
         b"", // Empty password
         Duration::from_secs(6),
         allowed_public_keys,
-    ).await {
+    )
+    .await
+    {
         Ok(meta) => {
-            info!("WebSocket handshake successful with {}, peer key: {}", 
-                  peer_addr, hex::encode(meta.public_key.to_bytes()));
+            info!(
+                "WebSocket handshake successful with {}, peer key: {}",
+                peer_addr,
+                hex::encode(meta.public_key.to_bytes())
+            );
             meta
         }
         Err(e) => {
@@ -1510,31 +1605,32 @@ where
             return Err(e);
         }
     };
-    
+
     // Notify handshake complete (inbound WebSocket connection)
     tx.send(LinkEvent::HandshakeComplete(
         peer_addr,
         peer_meta.public_key,
         peer_meta.priority,
         true, // is_inbound (from listener)
-    )).await?;
-    
+    ))
+    .await?;
+
     // Get WebSocket stream back
     let ws_stream = handshake_stream.ws;
-    
+
     // Split into read and write halves using Arc and Mutex
     let ws_stream = Arc::new(tokio::sync::Mutex::new(ws_stream));
     let ws_write = ws_stream.clone();
-    
+
     // Create channel for sending data
     let (write_tx, mut write_rx) = mpsc::channel::<Vec<u8>>(100);
-    
+
     // Store connection
     {
         let mut conns = connections.write().await;
         conns.insert(peer_addr, write_tx);
     }
-    
+
     // Spawn write task
     let peer_addr_clone = peer_addr;
     let tx_clone = tx.clone();
@@ -1544,24 +1640,29 @@ where
             let msg = Message::Binary(Bytes::from(data));
             let mut ws = ws_write.lock().await;
             if let Err(e) = ws.send(msg).await {
-                error!("Failed to send WebSocket message to {}: {}", peer_addr_clone, e);
+                error!(
+                    "Failed to send WebSocket message to {}: {}",
+                    peer_addr_clone, e
+                );
                 break;
             }
         }
-        
+
         // Close WebSocket
         let mut ws = ws_write.lock().await;
         let _ = ws.close(None).await;
-        
+
         // Remove connection on write failure
         {
             let mut conns = connections_clone.write().await;
             conns.remove(&peer_addr_clone);
         }
-        
-        let _ = tx_clone.send(LinkEvent::Disconnected(peer_addr_clone)).await;
+
+        let _ = tx_clone
+            .send(LinkEvent::Disconnected(peer_addr_clone))
+            .await;
     });
-    
+
     // Read loop (blocking on current task)
     loop {
         let mut ws = ws_stream.lock().await;
@@ -1570,8 +1671,15 @@ where
                 drop(ws); // Release lock before processing
                 match msg {
                     Message::Binary(data) => {
-                        debug!("Received {} bytes from {} over WebSocket", data.len(), peer_addr);
-                        if let Err(e) = tx.send(LinkEvent::DataReceived(peer_addr, data.to_vec())).await {
+                        debug!(
+                            "Received {} bytes from {} over WebSocket",
+                            data.len(),
+                            peer_addr
+                        );
+                        if let Err(e) = tx
+                            .send(LinkEvent::DataReceived(peer_addr, data.to_vec()))
+                            .await
+                        {
                             error!("Failed to send data event: {}", e);
                             break;
                         }
@@ -1605,15 +1713,15 @@ where
             }
         }
     }
-    
+
     // Cleanup
     {
         let mut conns = connections.write().await;
         conns.remove(&peer_addr);
     }
-    
+
     tx.send(LinkEvent::Disconnected(peer_addr)).await?;
-    
+
     Ok(())
 }
 

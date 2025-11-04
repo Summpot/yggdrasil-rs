@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+mod service;
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use log::{error, info};
@@ -31,6 +33,11 @@ enum Commands {
         /// Use autoconf mode (automatic configuration)
         #[arg(long)]
         autoconf: bool,
+    },
+    /// Manage Yggdrasil as a system service
+    Service {
+        #[command(subcommand)]
+        action: ServiceAction,
     },
     /// Compatibility command for original Yggdrasil
     #[command(name = "compat")]
@@ -73,6 +80,26 @@ enum Commands {
     },
 }
 
+#[derive(Subcommand)]
+enum ServiceAction {
+    /// Install Yggdrasil as a system service
+    Install {
+        /// Path to configuration file (default: /etc/yggdrasil/config.hjson on Linux)
+        #[arg(short, long)]
+        config: Option<String>,
+    },
+    /// Start the Yggdrasil service
+    Start,
+    /// Stop the Yggdrasil service
+    Stop,
+    /// Restart the Yggdrasil service
+    Restart,
+    /// Uninstall the Yggdrasil service
+    Uninstall,
+    /// Show service status
+    Status,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::init();
@@ -82,6 +109,7 @@ async fn main() -> Result<()> {
     match cli.command {
         Some(Commands::GenConf { json }) => gen_conf(json),
         Some(Commands::Run { config, autoconf }) => run(config, autoconf).await,
+        Some(Commands::Service { action }) => handle_service(action),
         Some(Commands::Compat {
             genconf,
             useconf,
@@ -150,7 +178,7 @@ async fn run(config_path: Option<String>, autoconf: bool) -> Result<()> {
         use tokio::signal::unix::{signal, SignalKind};
         let mut sigterm = signal(SignalKind::terminate())?;
         let mut sigint = signal(SignalKind::interrupt())?;
-        
+
         tokio::select! {
             _ = sigterm.recv() => {
                 info!("Received SIGTERM, shutting down gracefully...");
@@ -160,7 +188,7 @@ async fn run(config_path: Option<String>, autoconf: bool) -> Result<()> {
             }
         }
     }
-    
+
     #[cfg(not(unix))]
     {
         tokio::signal::ctrl_c().await?;
@@ -170,6 +198,32 @@ async fn run(config_path: Option<String>, autoconf: bool) -> Result<()> {
     core.stop().await?;
     info!("Yggdrasil shutdown complete");
     Ok(())
+}
+
+fn handle_service(action: ServiceAction) -> Result<()> {
+    match action {
+        ServiceAction::Install { config } => {
+            info!("Installing Yggdrasil service...");
+            service::install_service(config)
+        }
+        ServiceAction::Start => {
+            info!("Starting Yggdrasil service...");
+            service::start_service()
+        }
+        ServiceAction::Stop => {
+            info!("Stopping Yggdrasil service...");
+            service::stop_service()
+        }
+        ServiceAction::Restart => {
+            info!("Restarting Yggdrasil service...");
+            service::restart_service()
+        }
+        ServiceAction::Uninstall => {
+            info!("Uninstalling Yggdrasil service...");
+            service::uninstall_service()
+        }
+        ServiceAction::Status => service::status_service(),
+    }
 }
 
 struct CompatArgs {
@@ -223,7 +277,8 @@ async fn compat(args: CompatArgs) -> Result<()> {
     }
 
     if args.exportkey {
-        let private_key = config.private_key
+        let private_key = config
+            .private_key
             .ok_or_else(|| anyhow::anyhow!("No private key in configuration"))?;
         println!("{}", hex::encode(private_key));
         return Ok(());

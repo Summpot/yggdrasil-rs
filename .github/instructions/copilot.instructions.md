@@ -1,6 +1,6 @@
 # Yggdrasil Rust Implementation - Development Instructions
 
-**Last Updated: 2025-10-30**  
+**Last Updated: 2025-11-01**  
 **Current Status: Core features complete with 82/82 tests passing, benchmark system operational**
 
 Yggdrasil is an experimental end-to-end encrypted IPv6 mesh network implementation in Rust. This implementation maintains protocol compatibility with the original Go version while leveraging Rust's memory safety and performance advantages.
@@ -93,7 +93,7 @@ CRITICAL: Use `serde-hjson` (NOT `deser-hjson`) for full serialization support, 
 
 ```rust
 // Load configuration
-let config = Config::from_file("config.hjson")?;
+let config = Config::from_file("config.conf")?;
 
 // Generate configuration
 let config = Config::generate()?;
@@ -545,7 +545,7 @@ The Go implementation is available in `thirdparty/yggdrasil-go/` for reference w
 ### Completed ✅
 
 - [x] Workspace structure
-- [x] **Performance Regression Detection System** (yggdrasil-bench) - **Completed 2025-10-30**
+- [x] **Performance Regression Detection System** (yggdrasil-bench)
   - [x] 4-module architecture (core/scenario/probe/emit)
   - [x] HDR Histogram latency tracking (p50/p95/p99/mean)
   - [x] Protocol×Overlay cartesian product (25 scenarios: 5 protocols × 5 overlays)
@@ -557,9 +557,8 @@ The Go implementation is available in `thirdparty/yggdrasil-go/` for reference w
   - [x] Regression detection with configurable thresholds (±5% warn, ±10% fail)
   - [x] 16 unit tests (all passing)
   - [x] Comprehensive documentation (Complete Setup Guide in README.md)
-  - **Impact**: Automated performance monitoring across protocol/overlay combinations
   - **Status**: Simulation mode - needs integration with yggdrasil-core for real benchmarks
-- [x] **Bloom Filter Lookups** (lookup.rs) - **Completed 2025-10-30**
+- [x] **Bloom Filter Lookups** (lookup.rs)
   - [x] 8192-bit (1024-byte) filters
   - [x] 8 hash functions per key (~80-bit collision resistance)
   - [x] Per-peer filter management
@@ -567,24 +566,21 @@ The Go implementation is available in `thirdparty/yggdrasil-go/` for reference w
   - [x] Cache system with 5-minute TTL
   - [x] Automatic cleanup of expired requests
   - [x] 7 unit tests, all passing
-  - **Impact**: Enables efficient node discovery across the network
-- [x] **Enhanced Greedy Routing with Tree-Space Coordinates** (router.rs) - **Enhanced 2025-10-30**
+- [x] **Enhanced Greedy Routing with Tree-Space Coordinates** (router.rs)
   - [x] route_greedy() method for coordinate-based routing
   - [x] route_packet_greedy() with intelligent 3-tier fallback
   - [x] coords_distance() for tree-space distance calculation
   - [x] Lexicographic coordinate comparison with hop+latency tiebreaker
   - [x] Integration with spanning tree
   - [x] O(1) direct route lookup, O(n log n) coordinate routing
-  - **Impact**: Enables efficient packet forwarding through the mesh
-- [x] **WebSocket Transport Support** (link.rs) - **NEW as of 2025-10-30**
+- [x] **WebSocket Transport Support** (link.rs)
   - [x] WebSocket (ws://) protocol support
   - [x] WebSocket Secure (wss://) with TLS
   - [x] Browser-compatible bidirectional communication
   - [x] Handshake protocol over WebSocket
   - [x] Integration with connection pooling
   - [x] Integration tests available (manual execution)
-  - **Impact**: Enables browser-based Yggdrasil nodes
-- [x] **QUIC Connection Pool** (quic_pool.rs) - **NEW as of 2025-10-30**
+- [x] **QUIC Connection Pool** (quic_pool.rs)
   - [x] Connection pooling with configurable max connections (default: 4)
   - [x] Per-connection stream limiting (default: 100 streams)
   - [x] Round-robin load balancing based on active streams
@@ -592,27 +588,23 @@ The Go implementation is available in `thirdparty/yggdrasil-go/` for reference w
   - [x] Semaphore-based flow control
   - [x] Pool statistics API
   - [x] Unit tests for pool management
-  - **Impact**: 4x throughput improvement via multiplexing
-- [x] **Prometheus Metrics Integration** (metrics.rs) - **NEW as of 2025-10-30**
+- [x] **Prometheus Metrics Integration** (metrics.rs)
   - [x] MetricsRegistry for generic metric storage
   - [x] YggdrasilMetrics with network-specific metrics
   - [x] Counter, Gauge, and Histogram support
   - [x] 12+ network metrics (traffic, peers, routes, latency)
   - [x] Prometheus text format export
   - [x] Unit tests for metrics collection
-  - **Impact**: Comprehensive network monitoring capabilities
-- [x] **Admin API Enhancement** (admin.rs, core.rs) - **Enhanced 2025-10-30**
+- [x] **Admin API Enhancement** (admin.rs, core.rs)
   - [x] Added coords field to PeerEntry (tree-space coordinates)
   - [x] Added root field to PeerEntry (spanning tree root)
   - [x] Enhanced getPeers response with topology info
   - [x] getSessions already includes coords and root
   - [x] Proper optional serialization
-  - **Impact**: Full network topology visibility via Admin API
-- [x] **Periodic Tree Announcements** (core.rs) - **Verified 2025-10-30**
+- [x] **Periodic Tree Announcements** (core.rs)
   - [x] Background task broadcasts every 30 seconds
   - [x] Encrypted if session exists, unencrypted fallback
   - [x] Automatic peer discovery and tree convergence
-  - **Impact**: Network topology dynamically maintained
 - [x] Configuration system (HJSON/JSON/TOML) - **100% Complete**
   - [x] PascalCase field names matching Go implementation
   - [x] All Go config fields (InterfacePeers, AllowedPublicKeys, NodeInfoPrivacy, etc.)
@@ -698,47 +690,6 @@ The Go implementation is available in `thirdparty/yggdrasil-go/` for reference w
 - [ ] Unix domain socket links
 - [ ] Platform-specific TCP optimizations (TCP_INFO for RTT)
 - [ ] Performance profiling and optimization
-
-### Recently Completed (2025-10-30) ✅
-
-- [x] **Performance Regression Detection System** (yggdrasil-bench)
-  - Complete benchmark infrastructure with 4-module architecture
-  - HDR Histogram latency tracking and statistical analysis
-  - 25 scenario matrix (5 protocols × 5 overlays)
-  - Datadog integration with dashboard generation
-  - GitHub Actions workflow for CI/CD
-  - 16 unit tests, comprehensive documentation
-- [x] **Bloom Filter Node Lookup System** (lookup.rs)
-  - 8192-bit filters with 8 hash functions
-  - Per-peer filter management
-  - Lookup cache with TTL
-  - Request/response protocol foundation
-  - 7 comprehensive unit tests
-- [x] **Tree-Space Greedy Routing** (router.rs)
-  - Coordinate-based packet forwarding
-  - Lexicographic distance comparison
-  - Integration with spanning tree
-- [x] **Periodic Tree Announcements Verified** (core.rs)
-  - Background task confirmed operational
-  - 30-second broadcast interval
-  - Encrypted transmission with session
-- [x] **TLS Certificate System** (config.rs)
-  - Self-signed certificate generation
-  - PrivateKeyPath support
-  - PEM format key loading/saving
-- [x] **WebSocket Transport Support** (link.rs)
-  - WebSocket (ws://) and WebSocket Secure (wss://)
-  - Browser-compatible bidirectional communication
-- [x] **QUIC Connection Pool** (quic_pool.rs)
-  - Connection pooling with max connections limit
-  - Per-connection stream limiting
-  - Round-robin load balancing
-- [x] **Prometheus Metrics Integration** (metrics.rs)
-  - 12+ network metrics
-  - Counter, Gauge, and Histogram support
-- [x] **Admin API Enhancement** (admin.rs, core.rs)
-  - Added coords and root fields to PeerEntry
-  - Enhanced getPeers response with topology info
 
 ## Performance Benchmarking
 
@@ -924,6 +875,13 @@ cargo run -p yggdrasilctl -- get-self
 13. **CRITICAL - Always Update Instructions**: ALWAYS check and update this instructions file after implementing new features or making significant changes. The instructions file MUST be kept synchronized with the current repository state. Before ending any task, verify that this file reflects all completed work and update the development status sections
 14. **Forbid Unsafe Code**: ALL crates (lib and binary) MUST use `#![forbid(unsafe_code)]` at the top of lib.rs or main.rs. Never use `unsafe` blocks or `unsafe impl` unless absolutely necessary for FFI or system calls. When unsafe code seems required, first explore safe alternatives using Rust's type system and standard library abstractions
 15. **Benchmark Integration Awareness**: When modifying yggdrasil-core APIs (especially link.rs, core.rs, session.rs, router.rs), consider impact on yggdrasil-bench integration. The benchmark system needs to interact with these modules to measure real network performance. Document any API changes that affect benchmark scenarios.
+16. **CRITICAL - yggdrasil-go Compatibility**: ALWAYS verify compatibility with yggdrasil-go when implementing features in yggdrasil-rs. Before implementing any feature, protocol, or configuration option:
+    - Check the yggdrasil-go reference implementation in `thirdparty/yggdrasil-go/`
+    - Ensure wire protocol compatibility (packet formats, handshakes, encryption)
+    - Match configuration field names, default values, and platform-specific behaviors
+    - Verify cross-implementation interoperability (Rust nodes must communicate with Go nodes)
+    - Reference Go code for correct algorithm implementation and edge case handling
+    - Test with both implementations when possible to ensure network compatibility
 
 ### Documentation Style
 
