@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use yggdrasil_core::AdminClient;
+use yggdrasil_core::{admin_compat, AdminClient};
 
 #[derive(Parser)]
 #[command(name = "yggdrasilctl")]
@@ -69,6 +69,10 @@ enum Commands {
         #[arg(value_name = "COMMAND")]
         command: String,
 
+        /// Output in Go-compatible format (PascalCase field names)
+        #[arg(long)]
+        go_compat: bool,
+
         /// Additional arguments
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
@@ -98,8 +102,8 @@ async fn main() -> Result<()> {
         }
         Some(Commands::GetTUN) => get_tun(&client, json_output).await,
         Some(Commands::List) => list_commands(&client, json_output).await,
-        Some(Commands::Compat { command, args }) => {
-            compat_command(&client, &command, &args, cli.endpoint.clone()).await
+        Some(Commands::Compat { command, args, go_compat }) => {
+            compat_command(&client, &command, &args, cli.endpoint.clone(), go_compat).await
         }
         None => {
             eprintln!("No command specified. Use --help for usage information.");
@@ -361,44 +365,94 @@ async fn compat_command(
     command: &str,
     args: &[String],
     _endpoint: String,
+    go_compat: bool,
 ) -> Result<()> {
     // Parse JSON flag from args
     let json = args.contains(&"--json".to_string()) || args.contains(&"-json".to_string());
 
+    // Parse key=value style arguments (Go style)
+    let mut parsed_args = std::collections::HashMap::new();
+    for arg in args {
+        if arg.starts_with("--") || arg.starts_with("-") {
+            continue;
+        }
+        if let Some((key, value)) = arg.split_once('=') {
+            parsed_args.insert(key.to_string(), value.to_string());
+        }
+    }
+
     // Map original command names to new functions
     match command {
-        "getSelf" | "getself" => get_self(client, json).await,
-        "getPeers" | "getpeers" => get_peers(client, json).await,
+        "getSelf" | "getself" => {
+            if go_compat {
+                get_self_go_compat(client, json).await
+            } else {
+                get_self(client, json).await
+            }
+        }
+        "getPeers" | "getpeers" => {
+            if go_compat {
+                get_peers_go_compat(client, json).await
+            } else {
+                get_peers(client, json).await
+            }
+        }
         "getDHT" | "getdht" => get_dht(client, json).await,
-        "getPaths" | "getpaths" => get_paths(client, json).await,
-        "getSessions" | "getsessions" => get_sessions(client, json).await,
+        "getPaths" | "getpaths" => {
+            if go_compat {
+                get_paths_go_compat(client, json).await
+            } else {
+                get_paths(client, json).await
+            }
+        }
+        "getSessions" | "getsessions" => {
+            if go_compat {
+                get_sessions_go_compat(client, json).await
+            } else {
+                get_sessions(client, json).await
+            }
+        }
         "getMulticast" | "getmulticast" => get_multicast_interfaces(client, json).await,
         "getTUN" | "gettun" => get_tun(client, json).await,
         "list" => list_commands(client, json).await,
         "addPeer" | "addpeer" => {
-            if args.is_empty() {
-                eprintln!("Error: addPeer requires URI argument");
-                std::process::exit(1);
-            }
-            let uri = &args[0];
-            let interface = args
-                .iter()
-                .position(|a| a == "--interface" || a == "-i")
-                .and_then(|i| args.get(i + 1))
-                .map(|s| s.as_str());
+            // Support both positional and key=value style
+            let uri = parsed_args
+                .get("uri")
+                .map(|s| s.as_str())
+                .or_else(|| args.first().map(|s| s.as_str()))
+                .ok_or_else(|| anyhow::anyhow!("addPeer requires URI argument"))?;
+
+            let interface = parsed_args
+                .get("interface")
+                .map(|s| s.as_str())
+                .or_else(|| {
+                    args.iter()
+                        .position(|a| a == "--interface" || a == "-i")
+                        .and_then(|i| args.get(i + 1))
+                        .map(|s| s.as_str())
+                });
+
             add_peer(client, uri, interface, json).await
         }
         "removePeer" | "removepeer" => {
-            if args.is_empty() {
-                eprintln!("Error: removePeer requires URI argument");
-                std::process::exit(1);
-            }
-            let uri = &args[0];
-            let interface = args
-                .iter()
-                .position(|a| a == "--interface" || a == "-i")
-                .and_then(|i| args.get(i + 1))
-                .map(|s| s.as_str());
+            // Support both positional and key=value style
+            let uri = parsed_args
+                .get("uri")
+                .map(|s| s.as_str())
+                .or_else(|| args.first().map(|s| s.as_str()))
+                .ok_or_else(|| anyhow::anyhow!("removePeer requires URI argument"))?;
+
+            let interface = parsed_args
+                .get("interface")
+                .map(|s| s.as_str())
+                .or_else(|| {
+                    args.iter()
+                        .position(|a| a == "--interface" || a == "-i")
+                        .and_then(|i| args.get(i + 1))
+                        .map(|s| s.as_str())
+                });
+
             remove_peer(client, uri, interface, json).await
         }
         _ => {
@@ -427,4 +481,150 @@ fn format_bytes(bytes: u64) -> String {
     } else {
         format!("{}B", bytes)
     }
+}
+
+// Go-compatible output functions
+
+async fn get_self_go_compat(client: &AdminClient, json: bool) -> Result<()> {
+    let response = client.get_self().await?;
+    let go_response: admin_compat::GetSelfResponseGo = response.into();
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&go_response)?);
+    } else {
+        println!("Node Information:");
+        println!("  Build Name:       {}", go_response.build_name);
+        println!("  Build Version:    {}", go_response.build_version);
+        println!("  Public Key:       {}", go_response.public_key);
+        println!("  IPv6 Address:     {}", go_response.address);
+        println!("  IPv6 Subnet:      {}", go_response.subnet);
+        println!("  Routing Entries:  {}", go_response.routing_entries);
+    }
+
+    Ok(())
+}
+
+async fn get_peers_go_compat(client: &AdminClient, json: bool) -> Result<()> {
+    let response = client.get_peers().await?;
+    let go_response: admin_compat::GetPeersResponseGo = response.into();
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&go_response)?);
+        return Ok(());
+    }
+
+    if go_response.peers.is_empty() {
+        println!("No peers connected");
+        return Ok(());
+    }
+
+    println!("Connected Peers ({}):", go_response.peers.len());
+    println!();
+
+    for (i, peer) in go_response.peers.iter().enumerate() {
+        println!("Peer #{}:", i + 1);
+        println!("  Public Key:   {}", peer.public_key);
+        if let Some(addr) = &peer.address {
+            println!("  IPv6 Address: {}", addr);
+        }
+        if let Some(uri) = &peer.uri {
+            println!("  URI:          {}", uri);
+        }
+        println!(
+            "  Direction:    {}",
+            if peer.inbound { "Inbound" } else { "Outbound" }
+        );
+        println!("  Status:       {}", if peer.up { "Up" } else { "Down" });
+        println!("  Port:         {}", peer.port);
+        println!("  Priority:     {}", peer.priority);
+        if let Some(cost) = peer.cost {
+            println!("  Cost:         {}", cost);
+        }
+
+        if let Some(uptime) = peer.uptime {
+            println!("  Uptime:       {:.2}s", uptime);
+        }
+        if let Some(rx) = peer.rx_bytes {
+            println!("  RX Bytes:     {}", format_bytes(rx));
+        }
+        if let Some(tx) = peer.tx_bytes {
+            println!("  TX Bytes:     {}", format_bytes(tx));
+        }
+        if let Some(latency) = peer.latency {
+            println!("  Latency:      {}ms", latency / 1_000_000);
+        }
+        if let Some(coords) = &peer.coords {
+            println!("  Coords:       {:?}", coords);
+        }
+        if let Some(root) = &peer.root {
+            println!("  Root:         {}", root);
+        }
+        println!();
+    }
+
+    Ok(())
+}
+
+async fn get_paths_go_compat(client: &AdminClient, json: bool) -> Result<()> {
+    let response = client.get_paths().await?;
+    let go_response: admin_compat::GetPathsResponseGo = response.into();
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&go_response)?);
+        return Ok(());
+    }
+
+    if go_response.paths.is_empty() {
+        println!("No paths found");
+        return Ok(());
+    }
+
+    println!("Routing Paths ({}):", go_response.paths.len());
+    println!();
+
+    for (i, path) in go_response.paths.iter().enumerate() {
+        println!("Path #{}:", i + 1);
+        println!("  Public Key:   {}", path.public_key);
+        println!("  IPv6 Address: {}", path.address);
+        println!("  Path:         {:?}", path.path);
+        println!();
+    }
+
+    Ok(())
+}
+
+async fn get_sessions_go_compat(client: &AdminClient, json: bool) -> Result<()> {
+    let response = client.get_sessions().await?;
+    let go_response: admin_compat::GetSessionsResponseGo = response.into();
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&go_response)?);
+        return Ok(());
+    }
+
+    if go_response.sessions.is_empty() {
+        println!("No active sessions");
+        return Ok(());
+    }
+
+    println!("Active Sessions ({}):", go_response.sessions.len());
+    println!();
+
+    for (i, session) in go_response.sessions.iter().enumerate() {
+        println!("Session #{}:", i + 1);
+        println!("  Public Key:   {}", session.public_key);
+        println!("  IPv6 Address: {}", session.address);
+        println!("  RX Bytes:     {}", format_bytes(session.rx_bytes));
+        println!("  TX Bytes:     {}", format_bytes(session.tx_bytes));
+        println!("  Uptime:       {:.2}s", session.uptime);
+        if let Some(coords) = &session.coords {
+            println!("  Coords:       {:?}", coords);
+        }
+        if let Some(root) = &session.root {
+            println!("  Root:         {}", root);
+        }
+        println!();
+    }
+
+    Ok(())
 }

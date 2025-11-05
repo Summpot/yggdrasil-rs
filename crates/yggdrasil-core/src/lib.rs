@@ -6,6 +6,7 @@
 
 pub mod address;
 pub mod admin;
+pub mod admin_compat;
 pub mod config;
 pub mod core;
 pub mod crypto;
