@@ -5,6 +5,7 @@
 
 mod admin_commands;
 mod cli;
+mod routing;
 mod service;
 mod utils;
 
@@ -12,29 +13,24 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
+use std::time::Duration;
 use tracing_subscriber::Layer;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use dashmap::DashMap;
 use tokio::sync::{broadcast, mpsc};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use yggdrasil::{AdminServer, Core, NodeConfig, VERSION};
-use yggdrasil_address::Address;
 use yggdrasil_config::get_defaults;
-use yggdrasil_link::{LinkType, Links, LinksListenerFactory, OutgoingPacket};
+use yggdrasil_link::{LinkType, Links, LinksListenerFactory};
 use yggdrasil_multicast::{
     Multicast, MulticastConfig, MulticastInterfaceConfig as MulticastIfaceConfig,
 };
 use yggdrasil_tun::{TunAdapter, TunConfig};
-use yggdrasil_types::PublicKey;
-use yggdrasil_wire::{Traffic, WireEncode, WirePacketType};
 
 use cli::{Cli, Commands};
-
-/// Registry for tracking peer outgoing channels.
-type PeerRegistry = Arc<DashMap<PublicKey, mpsc::UnboundedSender<OutgoingPacket>>>;
+use routing::{PeerRegistry, RoutingRuntime};
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
@@ -53,16 +49,12 @@ fn main() -> ExitCode {
     // Initialize tracing
     // Build filter for console that respects RUST_LOG env var, with CLI flag as fallback
     // Always reduce multicast module logs to trace level
-    let default_console_filter = format!(
-        "{},yggdrasil_multicast::multicast=error",
-        cli.log_level
-    );
+    let default_console_filter = format!("{},yggdrasil_multicast::multicast=error", cli.log_level);
     let console_filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&default_console_filter));
 
     // Create console layer with its filter
-    let console_layer = tracing_subscriber::fmt::layer()
-        .with_filter(console_filter);
+    let console_layer = tracing_subscriber::fmt::layer().with_filter(console_filter);
 
     // Optionally create file layer with trace-level filter
     if let Some(log_file) = &cli.log_file {
@@ -74,16 +66,18 @@ fn main() -> ExitCode {
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("yggdrasil.log");
-        
+
         let file_appender = tracing_appender::rolling::never(file_dir, file_name);
-        
+
         // File layer always uses trace level, but also respects RUST_LOG if set
-        let file_filter = tracing_subscriber::EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| {
+        let file_filter =
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
                 // Default file filter: trace for everything
-                tracing_subscriber::EnvFilter::new("trace,yggdrasil_multicast::multicast=warn,yggdrasil_link::peer_handler=warn")
+                tracing_subscriber::EnvFilter::new(
+                    "trace,yggdrasil_multicast::multicast=warn,yggdrasil_link::peer_handler=warn",
+                )
             });
-        
+
         let file_layer = tracing_subscriber::fmt::layer()
             .with_writer(file_appender)
             .with_ansi(false)
@@ -94,9 +88,7 @@ fn main() -> ExitCode {
             .with(file_layer)
             .init();
     } else {
-        tracing_subscriber::registry()
-            .with(console_layer)
-            .init();
+        tracing_subscriber::registry().with(console_layer).init();
     }
 
     match run(cli) {
@@ -235,8 +227,11 @@ async fn run_daemon(config: NodeConfig) -> Result<()> {
         None
     };
 
+    // Create routing runtime
+    let routing = Arc::new(RoutingRuntime::new(Arc::clone(&core)));
+
     // Start links manager
-    let links_result = start_links(&config, &core).await?;
+    let links_result = start_links(&config, Arc::clone(&routing)).await?;
     let (links, peer_registry, incoming_rx) = match links_result {
         Some((l, r, rx)) => (Some(l), Some(r), Some(rx)),
         None => (None, None, None),
@@ -251,8 +246,15 @@ async fn run_daemon(config: NodeConfig) -> Result<()> {
     let multicast = start_multicast(&config, &core, links.as_ref()).await?;
 
     // Start TUN adapter
-    let tun_adapter =
-        start_tun_adapter(&config, &core, admin_server.as_ref(), peer_registry, incoming_rx).await?;
+    let tun_adapter = start_tun_adapter(
+        &config,
+        &core,
+        Arc::clone(&routing),
+        admin_server.as_ref(),
+        peer_registry,
+        incoming_rx,
+    )
+    .await?;
 
     // Setup graceful shutdown
     let shutdown_tx_clone = shutdown_tx.clone();
@@ -331,7 +333,7 @@ async fn run_daemon(config: NodeConfig) -> Result<()> {
 /// Returns (Links, PeerRegistry, IncomingPacketReceiver)
 async fn start_links(
     config: &NodeConfig,
-    core: &Arc<Core>,
+    routing: Arc<RoutingRuntime>,
 ) -> Result<Option<(Arc<Links>, PeerRegistry, mpsc::UnboundedReceiver<Vec<u8>>)>> {
     let private_key = config.get_private_key()?;
     let (links, mut event_rx) = Links::new(private_key);
@@ -358,14 +360,26 @@ async fn start_links(
     tracing::info!("Links manager started");
 
     // Create peer registry for tracking outgoing channels
-    let peer_registry: PeerRegistry = Arc::new(DashMap::new());
+    let peer_registry: PeerRegistry = Arc::new(dashmap::DashMap::new());
     let peer_registry_clone = Arc::clone(&peer_registry);
-    
+    let routing_for_peers = Arc::clone(&routing);
+
+    // Periodic routing maintenance
+    let routing_for_tick = Arc::clone(&routing);
+    let registry_for_tick = Arc::clone(&peer_registry);
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(5));
+        loop {
+            interval.tick().await;
+            routing_for_tick.maintenance_tick(&registry_for_tick);
+        }
+    });
+
     // Create channel for incoming decrypted packets to be written to TUN
     let (incoming_tx, incoming_rx) = mpsc::unbounded_channel::<Vec<u8>>();
 
-    // Clone core for the peer event handler
-    let core_clone = Arc::clone(core);
+    // Clone routing for the peer event handler
+    let routing_clone = Arc::clone(&routing_for_peers);
 
     // Spawn a task to handle peer connection events
     tokio::spawn(async move {
@@ -388,10 +402,18 @@ async fn start_links(
             // Register the outgoing channel for this peer
             peer_registry_clone.insert(event.public_key, event.outgoing_tx);
 
+            // Inform routing about the new peer so announcements and requests can be sent
+            routing_for_peers.register_peer(
+                event.public_key,
+                event.peer_port,
+                event.priority,
+                &peer_registry_clone,
+            );
+
             // Spawn a task to handle events from this peer
             let _peer_key = event.public_key;
             let peer_registry_inner = Arc::clone(&peer_registry_clone);
-            let core_for_peer = Arc::clone(&core_clone);
+            let routing_for_peer = Arc::clone(&routing_clone);
             let incoming_tx_for_peer = incoming_tx.clone();
             let mut peer_event_rx = event.event_rx;
             tokio::spawn(async move {
@@ -413,6 +435,12 @@ async fn start_links(
                                 rtt_ms = rtt.as_millis(),
                                 "Received signature response"
                             );
+                            routing_for_peer.handle_sig_response(
+                                from,
+                                res,
+                                rtt,
+                                &peer_registry_inner,
+                            );
                         }
                         yggdrasil_link::PeerEvent::Announce { from, announce } => {
                             tracing::debug!(
@@ -422,6 +450,7 @@ async fn start_links(
                                 port = announce.sig_res.port,
                                 "Received router announcement"
                             );
+                            routing_for_peer.handle_announce(from, announce, &peer_registry_inner);
                         }
                         yggdrasil_link::PeerEvent::Traffic { from, traffic } => {
                             tracing::trace!(
@@ -431,115 +460,12 @@ async fn start_links(
                                 payload_len = traffic.payload.len(),
                                 "Received traffic"
                             );
-                            
-                            // Decrypt the traffic payload using session manager
-                            let sessions = core_for_peer.sessions();
-                            match sessions.handle_data(&from, &traffic.payload) {
-                                yggdrasil_session::HandleResult::Received { payload } => {
-                                    tracing::debug!(
-                                        from = %hex::encode(&from.as_bytes()[..8]),
-                                        payload_len = payload.len(),
-                                        "Decrypted incoming traffic"
-                                    );
-                                    // Send the decrypted IPv6 packet to TUN
-                                    if let Err(e) = incoming_tx_for_peer.send(payload) {
-                                        tracing::debug!(
-                                            error = %e,
-                                            "Failed to send decrypted packet to TUN channel"
-                                        );
-                                    }
-                                }
-                                yggdrasil_session::HandleResult::SendInit { dest, init } => {
-                                    // Need to send init message back
-                                    tracing::debug!(
-                                        dest = %hex::encode(&dest.as_bytes()[..8]),
-                                        "Need to send session init"
-                                    );
-                                    if let Some(init_data) = sessions.encrypt_init(&dest, &init) {
-                                        let init_traffic = yggdrasil_wire::Traffic::new(
-                                            *core_for_peer.public_key(),
-                                            dest,
-                                            init_data
-                                        );
-                                        if let Some(tx) = peer_registry_inner.get(&dest) {
-                                            let mut payload = Vec::new();
-                                            if init_traffic.wire_encode(&mut payload).is_ok() {
-                                                let packet = yggdrasil_link::OutgoingPacket {
-                                                    packet_type: yggdrasil_wire::WirePacketType::Traffic,
-                                                    payload,
-                                                };
-                                                let _ = tx.send(packet);
-                                            }
-                                        }
-                                    }
-                                }
-                                yggdrasil_session::HandleResult::SendAck { dest, ack, buffered_data } => {
-                                    // Need to send ack message back
-                                    tracing::debug!(
-                                        dest = %hex::encode(&dest.as_bytes()[..8]),
-                                        has_buffered = buffered_data.is_some(),
-                                        "Need to send session ack"
-                                    );
-                                    if let Some(ack_data) = sessions.encrypt_ack(&dest, &ack) {
-                                        let ack_traffic = yggdrasil_wire::Traffic::new(
-                                            *core_for_peer.public_key(),
-                                            dest,
-                                            ack_data
-                                        );
-                                        if let Some(tx) = peer_registry_inner.get(&dest) {
-                                            let mut payload = Vec::new();
-                                            if ack_traffic.wire_encode(&mut payload).is_ok() {
-                                                let packet = yggdrasil_link::OutgoingPacket {
-                                                    packet_type: yggdrasil_wire::WirePacketType::Traffic,
-                                                    payload,
-                                                };
-                                                let _ = tx.send(packet);
-                                            }
-                                        }
-                                    }
-                                    // Also send buffered data to TUN if any
-                                    if let Some(data) = buffered_data {
-                                        if let Err(e) = incoming_tx_for_peer.send(data) {
-                                            tracing::debug!(
-                                                error = %e,
-                                                "Failed to send buffered packet to TUN channel"
-                                            );
-                                        }
-                                    }
-                                }
-                                yggdrasil_session::HandleResult::SendBuffered { dest, data } => {
-                                    // Need to send buffered data
-                                    tracing::debug!(
-                                        dest = %hex::encode(&dest.as_bytes()[..8]),
-                                        data_len = data.len(),
-                                        "Need to send buffered data"
-                                    );
-                                    let buffered_traffic = yggdrasil_wire::Traffic::new(
-                                        *core_for_peer.public_key(),
-                                        dest,
-                                        data
-                                    );
-                                    if let Some(tx) = peer_registry_inner.get(&dest) {
-                                        let mut payload = Vec::new();
-                                        if buffered_traffic.wire_encode(&mut payload).is_ok() {
-                                            let packet = yggdrasil_link::OutgoingPacket {
-                                                packet_type: yggdrasil_wire::WirePacketType::Traffic,
-                                                payload,
-                                            };
-                                            let _ = tx.send(packet);
-                                        }
-                                    }
-                                }
-                                yggdrasil_session::HandleResult::Ignored => {
-                                    tracing::trace!("Ignored traffic packet (possibly dummy)");
-                                }
-                                yggdrasil_session::HandleResult::Error => {
-                                    tracing::debug!(
-                                        from = %hex::encode(&from.as_bytes()[..8]),
-                                        "Error handling traffic packet"
-                                    );
-                                }
-                            }
+                            routing_for_peer.handle_incoming_traffic(
+                                from,
+                                traffic,
+                                &peer_registry_inner,
+                                &incoming_tx_for_peer,
+                            );
                         }
                         yggdrasil_link::PeerEvent::BloomFilter { from, data } => {
                             tracing::trace!(
@@ -555,6 +481,7 @@ async fn start_links(
                                 dest = %hex::encode(&lookup.dest.as_bytes()[..8]),
                                 "Received path lookup"
                             );
+                            routing_for_peer.handle_path_lookup(from, lookup, &peer_registry_inner);
                         }
                         yggdrasil_link::PeerEvent::PathNotify { from, notify } => {
                             tracing::trace!(
@@ -563,6 +490,7 @@ async fn start_links(
                                 dest = %hex::encode(&notify.dest.as_bytes()[..8]),
                                 "Received path notify"
                             );
+                            routing_for_peer.forward_path_notify(notify, &peer_registry_inner);
                         }
                         yggdrasil_link::PeerEvent::PathBroken { from, broken } => {
                             tracing::trace!(
@@ -571,6 +499,7 @@ async fn start_links(
                                 dest = %hex::encode(&broken.dest.as_bytes()[..8]),
                                 "Received path broken"
                             );
+                            routing_for_peer.forward_path_broken(broken, &peer_registry_inner);
                         }
                         yggdrasil_link::PeerEvent::Disconnected { key, error } => {
                             tracing::info!(
@@ -580,6 +509,7 @@ async fn start_links(
                             );
                             // Remove peer from registry
                             peer_registry_inner.remove(&key);
+                            routing_for_peer.peer_disconnected(&key, &peer_registry_inner);
                             break;
                         }
                     }
@@ -697,6 +627,7 @@ async fn start_multicast(
 async fn start_tun_adapter(
     config: &NodeConfig,
     core: &Arc<Core>,
+    routing: Arc<RoutingRuntime>,
     admin_server: Option<&Arc<AdminServer>>,
     peer_registry: Option<PeerRegistry>,
     incoming_rx: Option<mpsc::UnboundedReceiver<Vec<u8>>>,
@@ -744,11 +675,11 @@ async fn start_tun_adapter(
 
             // Spawn TUN read loop (outgoing packets)
             let tun_clone = Arc::clone(&tun);
-            let core_clone = Arc::clone(core);
+            let routing_clone = Arc::clone(&routing);
             tokio::spawn(async move {
-                tun_read_loop(tun_clone, core_clone, peer_registry).await;
+                tun_read_loop(tun_clone, routing_clone, peer_registry).await;
             });
-            
+
             // Spawn TUN write loop (incoming packets from peers)
             if let Some(rx) = incoming_rx {
                 let tun_clone = Arc::clone(&tun);
@@ -770,7 +701,11 @@ async fn start_tun_adapter(
     }
 }
 
-async fn tun_read_loop(tun: Arc<TunAdapter>, core: Arc<Core>, peer_registry: Option<PeerRegistry>) {
+async fn tun_read_loop(
+    tun: Arc<TunAdapter>,
+    routing: Arc<RoutingRuntime>,
+    peer_registry: Option<PeerRegistry>,
+) {
     let mut buf = vec![0u8; 65535];
     loop {
         match tun.recv(&mut buf).await {
@@ -821,121 +756,8 @@ async fn tun_read_loop(tun: Arc<TunAdapter>, core: Arc<Core>, peer_registry: Opt
                     "Received IPv6 packet from TUN"
                 );
 
-                // Check if destination is in Yggdrasil address range (0x02xx::)
-                let dst_bytes = dst_addr.octets();
-                if dst_bytes[0] != 0x02 && dst_bytes[0] != 0x03 {
-                    tracing::trace!(dst = %dst_addr, "Destination not in Yggdrasil range, ignoring");
-                    continue;
-                }
-
-                // Convert destination IPv6 to a (partial) public key
-                let dest_ygg_addr = Address::from_bytes(dst_bytes);
-                let dest_key = dest_ygg_addr.get_key();
-
-                tracing::debug!(
-                    dst = %dst_addr,
-                    dest_key = %hex::encode(&dest_key.as_bytes()[..8]),
-                    payload_len = n - 40,
-                    "Routing Yggdrasil packet"
-                );
-
-                // Basic routing implementation (addresses the TODO requirements):
-                // 1. ✓ Session encryption: Use session manager to encrypt payload
-                // 2. ✓ Traffic packet creation: Create wire protocol Traffic packet
-                // 3. ✓ Sending through peer link: Use peer registry to send to destination
-                // 4. Simplified path finding: Direct peer-to-peer connection
-                //
-                // Note: This is a simplified implementation that sends packets directly
-                // to peers if connected. A complete routing implementation would require:
-                // - Router integration for spanning tree and path computation
-                // - Pathfinder for multi-hop routing through intermediate nodes
-                // - Bloom filters for efficient route advertising
-                // - Handling incoming traffic and forwarding decisions
-
                 if let Some(ref registry) = peer_registry {
-                    // Try to get or create a session with the destination
-                    let sessions = core.sessions();
-
-                    // Use session manager to encrypt the IPv6 packet
-                    let write_result = sessions.write_to(dest_key, packet.to_vec());
-
-                    match write_result {
-                        yggdrasil_session::WriteResult::Send { data } => {
-                            // Session exists, data is encrypted
-                            // Create a traffic packet
-                            let traffic = Traffic::new(*core.public_key(), dest_key, data);
-
-                            // Try to send directly to the peer if connected
-                            if let Some(tx) = registry.get(&dest_key) {
-                                let mut payload = Vec::new();
-                                if let Err(e) = traffic.wire_encode(&mut payload) {
-                                    tracing::debug!(
-                                        dest = %hex::encode(&dest_key.as_bytes()[..8]),
-                                        error = %e,
-                                        "Failed to encode traffic packet"
-                                    );
-                                    continue;
-                                }
-
-                                let packet = OutgoingPacket {
-                                    packet_type: WirePacketType::Traffic,
-                                    payload,
-                                };
-
-                                if let Err(e) = tx.send(packet) {
-                                    tracing::debug!(
-                                        dest = %hex::encode(&dest_key.as_bytes()[..8]),
-                                        error = %e,
-                                        "Failed to send traffic packet"
-                                    );
-                                }
-                            } else {
-                                tracing::trace!(
-                                    dest = %hex::encode(&dest_key.as_bytes()[..8]),
-                                    "No direct peer connection to destination"
-                                );
-                            }
-                        }
-                        yggdrasil_session::WriteResult::NeedInit { dest: _, init } => {
-                            // No session yet, need to send init first
-                            // Encrypt the init message
-                            if let Some(init_data) = sessions.encrypt_init(&dest_key, &init) {
-                                // Create a traffic packet with the init message
-                                let traffic = Traffic::new(*core.public_key(), dest_key, init_data);
-
-                                // Try to send to the peer
-                                if let Some(tx) = registry.get(&dest_key) {
-                                    let mut payload = Vec::new();
-                                    if let Err(e) = traffic.wire_encode(&mut payload) {
-                                        tracing::debug!(
-                                            dest = %hex::encode(&dest_key.as_bytes()[..8]),
-                                            error = %e,
-                                            "Failed to encode session init traffic"
-                                        );
-                                        continue;
-                                    }
-
-                                    let packet = OutgoingPacket {
-                                        packet_type: WirePacketType::Traffic,
-                                        payload,
-                                    };
-
-                                    if let Err(e) = tx.send(packet) {
-                                        tracing::debug!(
-                                            dest = %hex::encode(&dest_key.as_bytes()[..8]),
-                                            error = %e,
-                                            "Failed to send session init"
-                                        );
-                                    }
-                                } else {
-                                    tracing::trace!(
-                                        dest = %hex::encode(&dest_key.as_bytes()[..8]),
-                                        "No direct peer connection to send init"
-                                    );
-                                }
-                            }
-                        }
-                    }
+                    routing.handle_outgoing_ipv6_packet(packet, registry);
                 } else {
                     tracing::trace!("Peer registry not available, cannot route packet");
                 }
@@ -1346,4 +1168,3 @@ fn cmd_export_key_from_config(config: &NodeConfig) -> Result<()> {
     print!("{}", pem);
     Ok(())
 }
-

@@ -55,17 +55,57 @@ impl Pathfinder {
     pub fn should_send_lookup(&self, dest: &PublicKey) -> bool {
         if let Some(info) = self.paths.get(dest) {
             // Don't flood with requests
-            info.req_time.elapsed() >= self.config.path_throttle
-        } else {
-            true
+            if info.broken {
+                return true;
+            }
+
+            return info.req_time.elapsed() >= self.config.path_throttle;
         }
+
+        true
+    }
+
+    /// Check if we should send a lookup using a transformed destination key.
+    pub fn should_send_lookup_for(&self, dest: &PublicKey, xform: &PublicKey) -> bool {
+        if let Some(info) = self.paths.get(dest) {
+            if info.broken {
+                return true;
+            }
+
+            return info.req_time.elapsed() >= self.config.path_throttle;
+        }
+
+        if let Some(rumor) = self.rumors.get(xform) {
+            return rumor.send_time.elapsed() >= self.config.path_throttle;
+        }
+
+        true
     }
 
     /// Record that we sent a lookup.
+    #[allow(dead_code)]
     pub fn mark_lookup_sent(&mut self, dest: PublicKey) {
         if let Some(info) = self.paths.get_mut(&dest) {
             info.req_time = Instant::now();
         }
+    }
+
+    /// Record that we sent a lookup, updating either the known path entry or
+    /// a rumor entry for throttling.
+    pub fn mark_lookup_sent_for(&mut self, dest: PublicKey, xform: PublicKey) {
+        if let Some(info) = self.paths.get_mut(&dest) {
+            info.req_time = Instant::now();
+            return;
+        }
+
+        self.rumors
+            .entry(xform)
+            .and_modify(|r| r.send_time = Instant::now())
+            .or_insert_with(|| {
+                let mut r = PathRumor::new();
+                r.send_time = Instant::now();
+                r
+            });
     }
 
     /// Handle a path notification response.
@@ -101,7 +141,8 @@ impl Pathfinder {
             // Check if we have a rumor for this
             let xform = xform_key(source);
             if !self.rumors.contains_key(&xform) {
-                return false;
+                // Accept even if we didn't explicitly request it; we simply
+                // won't have any buffered traffic to replay.
             }
         }
 
@@ -111,10 +152,12 @@ impl Pathfinder {
         // Transfer any cached traffic from rumors
         let xform = xform_key(source);
         if let Some(mut rumor) = self.rumors.remove(&xform) {
-            if let Some(traffic) = rumor.traffic.take() {
-                if traffic.dest == *source {
-                    path_info.traffic = Some(traffic);
-                }
+            if let Some(mut traffic) = rumor.traffic.take() {
+                // The cached traffic may have been stored with a transformed
+                // destination key; rewrite it to the actual source key we just
+                // learned about so that forwarding succeeds.
+                traffic.dest = *source;
+                path_info.traffic = Some(traffic);
             }
         }
 
@@ -124,7 +167,9 @@ impl Pathfinder {
 
     /// Get the path for a destination, if known.
     pub fn get_path(&self, dest: &PublicKey) -> Option<&Vec<PeerPort>> {
-        self.paths.get(dest).map(|info| &info.path)
+        self.paths
+            .get(dest)
+            .and_then(|info| if info.broken { None } else { Some(&info.path) })
     }
 
     /// Check if we have a path to a destination.
@@ -158,6 +203,7 @@ impl Pathfinder {
     }
 
     /// Start a rumor-based lookup for a destination.
+    #[allow(dead_code)]
     pub fn start_rumor(&mut self, _dest: PublicKey, xform: PublicKey) {
         if let Some(rumor) = self.rumors.get_mut(&xform) {
             if rumor.send_time.elapsed() < self.config.path_throttle {
@@ -165,15 +211,16 @@ impl Pathfinder {
             }
             rumor.send_time = Instant::now();
         } else {
-            self.rumors.insert(xform, PathRumor::new());
+            let mut rumor = PathRumor::new();
+            rumor.send_time = Instant::now();
+            self.rumors.insert(xform, rumor);
         }
     }
 
     /// Cache traffic for a rumored destination.
     pub fn cache_rumor_traffic(&mut self, xform: PublicKey, traffic: Box<Traffic>) {
-        if let Some(rumor) = self.rumors.get_mut(&xform) {
-            rumor.traffic = Some(traffic);
-        }
+        let rumor = self.rumors.entry(xform).or_insert_with(PathRumor::new);
+        rumor.traffic = Some(traffic);
     }
 
     /// Take cached traffic from a path.
@@ -212,7 +259,8 @@ mod tests {
         let dest = PublicKey::from([1u8; 32]);
 
         // Should send lookup for unknown destination
-        assert!(pf.should_send_lookup(&dest));
+        let xform = dest;
+        assert!(pf.should_send_lookup_for(&dest, &xform));
     }
 
     #[test]

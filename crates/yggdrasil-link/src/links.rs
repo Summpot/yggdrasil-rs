@@ -696,7 +696,9 @@ impl Links {
         let protocol = if let Some(scheme_end) = uri.find("://") {
             &uri[..scheme_end]
         } else {
-            return Err(LinkError::Protocol("URI missing protocol scheme (e.g., tls://)".to_string()));
+            return Err(LinkError::Protocol(
+                "URI missing protocol scheme (e.g., tls://)".to_string(),
+            ));
         };
 
         match protocol {
@@ -705,44 +707,60 @@ impl Links {
                     .strip_prefix("tls://")
                     .ok_or_else(|| LinkError::Protocol("invalid tls:// URI".to_string()))?;
 
-                let mut addrs = addr
-                    .to_socket_addrs()
-                    .map_err(|e| LinkError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
-                let socket = addrs
-                    .next()
-                    .ok_or_else(|| LinkError::Protocol("URI did not resolve to an address".to_string()))?;
+                let mut addrs = addr.to_socket_addrs().map_err(|e| {
+                    LinkError::Io(std::io::Error::new(std::io::ErrorKind::Other, e))
+                })?;
+                let socket = addrs.next().ok_or_else(|| {
+                    LinkError::Protocol("URI did not resolve to an address".to_string())
+                })?;
 
                 self.connect(socket, sintf, link_type, priority, password)
                     .await
             }
             "tcp" => {
                 // TCP protocol support
-                Err(LinkError::Protocol("tcp:// protocol not yet integrated into links manager".to_string()))
+                Err(LinkError::Protocol(
+                    "tcp:// protocol not yet integrated into links manager".to_string(),
+                ))
             }
             "quic" => {
                 // QUIC protocol support
-                Err(LinkError::Protocol("quic:// protocol not yet integrated into links manager".to_string()))
+                Err(LinkError::Protocol(
+                    "quic:// protocol not yet integrated into links manager".to_string(),
+                ))
             }
             #[cfg(unix)]
             "unix" => {
                 // Unix socket protocol support
-                Err(LinkError::Protocol("unix:// protocol not yet integrated into links manager".to_string()))
+                Err(LinkError::Protocol(
+                    "unix:// protocol not yet integrated into links manager".to_string(),
+                ))
             }
             "ws" => {
                 // WebSocket protocol support - module complete, needs integration
-                Err(LinkError::Protocol("ws:// protocol module exists but not yet integrated into links manager".to_string()))
+                Err(LinkError::Protocol(
+                    "ws:// protocol module exists but not yet integrated into links manager"
+                        .to_string(),
+                ))
             }
             "wss" => {
                 // WebSocket Secure protocol support - module complete, needs integration
-                Err(LinkError::Protocol("wss:// protocol module exists but not yet integrated into links manager".to_string()))
+                Err(LinkError::Protocol(
+                    "wss:// protocol module exists but not yet integrated into links manager"
+                        .to_string(),
+                ))
             }
             "socks" | "sockstls" => {
                 // SOCKS5 proxy support
-                Err(LinkError::Protocol(format!("{}:// protocol not yet implemented", protocol)))
+                Err(LinkError::Protocol(format!(
+                    "{}:// protocol not yet implemented",
+                    protocol
+                )))
             }
-            _ => {
-                Err(LinkError::Protocol(format!("unsupported protocol: {}", protocol)))
-            }
+            _ => Err(LinkError::Protocol(format!(
+                "unsupported protocol: {}",
+                protocol
+            ))),
         }
     }
 
@@ -775,13 +793,13 @@ impl Links {
                 })
             })
             .collect();
-        
+
         debug!(
             total_stored = total,
             returned = summaries.len(),
             "get_links() called"
         );
-        
+
         summaries
     }
 

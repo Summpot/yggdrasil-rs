@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use futures::{SinkExt, StreamExt};
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
-use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async, tungstenite::Message};
 use yggdrasil_types::PublicKey;
 
 use crate::link::{Link, LinkConfig, LinkError, LinkInfo};
@@ -37,7 +37,9 @@ impl WebSocketLink {
             .uri(uri)
             .header("Sec-WebSocket-Protocol", "ygg-ws")
             .body(())
-            .map_err(|e| LinkError::Protocol(format!("failed to build WebSocket request: {}", e)))?;
+            .map_err(|e| {
+                LinkError::Protocol(format!("failed to build WebSocket request: {}", e))
+            })?;
 
         let (ws_stream, _response) = connect_async(request)
             .await
@@ -150,13 +152,10 @@ impl Link for WebSocketLink {
         let mut ws_stream = self.ws_stream.lock().await;
         // Convert slice to Bytes for WebSocket Message
         let bytes = bytes::Bytes::copy_from_slice(data);
-        ws_stream
-            .send(Message::Binary(bytes))
-            .await
-            .map_err(|e| {
-                self.connected.store(false, Ordering::Relaxed);
-                LinkError::Protocol(format!("WebSocket write failed: {}", e))
-            })?;
+        ws_stream.send(Message::Binary(bytes)).await.map_err(|e| {
+            self.connected.store(false, Ordering::Relaxed);
+            LinkError::Protocol(format!("WebSocket write failed: {}", e))
+        })?;
 
         Ok(())
     }

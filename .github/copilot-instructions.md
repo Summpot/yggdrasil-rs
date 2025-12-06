@@ -67,11 +67,3 @@
 * Follow the project's established coding conventions.
 * Use consistent naming conventions as per language standards.
 * Keep functions/methods focused and single-purpose.
-
-## 7. Documentation & Temporary Snippets
-
-* Use the `docs/` directory for small, focused markdown files that track progress, record short examples, or contain temporary code snippets.
-* Keep each file as small and targeted as possible — one topic or snippet per file.
-* Use clear, searchable filenames that indicate purpose and context, e.g. `progress/2025-12-04-genconf-snippet.md`, `notes/bridge-state-debug.md`, or `scratch/quick-crypto-example.md`.
-* Avoid large consolidated notes; prefer multiple tiny files so contributors can find or discard only the items they need.
-* Use `docs/` files for transient or investigative content that helps development; when something becomes permanent or important, move it into proper docs and reference it from README or the docs index.

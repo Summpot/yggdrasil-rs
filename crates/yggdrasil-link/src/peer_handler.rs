@@ -194,10 +194,11 @@ where
 
                 // Send outgoing packets
                 Some(packet) = outgoing_rx.recv() => {
-                    trace!(
+                    debug!(
+                        remote = %hex::encode(&remote_key.as_bytes()[..8]),
                         packet_type = ?packet.packet_type,
                         payload_len = packet.payload.len(),
-                        "Sending packet to peer"
+                        "Received outgoing packet from channel, writing to peer"
                     );
 
                     if let Some(metrics) = &self.metrics {
@@ -218,6 +219,12 @@ where
                     }
                     if let Err(e) = flush_writer(&mut writer).await {
                         debug!(error = ?e, "Failed to flush writer");
+                    } else {
+                        trace!(
+                            remote = %hex::encode(&remote_key.as_bytes()[..8]),
+                            packet_type = ?packet.packet_type,
+                            "Packet written and flushed successfully"
+                        );
                     }
                 }
 

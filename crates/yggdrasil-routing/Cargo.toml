@@ -11,6 +11,7 @@ description = "Routing implementation for the Yggdrasil network"
 yggdrasil-types.workspace = true
 yggdrasil-wire.workspace = true
 yggdrasil-crypto.workspace = true
+yggdrasil-address.workspace = true
 tokio.workspace = true
 parking_lot.workspace = true
 dashmap.workspace = true

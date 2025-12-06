@@ -102,7 +102,7 @@ impl PeerManager {
     }
 
     /// Allocate a port for a new peer.
-    fn allocate_port(&mut self, key: &PublicKey) -> PeerPort {
+    pub(crate) fn allocate_port(&mut self, key: &PublicKey) -> PeerPort {
         // Check if we already have a port for this key
         if let Some(key_peers) = self.peers.get(key) {
             if let Some((port, _)) = key_peers.iter().next() {
@@ -120,9 +120,20 @@ impl PeerManager {
         }
     }
 
-    /// Add a new peer connection.
-    pub fn add_peer(&mut self, key: PublicKey, priority: u8) -> PeerInfo {
-        let port = self.allocate_port(&key);
+    /// Add a new peer connection with an explicitly assigned port.
+    pub fn add_peer_with_port(&mut self, key: PublicKey, port: PeerPort, priority: u8) -> PeerInfo {
+        // If this port is already in use by another peer, drop the old mapping.
+        if let Some(existing_key) = self.ports.get(&port).copied() {
+            if existing_key != key {
+                if let Some(entry) = self.peers.get_mut(&existing_key) {
+                    entry.remove(&port);
+                    if entry.is_empty() {
+                        self.peers.remove(&existing_key);
+                    }
+                }
+            }
+        }
+
         let order = self.order;
         self.order += 1;
 
@@ -134,7 +145,13 @@ impl PeerManager {
             .insert(port, info.clone());
         self.ports.insert(port, key);
 
-        PeerInfo::new(key, port, priority, order)
+        info
+    }
+
+    /// Add a new peer connection, allocating a port if none is provided.
+    pub fn add_peer(&mut self, key: PublicKey, priority: u8) -> PeerInfo {
+        let port = self.allocate_port(&key);
+        self.add_peer_with_port(key, port, priority)
     }
 
     /// Remove a peer connection.

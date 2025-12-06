@@ -12,17 +12,20 @@ use crate::cli::ServiceCommand;
 use crate::utils::{default_config_path, ensure_config_file};
 
 /// Helper to create and configure a service manager
-fn get_service_manager(label: String, user: bool) -> Result<(Box<dyn ServiceManager>, ServiceLabel)> {
+fn get_service_manager(
+    label: String,
+    user: bool,
+) -> Result<(Box<dyn ServiceManager>, ServiceLabel)> {
     let label: ServiceLabel = label.parse()?;
-    let mut manager = <dyn ServiceManager>::native()
-        .context("Failed to detect service management platform")?;
-    
+    let mut manager =
+        <dyn ServiceManager>::native().context("Failed to detect service management platform")?;
+
     if user {
         manager
             .set_level(ServiceLevel::User)
             .context("Service manager does not support user-level services")?;
     }
-    
+
     Ok((manager, label))
 }
 

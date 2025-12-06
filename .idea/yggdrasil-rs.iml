@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="EMPTY_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-address/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-config/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-crypto/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-link/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-multicast/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-routing/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-session/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-tun/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-types/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/yggdrasil-wire/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

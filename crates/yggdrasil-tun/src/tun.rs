@@ -127,11 +127,8 @@ impl TunAdapter {
         let if_index = device.if_index().map_err(TunError::Io)?;
 
         // Install global Yggdrasil route 200::/7 via the TUN interface
-        let mut route = Route::new(
-            IpAddr::V6(Ipv6Addr::new(0x0200, 0, 0, 0, 0, 0, 0, 0)),
-            7u8,
-        )
-        .with_ifindex(if_index);
+        let mut route = Route::new(IpAddr::V6(Ipv6Addr::new(0x0200, 0, 0, 0, 0, 0, 0, 0)), 7u8)
+            .with_ifindex(if_index);
 
         #[cfg(any(target_os = "windows", target_os = "linux"))]
         {

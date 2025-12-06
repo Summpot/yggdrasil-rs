@@ -3568,6 +3568,7 @@ dependencies = [
  "rand",
  "tokio",
  "tracing",
+ "yggdrasil-address",
  "yggdrasil-crypto",
  "yggdrasil-types",
  "yggdrasil-wire",

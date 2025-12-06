@@ -135,16 +135,21 @@ pub fn ensure_config_file(path: &Path, generate: bool) -> Result<()> {
     }
 
     if !generate {
-        anyhow::bail!("Config file not found: {:?}. Use --generate-config to create it.", path);
+        anyhow::bail!(
+            "Config file not found: {:?}. Use --generate-config to create it.",
+            path
+        );
     }
 
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).with_context(|| format!("Failed to create config directory: {:?}", parent))?;
+        fs::create_dir_all(parent)
+            .with_context(|| format!("Failed to create config directory: {:?}", parent))?;
     }
 
     let config = NodeConfig::generate();
     let content = config.to_hjson_with_comments()?;
-    fs::write(path, content).with_context(|| format!("Failed to write generated config to {:?}", path))?;
+    fs::write(path, content)
+        .with_context(|| format!("Failed to write generated config to {:?}", path))?;
     Ok(())
 }
 

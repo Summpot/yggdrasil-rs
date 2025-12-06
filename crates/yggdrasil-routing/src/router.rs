@@ -4,10 +4,9 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 
-
-
+use yggdrasil_address::{self, Address};
 use yggdrasil_types::{PeerPort, PrivateKey, PublicKey, Signature};
-use yggdrasil_wire::{RouterAnnounce, RouterSigReq, RouterSigRes};
+use yggdrasil_wire::{PathNotify, RouterAnnounce, RouterSigReq, RouterSigRes, Traffic};
 
 use crate::bloom::BloomManager;
 use crate::config::{RouterCallbacks, RouterConfig};
@@ -66,13 +65,20 @@ impl Router {
     ) -> Self {
         let public_key = private_key.public_key();
 
+        // Configure bloom transformation using callbacks so upper layers can
+        // control how partial keys are matched (e.g., subnet-derived keys for
+        // address lookups).
+        let callbacks_for_bloom = Arc::clone(&callbacks);
+        let mut blooms = BloomManager::new();
+        blooms.set_transform(move |k| callbacks_for_bloom.bloom_transform(k));
+
         Self {
             private_key,
             public_key,
             config: config.clone(),
             callbacks,
             peers: PeerManager::new(),
-            blooms: BloomManager::new(),
+            blooms,
             pathfinder: Pathfinder::new(config),
             infos: HashMap::new(),
             ancestries: HashMap::new(),
@@ -93,10 +99,15 @@ impl Router {
         &self.public_key
     }
 
-    /// Add a peer to the router.
-    pub fn add_peer(&mut self, key: PublicKey, priority: u8) -> PeerInfo {
+    /// Apply the configured bloom/key transformation.
+    pub fn transform_key(&self, key: &PublicKey) -> PublicKey {
+        self.blooms.transform_key(key)
+    }
+
+    /// Add a peer to the router with an explicit port assignment.
+    pub fn add_peer_with_port(&mut self, key: PublicKey, port: PeerPort, priority: u8) -> PeerInfo {
         // Add to peer manager
-        let info = self.peers.add_peer(key, priority);
+        let info = self.peers.add_peer_with_port(key, port, priority);
 
         // Initialize tracking structures
         if !self.sent.contains_key(&key) {
@@ -109,6 +120,71 @@ impl Router {
         self.requests.insert(key, req.clone());
 
         info
+    }
+
+    /// Add a peer to the router, allocating a port automatically.
+    pub fn add_peer(&mut self, key: PublicKey, priority: u8) -> PeerInfo {
+        let port = self.peers.allocate_port(&key);
+        self.add_peer_with_port(key, port, priority)
+    }
+
+    /// Determine whether we should send a lookup for the given destination
+    /// using the configured transform.
+    pub fn should_send_lookup(&self, dest: &PublicKey) -> bool {
+        let xform = self.transform_key(dest);
+        self.pathfinder.should_send_lookup_for(dest, &xform)
+    }
+
+    /// Determine whether we should send a lookup for a pre-transformed key.
+    pub fn should_send_lookup_for(&self, dest: &PublicKey, xform: &PublicKey) -> bool {
+        self.pathfinder.should_send_lookup_for(dest, xform)
+    }
+
+    /// Record that we sent a lookup (throttling) for the given destination.
+    #[allow(dead_code)]
+    pub fn mark_lookup_sent(&mut self, dest: PublicKey) {
+        let xform = self.transform_key(&dest);
+        self.pathfinder.mark_lookup_sent_for(dest, xform);
+    }
+
+    /// Record that we sent a lookup using a precomputed transform.
+    pub fn mark_lookup_sent_for(&mut self, dest: PublicKey, xform: PublicKey) {
+        self.pathfinder.mark_lookup_sent_for(dest, xform);
+    }
+
+    /// Cache traffic while waiting for a path lookup response.
+    pub fn cache_rumor_traffic(&mut self, xform: PublicKey, traffic: Traffic) {
+        self.pathfinder
+            .cache_rumor_traffic(xform, Box::new(traffic));
+    }
+
+    /// Take cached traffic for a destination (if any).
+    pub fn take_cached_traffic(&mut self, dest: &PublicKey) -> Option<Box<Traffic>> {
+        self.pathfinder.take_cached_traffic(dest)
+    }
+
+    /// Handle a PathNotify destined for us, returning any buffered traffic
+    /// that should now be forwarded.
+    pub fn handle_path_notify(&mut self, notify: &PathNotify) -> Option<Box<Traffic>> {
+        let transform = {
+            let blooms = &self.blooms;
+            move |k: &PublicKey| blooms.transform_key(k)
+        };
+
+        if self
+            .pathfinder
+            .handle_notify(notify, &self.public_key, transform)
+        {
+            self.callbacks.path_notify(&notify.source);
+            return self.pathfinder.take_cached_traffic(&notify.source);
+        }
+
+        None
+    }
+
+    /// Mark a path as broken in the pathfinder state.
+    pub fn mark_path_broken(&mut self, dest: &PublicKey) {
+        self.pathfinder.mark_broken(dest);
     }
 
     /// Remove a peer from the router.
@@ -164,7 +240,12 @@ impl Router {
     }
 
     /// Handle a signature response from a peer.
-    pub fn handle_sig_response(&mut self, peer_key: &PublicKey, res: &RouterSigRes, _rtt: Duration) {
+    pub fn handle_sig_response(
+        &mut self,
+        peer_key: &PublicKey,
+        res: &RouterSigRes,
+        _rtt: Duration,
+    ) {
         // Verify the response matches our request
         if let Some(req) = self.requests.get(peer_key) {
             if res.req == *req {
@@ -237,7 +318,7 @@ impl Router {
     }
 
     /// Become the root of the tree.
-    fn become_root(&mut self) -> bool {
+    pub fn become_root(&mut self) -> bool {
         let req = self.new_sig_req();
 
         let mut res = RouterSigRes {
@@ -318,6 +399,37 @@ impl Router {
 
         ports.reverse();
         (root, ports)
+    }
+
+    /// Find a known public key that corresponds to the given Yggdrasil IPv6 address.
+    ///
+    /// This checks all known router infos and currently connected peers, returning
+    /// the first key whose derived address matches the provided address.
+    pub fn key_for_address(&self, addr: &Address) -> Option<PublicKey> {
+        let mut seen = HashSet::new();
+
+        // Known router infos (includes ourselves once rooted) and connected peers.
+        let candidates = self
+            .infos
+            .keys()
+            .copied()
+            .chain(self.peers.iter().map(|(k, _)| *k))
+            .chain(std::iter::once(self.public_key));
+
+        for key in candidates {
+            // Skip duplicates to avoid extra address computations.
+            if !seen.insert(key) {
+                continue;
+            }
+
+            if let Some(derived) = yggdrasil_address::addr_for_key(&key) {
+                if &derived == addr {
+                    return Some(key);
+                }
+            }
+        }
+
+        None
     }
 
     /// Calculate tree distance between paths.
@@ -401,6 +513,51 @@ impl Router {
         }
 
         best.map(|(key, port, _, _)| (key, port))
+    }
+
+    /// Get a cloned path for the destination if known.
+    pub fn get_path(&self, dest: &PublicKey) -> Option<Vec<PeerPort>> {
+        if self.infos.contains_key(dest) {
+            Some(self.get_root_and_path(dest).1)
+        } else {
+            None
+        }
+    }
+
+    /// Retrieve a cached path discovered via the pathfinder (if any).
+    pub fn get_pathfinder_path(&self, dest: &PublicKey) -> Option<Vec<PeerPort>> {
+        self.pathfinder.get_path(dest).cloned()
+    }
+
+    /// Reset the path timeout for a destination when we see traffic from it.
+    pub fn reset_path_timeout(&mut self, key: &PublicKey) {
+        self.pathfinder.reset_timeout(key);
+    }
+
+    /// List all pending signature requests (for dispatch to peers).
+    pub fn pending_requests(&self) -> Vec<(PublicKey, RouterSigReq)> {
+        self.requests.iter().map(|(k, v)| (*k, v.clone())).collect()
+    }
+
+    /// Collect router announcements that have not yet been sent to peers.
+    /// Marks them as sent so repeated calls only emit new information.
+    pub fn collect_announcements(&mut self) -> Vec<(PublicKey, RouterAnnounce)> {
+        let mut out = Vec::new();
+
+        for (peer, sent_set) in self.sent.iter_mut() {
+            for (key, info) in self.infos.iter() {
+                if peer == key {
+                    // Don't send a node its own announcement
+                    continue;
+                }
+
+                if sent_set.insert(*key) {
+                    out.push((*peer, info.get_announce(*key)));
+                }
+            }
+        }
+
+        out
     }
 
     /// Perform maintenance tasks.

@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use parking_lot::RwLock;
 use yggdrasil_crypto::box_crypto::{self, BoxPriv};
-use yggdrasil_types::{PublicKey, SecretKey};
+use yggdrasil_types::{PublicKey, SecretKey, WireError};
 
 use crate::{SESSION_TIMEOUT, SessionBuffer, SessionInfo, SessionInit};
 
@@ -248,13 +248,18 @@ impl SessionManager {
             })
             .collect()
     }
-    pub fn encrypt_init(&self, dest: &PublicKey, init: &SessionInit) -> Option<Vec<u8>> {
-        init.encrypt(&self.secret_ed, dest).ok()
+
+    pub fn encrypt_init(&self, dest: &PublicKey, init: &SessionInit) -> Result<Vec<u8>, WireError> {
+        init.encrypt(&self.secret_ed, dest)
     }
 
     /// Encrypt a session ack message.
-    pub fn encrypt_ack(&self, dest: &PublicKey, ack: &crate::SessionAck) -> Option<Vec<u8>> {
-        ack.encrypt(&self.secret_ed, dest).ok()
+    pub fn encrypt_ack(
+        &self,
+        dest: &PublicKey,
+        ack: &crate::SessionAck,
+    ) -> Result<Vec<u8>, WireError> {
+        ack.encrypt(&self.secret_ed, dest)
     }
 
     /// Clean up expired sessions and buffers.
