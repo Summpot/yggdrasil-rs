@@ -1,7 +1,9 @@
 //! TUN adapter implementation.
 
-use std::net::Ipv6Addr;
+use std::io::ErrorKind;
+use std::net::{IpAddr, Ipv6Addr};
 
+use net_route::{Handle as RouteHandle, Route};
 use thiserror::Error;
 use tokio::sync::RwLock;
 use tun_rs::{AsyncDevice, DeviceBuilder};
@@ -44,6 +46,7 @@ pub struct TunAdapter {
     address: Address,
     subnet: Subnet,
     device: RwLock<Option<AsyncDevice>>,
+    route: RwLock<Option<Route>>,
 }
 
 impl TunAdapter {
@@ -54,13 +57,13 @@ impl TunAdapter {
             address,
             subnet,
             device: RwLock::new(None),
+            route: RwLock::new(None),
         }
     }
 
     /// Start the TUN adapter.
     pub async fn start(&self) -> Result<(), TunError> {
-        let mut device_guard = self.device.write().await;
-        if device_guard.is_some() {
+        if self.device.read().await.is_some() {
             return Err(TunError::AlreadyStarted);
         }
 
@@ -120,25 +123,101 @@ impl TunAdapter {
             .build_async()
             .map_err(|e| TunError::Device(e.to_string()))?;
 
-        tracing::info!(
-            name = ?self.config.name,
-            address = %ipv6_addr,
-            mtu = self.config.mtu,
-            "TUN adapter started"
-        );
+        let if_name = device.name().map_err(TunError::Io)?;
+        let if_index = device.if_index().map_err(TunError::Io)?;
 
-        *device_guard = Some(device);
+        // Install global Yggdrasil route 200::/7 via the TUN interface
+        let mut route = Route::new(
+            IpAddr::V6(Ipv6Addr::new(0x0200, 0, 0, 0, 0, 0, 0, 0)),
+            7u8,
+        )
+        .with_ifindex(if_index);
+
+        #[cfg(any(target_os = "windows", target_os = "linux"))]
+        {
+            // Match the kernel's default metric for on-link routes
+            route = route.with_metric(256);
+        }
+
+        let route_handle = RouteHandle::new().map_err(|e| {
+            TunError::Device(format!(
+                "failed to initialize routing handle for TUN route: {}",
+                e
+            ))
+        })?;
+
+        let mut installed_route: Option<Route> = None;
+
+        match route_handle.add(&route).await {
+            Ok(()) => {
+                installed_route = Some(route.clone());
+                tracing::info!(
+                    dest = "200::/7",
+                    if_index,
+                    metric = 256u32,
+                    "Added global Yggdrasil route via TUN"
+                );
+            }
+            Err(e) if e.kind() == ErrorKind::AlreadyExists => {
+                tracing::debug!(
+                    dest = "200::/7",
+                    if_index,
+                    "Global Yggdrasil route already exists"
+                );
+            }
+            Err(e) => {
+                return Err(TunError::Device(format!(
+                    "failed to add global Yggdrasil route: {}",
+                    e
+                )));
+            }
+        }
+
+        {
+            let mut route_guard = self.route.write().await;
+            *route_guard = installed_route;
+        }
+
+        {
+            let mut device_guard = self.device.write().await;
+            *device_guard = Some(device);
+        }
+
+        tracing::info!(name = %if_name, address = %ipv6_addr, mtu = self.config.mtu, "TUN adapter started");
+
         Ok(())
     }
 
     /// Stop the TUN adapter.
     pub async fn stop(&self) -> Result<(), TunError> {
-        let mut device_guard = self.device.write().await;
-        if device_guard.is_none() {
+        if self.device.read().await.is_none() {
             return Err(TunError::NotStarted);
         }
 
+        // Remove the global route if we installed it
+        if let Some(route) = { self.route.write().await.take() } {
+            match RouteHandle::new() {
+                Ok(handle) => {
+                    if let Err(e) = handle.delete(&route).await {
+                        tracing::warn!(
+                            error = %e,
+                            dest = "200::/7",
+                            "Failed to remove global Yggdrasil route"
+                        );
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        error = %e,
+                        dest = "200::/7",
+                        "Failed to initialize routing handle to remove global route"
+                    );
+                }
+            }
+        }
+
         // Drop the device to close it
+        let mut device_guard = self.device.write().await;
         *device_guard = None;
 
         tracing::info!("TUN adapter stopped");

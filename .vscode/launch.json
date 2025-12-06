@@ -1,0 +1,152 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug executable 'yggdrasil'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "run",
+                    "--bin=yggdrasil",
+                    "--package=yggdrasil"
+                ]
+            },
+            "args": ["run","--config","example.conf"]
+        },
+        
+        {
+            "name": "Debug unit tests in library 'yggdrasil'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in executable 'yggdrasil'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--bin=yggdrasil",
+                    "--package=yggdrasil"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_address'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-address"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_types'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-types"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_config'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-config"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_crypto'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-crypto"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_link'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-link"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_multicast'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-multicast"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_wire'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-wire"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_routing'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-routing"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_session'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-session"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'yggdrasil_tun'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=yggdrasil-tun"
+                ]
+            }
+        }
+    ]
+}

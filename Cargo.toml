@@ -117,6 +117,7 @@ rustls = { version = "0.23", default-features = false, features = [
 tokio-rustls = "0.26"
 webpki-roots = "1.0"
 rcgen = "0.14"
+net-route = "0.4"
 
 # Data structures
 bytes = "1.11"

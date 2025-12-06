@@ -69,7 +69,7 @@ fn main() -> ExitCode {
         // Use RollingFileAppender for better log management
         let file_dir = log_file
             .parent()
-            .unwrap_or_else(|| std::path::Path::new("."));
+            .unwrap_or_else(|| std::path::Path::new("logs"));
         let file_name = log_file
             .file_name()
             .and_then(|n| n.to_str())
@@ -81,7 +81,7 @@ fn main() -> ExitCode {
         let file_filter = tracing_subscriber::EnvFilter::try_from_default_env()
             .unwrap_or_else(|_| {
                 // Default file filter: trace for everything
-                tracing_subscriber::EnvFilter::new("trace")
+                tracing_subscriber::EnvFilter::new("trace,yggdrasil_multicast::multicast=warn,yggdrasil_link::peer_handler=warn")
             });
         
         let file_layer = tracing_subscriber::fmt::layer()

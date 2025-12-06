@@ -15,6 +15,7 @@ tracing.workspace = true
 thiserror.workspace = true
 async-trait.workspace = true
 tun-rs = { version = "2.7", features = ["async"] }
+net-route.workspace = true
 
 [build-dependencies]
 
