@@ -210,22 +210,38 @@ where
                     }
 
                     if let Err(e) = write_frame_with_payload(&mut writer, packet.packet_type, &packet.payload).await {
-                        debug!(error = ?e, "Failed to write frame");
+                        debug!(
+                            remote = %hex::encode(&remote_key.as_bytes()[..8]),
+                            error = ?e,
+                            packet_type = ?packet.packet_type,
+                            "Failed to write frame"
+                        );
                         let _ = event_tx.send(PeerEvent::Disconnected {
                             key: remote_key,
                             error: Some(format!("{:?}", e)),
                         });
                         break;
                     }
+                    
                     if let Err(e) = flush_writer(&mut writer).await {
-                        debug!(error = ?e, "Failed to flush writer");
-                    } else {
-                        trace!(
+                        debug!(
                             remote = %hex::encode(&remote_key.as_bytes()[..8]),
+                            error = ?e,
                             packet_type = ?packet.packet_type,
-                            "Packet written and flushed successfully"
+                            "Failed to flush writer - disconnecting peer"
                         );
+                        let _ = event_tx.send(PeerEvent::Disconnected {
+                            key: remote_key,
+                            error: Some(format!("flush error: {:?}", e)),
+                        });
+                        break;
                     }
+                    
+                    debug!(
+                        remote = %hex::encode(&remote_key.as_bytes()[..8]),
+                        packet_type = ?packet.packet_type,
+                        "Packet written and flushed successfully"
+                    );
                 }
 
                 // Send keep-alive periodically
@@ -454,11 +470,12 @@ async fn handle_packet<W: AsyncWrite + Unpin>(
             let traffic = Traffic::wire_decode(&mut data)
                 .map_err(|e| LinkError::Protocol(format!("Failed to decode traffic: {:?}", e)))?;
 
-            trace!(
+            debug!(
+                remote = %hex::encode(remote_key.as_bytes()[..8].as_ref()),
                 source = %hex::encode(&traffic.source.as_bytes()[..8]),
                 dest = %hex::encode(&traffic.dest.as_bytes()[..8]),
                 payload_len = traffic.payload.len(),
-                "Received traffic"
+                "Received traffic packet from peer"
             );
 
             // Send event

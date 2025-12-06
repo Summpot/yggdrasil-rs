@@ -16,3 +16,4 @@ tokio.workspace = true
 parking_lot.workspace = true
 dashmap.workspace = true
 tracing.workspace = true
+hex.workspace = true

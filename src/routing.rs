@@ -207,6 +207,16 @@ impl RoutingRuntime {
         registry: &PeerRegistry,
         incoming_tx: &mpsc::UnboundedSender<Vec<u8>>,
     ) {
+        debug!(
+            from = %hex::encode(&from.as_bytes()[..8]),
+            source = %hex::encode(&traffic.source.as_bytes()[..8]),
+            dest = %hex::encode(&traffic.dest.as_bytes()[..8]),
+            our_key = %hex::encode(&self.core.public_key().as_bytes()[..8]),
+            payload_len = traffic.payload.len(),
+            is_for_us = (traffic.dest == *self.core.public_key()),
+            "Processing incoming traffic packet"
+        );
+
         if traffic.dest == *self.core.public_key() {
             {
                 let mut router = self.router.write();
@@ -216,8 +226,15 @@ impl RoutingRuntime {
             let sessions = self.core.sessions();
             match sessions.handle_data(&from, &traffic.payload) {
                 HandleResult::Received { payload } => {
+                    debug!(
+                        from = %hex::encode(&from.as_bytes()[..8]),
+                        payload_len = payload.len(),
+                        "Session decrypted payload, sending to TUN"
+                    );
                     if let Err(e) = incoming_tx.send(payload) {
                         debug!(error = %e, "Failed to deliver decrypted packet to TUN channel");
+                    } else {
+                        trace!("Decrypted payload successfully sent to TUN channel");
                     }
                 }
                 HandleResult::SendInit { dest, init } => {
@@ -250,10 +267,18 @@ impl RoutingRuntime {
                     }
                 }
                 HandleResult::SendBuffered { dest, data } => {
+                    debug!(
+                        from = %hex::encode(&from.as_bytes()[..8]),
+                        dest = %hex::encode(&dest.as_bytes()[..8]),
+                        "Session buffered data, sending back"
+                    );
                     self.send_encrypted_payload(dest, data, registry);
                 }
                 HandleResult::Ignored => {
-                    trace!("Ignored traffic packet (possibly dummy)");
+                    debug!(
+                        from = %hex::encode(&from.as_bytes()[..8]),
+                        "Ignored traffic packet (possibly dummy or out of sequence)"
+                    );
                 }
                 HandleResult::Error => {
                     debug!(from = %hex::encode(&from.as_bytes()[..8]), "Error handling traffic packet");

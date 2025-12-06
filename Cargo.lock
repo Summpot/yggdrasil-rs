@@ -3580,6 +3580,7 @@ version = "0.1.0"
 dependencies = [
  "dashmap",
  "ed25519-dalek",
+ "hex",
  "parking_lot",
  "tokio",
  "tracing",

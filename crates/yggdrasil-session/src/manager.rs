@@ -102,21 +102,52 @@ impl SessionManager {
             return HandleResult::Ignored;
         }
 
+        let packet_type = data[0];
+        tracing::debug!(
+            from = %hex::encode(&from.as_bytes()[..8]),
+            packet_type = packet_type,
+            data_len = data.len(),
+            packet_name = match packet_type {
+                0 => "Dummy",
+                1 => "Init",
+                2 => "Ack",
+                3 => "Traffic",
+                _ => "Unknown"
+            },
+            "Session: Received packet"
+        );
+
         match data[0] {
             0 => HandleResult::Ignored, // Dummy
             1 => {
                 // Init
                 if let Some(init) = SessionInit::decrypt(&self.secret_box, from, data) {
+                    tracing::debug!(
+                        from = %hex::encode(&from.as_bytes()[..8]),
+                        "Session: Init decrypted successfully"
+                    );
                     self.handle_init(from, &init)
                 } else {
+                    tracing::warn!(
+                        from = %hex::encode(&from.as_bytes()[..8]),
+                        "Session: Failed to decrypt Init packet"
+                    );
                     HandleResult::Error
                 }
             }
             2 => {
                 // Ack
                 if let Some(ack) = crate::SessionAck::decrypt(&self.secret_box, from, data) {
+                    tracing::debug!(
+                        from = %hex::encode(&from.as_bytes()[..8]),
+                        "Session: Ack decrypted successfully"
+                    );
                     self.handle_ack(from, &ack)
                 } else {
+                    tracing::warn!(
+                        from = %hex::encode(&from.as_bytes()[..8]),
+                        "Session: Failed to decrypt Ack packet"
+                    );
                     HandleResult::Error
                 }
             }
@@ -177,10 +208,25 @@ impl SessionManager {
 
     fn handle_traffic(&self, pub_key: &PublicKey, msg: &[u8]) -> HandleResult {
         if let Some(session) = self.sessions.read().get(pub_key) {
+            tracing::debug!(
+                from = %hex::encode(&pub_key.as_bytes()[..8]),
+                "Session: Found existing session, attempting to decrypt traffic"
+            );
             let mut info = session.write();
             match info.decrypt_traffic(msg) {
-                Ok(payload) => HandleResult::Received { payload },
+                Ok(payload) => {
+                    tracing::debug!(
+                        from = %hex::encode(&pub_key.as_bytes()[..8]),
+                        payload_len = payload.len(),
+                        "Session: Traffic decrypted successfully"
+                    );
+                    HandleResult::Received { payload }
+                }
                 Err(crate::info::DecryptError::KeyMismatch) => {
+                    tracing::warn!(
+                        from = %hex::encode(&pub_key.as_bytes()[..8]),
+                        "Session: Key mismatch, sending Init to resync"
+                    );
                     // Send init to resync
                     let init = info.create_init();
                     HandleResult::SendInit {
@@ -188,9 +234,20 @@ impl SessionManager {
                         init,
                     }
                 }
-                Err(_) => HandleResult::Error,
+                Err(e) => {
+                    tracing::error!(
+                        from = %hex::encode(&pub_key.as_bytes()[..8]),
+                        error = ?e,
+                        "Session: Failed to decrypt traffic"
+                    );
+                    HandleResult::Error
+                }
             }
         } else {
+            tracing::warn!(
+                from = %hex::encode(&pub_key.as_bytes()[..8]),
+                "Session: No session found for traffic, sending ephemeral Init"
+            );
             // No session - send ephemeral init
             let (current_pub, _) = box_crypto::generate_keypair();
             let (next_pub, _) = box_crypto::generate_keypair();
@@ -205,10 +262,25 @@ impl SessionManager {
     /// Encrypt and send data to a peer.
     pub fn write_to(&self, to_key: PublicKey, msg: Vec<u8>) -> WriteResult {
         if let Some(session) = self.sessions.read().get(&to_key) {
+            tracing::debug!(
+                dest = %hex::encode(&to_key.as_bytes()[..8]),
+                msg_len = msg.len(),
+                "Session: Encrypting traffic with existing session"
+            );
             let mut info = session.write();
             let encrypted = info.encrypt_traffic(&msg);
+            tracing::debug!(
+                dest = %hex::encode(&to_key.as_bytes()[..8]),
+                encrypted_len = encrypted.len(),
+                "Session: Traffic encrypted successfully"
+            );
             WriteResult::Send { data: encrypted }
         } else {
+            tracing::debug!(
+                dest = %hex::encode(&to_key.as_bytes()[..8]),
+                msg_len = msg.len(),
+                "Session: No session exists, buffering and sending Init"
+            );
             // Buffer and init
             self.buffer_and_init(to_key, msg)
         }

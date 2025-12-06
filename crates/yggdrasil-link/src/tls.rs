@@ -1,11 +1,14 @@
 //! TLS link implementation using tokio-rustls.
 
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
 use async_trait::async_trait;
+use parking_lot::Mutex as ParkingMutex;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, ServerName};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -13,6 +16,7 @@ use tokio::sync::Mutex;
 use tokio_rustls::TlsConnector;
 use tokio_rustls::client::TlsStream as ClientTlsStream;
 use tokio_rustls::server::TlsStream as ServerTlsStream;
+use tracing::{debug, warn};
 use yggdrasil_types::PublicKey;
 
 use crate::link::{Link, LinkConfig, LinkError, LinkInfo};
@@ -251,26 +255,86 @@ impl Link for TlsServerLink {
     }
 }
 
+/// TLS key logger for Wireshark decryption.
+/// Compatible with SSLKEYLOGFILE format used by Chrome, Firefox, etc.
+#[derive(Debug)]
+struct KeyLogFile {
+    file: ParkingMutex<Option<std::fs::File>>,
+}
+
+impl KeyLogFile {
+    fn new() -> Option<Arc<Self>> {
+        // Check for SSLKEYLOGFILE environment variable
+        let path = std::env::var("SSLKEYLOGFILE").ok()?;
+        
+        match OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)
+        {
+            Ok(file) => {
+                debug!(path = %path, "TLS key logging enabled");
+                Some(Arc::new(Self {
+                    file: ParkingMutex::new(Some(file)),
+                }))
+            }
+            Err(e) => {
+                warn!(path = %path, error = %e, "Failed to open SSLKEYLOGFILE");
+                None
+            }
+        }
+    }
+}
+
+impl rustls::KeyLog for KeyLogFile {
+    fn log(&self, label: &str, client_random: &[u8], secret: &[u8]) {
+        let mut file_guard = self.file.lock();
+        if let Some(ref mut file) = *file_guard {
+            // Format: <Label> <ClientRandom> <Secret>
+            // All values are hex-encoded
+            let client_random_hex = hex::encode(client_random);
+            let secret_hex = hex::encode(secret);
+            let line = format!("{} {} {}\n", label, client_random_hex, secret_hex);
+            
+            if let Err(e) = file.write_all(line.as_bytes()) {
+                warn!(error = %e, "Failed to write to SSLKEYLOGFILE");
+            }
+        }
+    }
+}
+
 /// Create a default TLS client configuration that skips certificate verification.
 /// This is used for self-signed certificates in Yggdrasil.
+/// Supports SSLKEYLOGFILE environment variable for Wireshark decryption.
 pub fn create_insecure_client_config() -> Arc<rustls::ClientConfig> {
-    let config = rustls::ClientConfig::builder()
+    let mut config = rustls::ClientConfig::builder()
         .dangerous()
         .with_custom_certificate_verifier(Arc::new(InsecureServerVerifier))
         .with_no_client_auth();
+
+    // Enable key logging if SSLKEYLOGFILE is set
+    if let Some(key_log) = KeyLogFile::new() {
+        config.key_log = key_log;
+    }
 
     Arc::new(config)
 }
 
 /// Create a TLS server configuration with the given certificate and key.
+/// Supports SSLKEYLOGFILE environment variable for Wireshark decryption.
 pub fn create_server_config(
     cert: CertificateDer<'static>,
     key: PrivateKeyDer<'static>,
 ) -> Result<Arc<rustls::ServerConfig>, LinkError> {
-    let config = rustls::ServerConfig::builder()
+    let mut config = rustls::ServerConfig::builder()
         .with_no_client_auth()
         .with_single_cert(vec![cert], key)
         .map_err(|e| LinkError::Tls(e.to_string()))?;
+
+    // Enable key logging if SSLKEYLOGFILE is set
+    if let Some(key_log) = KeyLogFile::new() {
+        config.key_log = key_log;
+    }
 
     Ok(Arc::new(config))
 }
