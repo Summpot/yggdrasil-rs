@@ -1,0 +1,6 @@
+/target
+
+/thirdparty/yggdrasil-go/yggdrasil
+/thirdparty/yggdrasil-go/yggdrasilctl
+/thirdparty/yggdrasil-go/genkeys
+*.backup

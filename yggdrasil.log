@@ -1,0 +1,1295 @@
+2025-12-06T15:01:32.684961Z  INFO yggdrasil: Starting Yggdrasil address=200:231a:6fae:4668:1cde:32f:15a8:c3dd subnet=300:231a:6fae:4668:0:0:0:0/64 public_key=ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b2daea046
+2025-12-06T15:01:32.685139Z  INFO yggdrasil::core: Yggdrasil node started public_key=ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b2daea046 address=200:231a:6fae:4668:1cde:32f:15a8:c3dd subnet=300:231a:6fae:4668:0:0:0:0/64
+2025-12-06T15:01:32.688834Z  INFO yggdrasil::admin_server: Admin socket listening on TCP address="localhost:9001"
+2025-12-06T15:01:32.688986Z  INFO yggdrasil: Admin socket started listen=tcp://localhost:9001
+2025-12-06T15:01:32.698719Z  INFO yggdrasil_link::links: Links manager started
+2025-12-06T15:01:32.698808Z  INFO yggdrasil: Links manager started
+2025-12-06T15:01:32.700212Z  INFO yggdrasil_multicast::multicast: Starting multicast module
+2025-12-06T15:01:32.700556Z  INFO yggdrasil: Multicast module started
+2025-12-06T15:01:32.700790Z DEBUG yggdrasil_tun::wintun_dll: wintun.dll already exists with correct size dll_path="C:\\Users\\Summp\\source\\repos\\yggdrasil-rs\\target\\debug\\wintun.dll"
+2025-12-06T15:01:32.704513Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:32.704516Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:32.704560Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:32.704567Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:32.704572Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:32.704580Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:32.704582Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:32.704592Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:32.704597Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:32.704608Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:32.704796Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:32.704922Z  INFO yggdrasil_link::links: TLS listener started addr=[fe80::656c:1f39:2a6f:bcec%4]:63594
+2025-12-06T15:01:32.704986Z DEBUG yggdrasil_multicast::multicast: Started TLS listener on 以太网 at [fe80::656c:1f39:2a6f:bcec]:63594
+2025-12-06T15:01:32.705260Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 以太网 via fe80::656c:1f39:2a6f:bcec port 63594
+2025-12-06T15:01:32.705504Z  INFO yggdrasil_link::links: TLS listener started addr=[fe80::6c35:7f79:d7da:5d3b%15]:63595
+2025-12-06T15:01:32.705548Z DEBUG yggdrasil_multicast::multicast: Started TLS listener on 本地连接* 10 at [fe80::6c35:7f79:d7da:5d3b]:63595
+2025-12-06T15:01:32.705699Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 10 via fe80::6c35:7f79:d7da:5d3b port 63595
+2025-12-06T15:01:32.705885Z  INFO yggdrasil_link::links: TLS listener started addr=[fe80::f0bd:e073:d8c2:e9a8%33]:63596
+2025-12-06T15:01:32.705929Z DEBUG yggdrasil_multicast::multicast: Started TLS listener on vEthernet (Default Switch) at [fe80::f0bd:e073:d8c2:e9a8]:63596
+2025-12-06T15:01:32.706064Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on vEthernet (Default Switch) via fe80::f0bd:e073:d8c2:e9a8 port 63596
+2025-12-06T15:01:32.706240Z  INFO yggdrasil_link::links: TLS listener started addr=[fe80::23d6:2e17:c568:b899%19]:63597
+2025-12-06T15:01:32.706259Z DEBUG yggdrasil_multicast::multicast: Started TLS listener on 本地连接* 9 at [fe80::23d6:2e17:c568:b899]:63597
+2025-12-06T15:01:32.706370Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 9 via fe80::23d6:2e17:c568:b899 port 63597
+2025-12-06T15:01:32.706529Z  INFO yggdrasil_link::links: TLS listener started addr=[fe80::a1d3:52b3:460c:1149%9]:63598
+2025-12-06T15:01:32.706547Z DEBUG yggdrasil_multicast::multicast: Started TLS listener on WLAN at [fe80::a1d3:52b3:460c:1149]:63598
+2025-12-06T15:01:32.706648Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on WLAN via fe80::a1d3:52b3:460c:1149 port 63598
+2025-12-06T15:01:32.706761Z TRACE yggdrasil_link::links: Accepting incoming TLS connection addr=[fe80::9e69:b4ff:fe61:f07e%4]:42233
+2025-12-06T15:01:32.706808Z TRACE yggdrasil_link::links: Starting TLS handshake for incoming connection remote_addr=[fe80::9e69:b4ff:fe61:f07e%4]:42233 local_addr=[fe80::656c:1f39:2a6f:bcec%4]:63594
+2025-12-06T15:01:32.707065Z TRACE rustls::server::hs: we got a clienthello ClientHelloPayload { client_version: TLSv1_2, random: 245d4cd5cd0e74aa2097ff5a87c2ed044c823c76b93d9f79bc52dce7e32e0828, session_id: 4ddb1f110280e5c035a3a27ecca66e5e500b0c16242c32e3402bcda3bc545f02, cipher_suites: [TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, CipherSuite(0xc012), TLS13_AES_128_GCM_SHA256, TLS13_AES_256_GCM_SHA384, TLS13_CHACHA20_POLY1305_SHA256], compression_methods: [Null], extensions: ClientExtensions { certificate_status_request: Ocsp(OcspCertificateStatusRequest { responder_ids: [], extensions:  }), named_groups: [X25519, secp256r1, secp384r1, secp521r1], ec_point_formats: SupportedEcPointFormats { uncompressed: true }, signature_schemes: [RSA_PSS_SHA256, ECDSA_NISTP256_SHA256, ED25519, RSA_PSS_SHA384, RSA_PSS_SHA512, RSA_PKCS1_SHA256, RSA_PKCS1_SHA384, RSA_PKCS1_SHA512, ECDSA_NISTP384_SHA384, ECDSA_NISTP521_SHA512, RSA_PKCS1_SHA1, ECDSA_SHA1_Legacy], extended_master_secret_request: (), supported_versions: SupportedProtocolVersions { tls13: true, tls12: true }, key_shares: [KeyShareEntry { group: X25519, payload: 77c417b45359f2489e3607fcef14af5a86736a0a7aa11631f75bd2230410284e }], renegotiation_info: , order_seed: 0, contiguous_extensions: [], .. } }
+2025-12-06T15:01:32.707162Z TRACE rustls::server::hs: Resolving server certificate: ClientHello {
+    server_name: None,
+    signature_schemes: [
+        RSA_PSS_SHA256,
+        ECDSA_NISTP256_SHA256,
+        ED25519,
+        RSA_PSS_SHA384,
+        RSA_PSS_SHA512,
+        RSA_PKCS1_SHA256,
+        RSA_PKCS1_SHA384,
+        RSA_PKCS1_SHA512,
+        ECDSA_NISTP384_SHA384,
+        ECDSA_NISTP521_SHA512,
+        RSA_PKCS1_SHA1,
+        ECDSA_SHA1_Legacy,
+    ],
+    alpn: None,
+    server_cert_types: None,
+    client_cert_types: None,
+    cipher_suites: [
+        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+        CipherSuite(0xc012),
+        TLS13_AES_128_GCM_SHA256,
+        TLS13_AES_256_GCM_SHA384,
+        TLS13_CHACHA20_POLY1305_SHA256,
+    ],
+    certificate_authorities: None,
+    named_groups: Some(
+        [
+            X25519,
+            secp256r1,
+            secp384r1,
+            secp521r1,
+        ],
+    ),
+}
+2025-12-06T15:01:32.707209Z DEBUG rustls::server::hs: decided upon suite TLS13_AES_128_GCM_SHA256
+2025-12-06T15:01:32.707241Z DEBUG rustls::server::tls13::client_hello: Client unwilling to resume, PSK_DHE_KE not offered
+2025-12-06T15:01:32.707497Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:32.707556Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:32.707593Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:32.707605Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:32.707620Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:32.707634Z TRACE rustls::server::tls13::client_hello: sending server hello Message { version: TLSv1_2, payload: Handshake { parsed: HandshakeMessagePayload(ServerHello(ServerHelloPayload { legacy_version: TLSv1_2, random: cf62bb96d7e92de2f5b4979ca2134ed905e69c179338c657f71b7da155f8b393, session_id: 4ddb1f110280e5c035a3a27ecca66e5e500b0c16242c32e3402bcda3bc545f02, cipher_suite: TLS13_AES_128_GCM_SHA256, compression_method: Null, extensions: ServerExtensions { key_share: KeyShareEntry { group: X25519, payload: 6754158928a0d2dea9a9401c0024603c755f4042c91123fd626cc23c91a44f6b }, selected_version: TLSv1_3, unknown_extensions: {}, .. } })), encoded: 020000760303cf62bb96d7e92de2f5b4979ca2134ed905e69c179338c657f71b7da155f8b393204ddb1f110280e5c035a3a27ecca66e5e500b0c16242c32e3402bcda3bc545f02130100002e00330024001d00206754158928a0d2dea9a9401c0024603c755f4042c91123fd626cc23c91a44f6b002b00020304 } }
+2025-12-06T15:01:32.707743Z TRACE rustls::server::tls13::client_hello: sending encrypted extensions HandshakeMessagePayload(EncryptedExtensions(ServerExtensions { unknown_extensions: {}, .. }))
+2025-12-06T15:01:32.707736Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:32.707773Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.707785Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.707761Z TRACE rustls::server::tls13::client_hello: sending certificate HandshakeMessagePayload(CertificateTls13(CertificatePayloadTls13 { context: , entries: [CertificateEntry { cert: CertificateDer(0x3082015d30820102a00302010202144c20565600fd4ac8f347c0adfce8dca351800446300a06082a8648ce3d0403023021311f301d06035504030c16726367656e2073656c66207369676e65642063657274301e170d3235313230363135303133325a170d3335313230343135303133325a3021311f301d06035504030c16726367656e2073656c66207369676e656420636572743059301306072a8648ce3d020106082a8648ce3d03010703420004a00d075de9f1bc71c266e93d8424aad4947ed731f0a028db47fad0b2aa7080d9183ddacf47339683633118f087a32b5321bf98a2741711a419b7169f13f4bea0a318301630140603551d11040d300b820979676764726173696c300a06082a8648ce3d0403020349003046022100c7a91aad627c62d4158c8ba5189da0842c88817f15719c38cec5585509821783022100efc7a62adae86574eeaccf245b8a701f15f3b6f1a468bc71fd5e7f58a759099b), extensions: CertificateExtensions { .. } }] }))
+2025-12-06T15:01:32.707793Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.707800Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.707845Z TRACE rustls::server::tls13::client_hello: sending certificate-verify HandshakeMessagePayload(CertificateVerify(DigitallySignedStruct { scheme: ECDSA_NISTP256_SHA256, sig: 3045022100a329319102da0cf1cefa65d4dc2290bb2483468c4945157722acbf6c3e6cb216022060328078c7c77523014731221711365186ed7507c4127dd03d9ead1668aa7aba }))
+2025-12-06T15:01:32.707875Z TRACE rustls::server::tls13::client_hello: sending finished HandshakeMessagePayload(Finished(581942bf353837b063cc695e8f69f1db3dfc4545bdcc194d2a9dab784473a5d7))
+2025-12-06T15:01:32.708405Z TRACE rustls::conn: Dropping CCS
+2025-12-06T15:01:32.708512Z TRACE yggdrasil_link::links: TLS handshake complete, starting protocol handshake
+2025-12-06T15:01:32.708531Z TRACE yggdrasil_link::handshake: Starting handshake our_public_key=ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b2daea046 priority=0 password_len=0
+2025-12-06T15:01:32.708542Z TRACE yggdrasil_link::handshake: Encoding handshake metadata major=0 minor=5 priority=0 public_key=ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b2daea046 password_len=0
+2025-12-06T15:01:32.708788Z TRACE yggdrasil_link::handshake: Encoded handshake packet len=123 payload_len=117 data_hex=6d657461007500000002000000010002000500020020ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b2daea0460003000100af0b73ffc15b82ffff74f5de657ac5885dea6e214c6e2ae745cf83cecccfa2ae37b44fdafd45c4ea4139d99627287ad5f7d2c6adbaea13e0fe3f99f3996d2407
+2025-12-06T15:01:32.708796Z TRACE yggdrasil_link::handshake: Sending handshake data len=123
+2025-12-06T15:01:32.708848Z TRACE yggdrasil_link::handshake: Handshake data sent, waiting for remote metadata
+2025-12-06T15:01:32.708857Z TRACE yggdrasil_link::handshake: Waiting to decode handshake metadata password_len=0
+2025-12-06T15:01:32.708867Z TRACE yggdrasil_link::handshake: Received handshake header header_hex=6d6574610075
+2025-12-06T15:01:32.708877Z TRACE yggdrasil_link::handshake: Received handshake payload payload_len=117 payload_hex=00000002000000010002000500020020ec8c29d981169aa8293fa2711558422d8ebde9c3b816c7333dcca039c0bc00470003000100bcbc60c5002ace984b772c53b5e747862000fd16cd78994235f12b226d9a8b9ad1d2067f0cbacd74bac28e23d28fcdf2c2a029c6467b915f51e0c9a9381bef06
+2025-12-06T15:01:32.709880Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:32.709913Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:32.709927Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:32.709937Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:32.709949Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:32.709964Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.709976Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.710049Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:32.710059Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.710066Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.712006Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:32.712038Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:32.712053Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:32.712063Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:32.712075Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:32.712090Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.712131Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.712167Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.712234Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:32.712244Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.714049Z TRACE yggdrasil_link::handshake: Decoded handshake metadata successfully major=0 minor=5 priority=0 public_key=ec8c29d981169aa8293fa2711558422d8ebde9c3b816c7333dcca039c0bc0047
+2025-12-06T15:01:32.714072Z TRACE yggdrasil_link::handshake: Received remote metadata remote_public_key=ec8c29d981169aa8293fa2711558422d8ebde9c3b816c7333dcca039c0bc0047
+2025-12-06T15:01:32.714085Z TRACE yggdrasil_link::links: Protocol handshake complete remote_key=ec8c29d981169aa8 priority=0
+2025-12-06T15:01:32.714152Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:32.714183Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:32.714183Z  INFO yggdrasil_link::links: Connected inbound peer=ec8c29d981169aa8 addr=200:26e7:ac4c:fdd2:caaf:ad80:bb1d:d54f source=[fe80::656c:1f39:2a6f:bcec%4]:63594 peer_port=1
+2025-12-06T15:01:32.714194Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:32.714224Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:32.714237Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:32.714250Z DEBUG yggdrasil_link::links: Incoming connection tracked in links HashMap uri=tls://[fe80::9e69:b4ff:fe61:f07e%4]:42233 remote_key=ec8c29d981169aa8293fa2711558422d8ebde9c3b816c7333dcca039c0bc0047 total_links=1
+2025-12-06T15:01:32.714271Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.714346Z TRACE yggdrasil_link::peer_handler: Received packet from peer packet_type=ProtoSigReq payload_len=11
+2025-12-06T15:01:32.714344Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:32.714376Z TRACE yggdrasil_link::peer_handler: Received signature request seq=751 nonce=6947600937971898175
+2025-12-06T15:01:32.714388Z  INFO yggdrasil: Peer connected peer=ec8c29d981169aa8 addr=200:26e7:ac4c:fdd2:caaf:ad80:bb1d:d54f remote=[fe80::9e69:b4ff:fe61:f07e%4]:42233 local=[fe80::656c:1f39:2a6f:bcec%4]:63594 direction="inbound" peer_port=1
+2025-12-06T15:01:32.714394Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.714425Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.714434Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:32.714562Z TRACE yggdrasil_link::peer_handler: Sending signature response port=1
+2025-12-06T15:01:32.714623Z TRACE yggdrasil_link::peer_handler: Received packet from peer packet_type=ProtoBloomFilter payload_len=32
+2025-12-06T15:01:32.714633Z TRACE yggdrasil_link::peer_handler: Received bloom filter update, payload_len=32
+2025-12-06T15:01:32.714667Z TRACE yggdrasil: Received signature request from=ec8c29d981169aa8 seq=751 nonce=6947600937971898175
+2025-12-06T15:01:32.714679Z TRACE yggdrasil: Received bloom filter update from=ec8c29d981169aa8 data_len=32
+2025-12-06T15:01:33.061696Z  INFO yggdrasil_tun::tun: TUN adapter started name="Yggdrasil" address=200:231a:6fae:4668:1cde:32f:15a8:c3dd mtu=65535
+2025-12-06T15:01:33.062952Z  INFO yggdrasil: TUN adapter started name="Yggdrasil" mtu=65535
+2025-12-06T15:01:33.146762Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=:: dst=ff02::1:ff06:4c22 next_header=58 hop_limit=255 data_hex=6000000000183aff00000000000000000000000000000000ff0200000000000000000001ff064c228700cf0f00000000fe80000000000000ec2a1f9c09064c22
+2025-12-06T15:01:33.146836Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:ff06:4c22
+2025-12-06T15:01:33.146855Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=:: dst=ff02::1:ffa8:c3dd next_header=58 hop_limit=255 data_hex=6000000000183aff00000000000000000000000000000000ff0200000000000000000001ffa8c3dd8700e15e000000000200231a6fae46681cde032f15a8c3dd
+2025-12-06T15:01:33.146866Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:ffa8:c3dd
+2025-12-06T15:01:33.146876Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=:: dst=ff02::1:ff00:0 next_header=58 hop_limit=255 data_hex=6000000000183aff00000000000000000000000000000000ff0200000000000000000001ff00000087009e77000000000300231a6fae46680000000000000000
+2025-12-06T15:01:33.146885Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:ff00:0
+2025-12-06T15:01:33.146895Z TRACE yggdrasil: Received IPv6 packet from TUN len=48 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::2 next_header=58 hop_limit=255 data_hex=6000000000083afffe80000000000000ec2a1f9c09064c22ff02000000000000000000000000000285001c4800000000
+2025-12-06T15:01:33.146905Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::2
+2025-12-06T15:01:33.146916Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff064c2204000000
+2025-12-06T15:01:33.146926Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:33.408865Z TRACE yggdrasil_link::peer_handler: Received packet from peer packet_type=ProtoAnnounce payload_len=204
+2025-12-06T15:01:33.408967Z TRACE yggdrasil_link::peer_handler: Received router announcement key=0b2feb54c253ed6e parent=0b2feb54c253ed6e
+2025-12-06T15:01:33.419118Z TRACE yggdrasil_link::peer_handler: Received packet from peer packet_type=ProtoAnnounce payload_len=204
+2025-12-06T15:01:33.419157Z TRACE yggdrasil_link::peer_handler: Received router announcement key=76fc570b1754bf07 parent=0b2feb54c253ed6e
+2025-12-06T15:01:33.429128Z TRACE yggdrasil_link::peer_handler: Received packet from peer packet_type=ProtoAnnounce payload_len=204
+2025-12-06T15:01:33.429157Z TRACE yggdrasil_link::peer_handler: Received router announcement key=ec8c29d981169aa8 parent=76fc570b1754bf07
+2025-12-06T15:01:33.439209Z DEBUG yggdrasil: Received router announcement from=ec8c29d981169aa8 key=0b2feb54c253ed6e parent=0b2feb54c253ed6e port=0
+2025-12-06T15:01:33.439227Z DEBUG yggdrasil: Received router announcement from=ec8c29d981169aa8 key=76fc570b1754bf07 parent=0b2feb54c253ed6e port=1
+2025-12-06T15:01:33.439233Z DEBUG yggdrasil: Received router announcement from=ec8c29d981169aa8 key=ec8c29d981169aa8 parent=76fc570b1754bf07 port=3
+2025-12-06T15:01:33.646137Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff064c2204000000
+2025-12-06T15:01:33.646221Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:33.719122Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:33.719194Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:33.719207Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:33.719217Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:33.719229Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:33.719240Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:33.719361Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:33.719390Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:33.719398Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:33.719419Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:33.719426Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:33.719532Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000e080000000104000000ff020000000000000000000000000114
+2025-12-06T15:01:33.719566Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.146165Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1 next_header=58 hop_limit=255 data_hex=6000000000183afffe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000018800b9c800000000fe80000000000000ec2a1f9c09064c22
+2025-12-06T15:01:34.146221Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1
+2025-12-06T15:01:34.146255Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=200:231a:6fae:4668:1cde:32f:15a8:c3dd dst=ff02::1 next_header=58 hop_limit=255 data_hex=6000000000183aff0200231a6fae46681cde032f15a8c3ddff0200000000000000000000000000018800cf21000000000200231a6fae46681cde032f15a8c3dd
+2025-12-06T15:01:34.146269Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1
+2025-12-06T15:01:34.146280Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=300:231a:6fae:4668:: dst=ff02::1 next_header=58 hop_limit=255 data_hex=6000000000183aff0300231a6fae46680000000000000000ff0200000000000000000000000000018800c047000000000300231a6fae46680000000000000000
+2025-12-06T15:01:34.146289Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1
+2025-12-06T15:01:34.146299Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000e080000000104000000ff020000000000000000000000000114
+2025-12-06T15:01:34.146308Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.159085Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f100000000104000000ff02000000000000000000000000000c
+2025-12-06T15:01:34.159155Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.160475Z TRACE yggdrasil: Received IPv6 packet from TUN len=96 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000380001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000b050000000204000000ff0200000000000000000000000000fb04000000
+2025-12-06T15:01:34.160514Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.161213Z TRACE yggdrasil: Received IPv6 packet from TUN len=81 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=6002c2cb00291101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003e5a314eb0029c03ee304000000010000000000000f4445534b544f502d47493053494a540000ff00
+2025-12-06T15:01:34.161275Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:34.161624Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f210000000103000000ff0200000000000000000000000000fb
+2025-12-06T15:01:34.161653Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.165122Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000e210000000104000000ff0200000000000000000000000000fb
+2025-12-06T15:01:34.165158Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.240786Z TRACE yggdrasil: Received IPv6 packet from TUN len=70 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=60068be4001e1101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003c2d814eb001e2acec5cd0000000100000000000004777061640000010001
+2025-12-06T15:01:34.240851Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:34.240865Z TRACE yggdrasil: Received IPv6 packet from TUN len=70 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=6007aa8e001e1101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003dbce14eb001e5b027c8800000001000000000000047770616400001c0001
+2025-12-06T15:01:34.240871Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:34.259090Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:34.259141Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:34.259153Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:34.259163Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:34.259174Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:34.259185Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:34.259517Z  INFO yggdrasil_link::links: TLS listener started addr=[fe80::ec2a:1f9c:906:4c22%63]:63603
+2025-12-06T15:01:34.259558Z DEBUG yggdrasil_multicast::multicast: Started TLS listener on Yggdrasil at [fe80::ec2a:1f9c:906:4c22]:63603
+2025-12-06T15:01:34.259860Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on Yggdrasil via fe80::ec2a:1f9c:906:4c22 port 63603
+2025-12-06T15:01:34.259915Z TRACE yggdrasil: Received IPv6 packet from TUN len=152 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::114 next_header=17 hop_limit=1 data_hex=60052ec800701101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000000114232923290070ad9000000005ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b
+2025-12-06T15:01:34.259947Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::114
+2025-12-06T15:01:34.262249Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:34.262331Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:34.262347Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:34.262357Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:34.262368Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:34.262379Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:34.262396Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:34.262420Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:34.262427Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:34.262435Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:34.262443Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:34.262551Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:34.571254Z TRACE yggdrasil: Received IPv6 packet from TUN len=81 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=6002c2cb00291101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003e5a314eb0029c03ee304000000010000000000000f4445534b544f502d47493053494a540000ff00
+2025-12-06T15:01:34.571316Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:34.572952Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff77500241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461990000000000010000000000000477706164056c6f63616c00001c0001
+2025-12-06T15:01:34.572983Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:34.573593Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff77500241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461990000000000010000000000000477706164056c6f63616c00001c0001
+2025-12-06T15:01:34.573617Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:34.574164Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff77500241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461b40000000000010000000000000477706164056c6f63616c0000010001
+2025-12-06T15:01:34.574188Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:34.574663Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff77500241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461b40000000000010000000000000477706164056c6f63616c0000010001
+2025-12-06T15:01:34.574687Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:34.646318Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f0007e10000000304000000ff02000000000000000000000000000c04000000
+2025-12-06T15:01:34.646377Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.650881Z TRACE yggdrasil: Received IPv6 packet from TUN len=70 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=60068be4001e1101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003c2d814eb001e2acec5cd0000000100000000000004777061640000010001
+2025-12-06T15:01:34.650909Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:34.650919Z TRACE yggdrasil: Received IPv6 packet from TUN len=70 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=6007aa8e001e1101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003dbce14eb001e5b027c8800000001000000000000047770616400001c0001
+2025-12-06T15:01:34.650925Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:34.716325Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:34.981587Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f0010180000000103000000ff020000000000000000000000010003
+2025-12-06T15:01:34.981647Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.981661Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f180000000104000000ff020000000000000000000000010003
+2025-12-06T15:01:34.981667Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:34.982391Z TRACE yggdrasil: Received IPv6 packet from TUN len=81 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=6002859600291101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003fc6914eb0029264d6630000000010000000000000f4445534b544f502d47493053494a540000ff00
+2025-12-06T15:01:34.982422Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:35.010710Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00c3f10000000104000000ff0200000000000000000001ff064c22
+2025-12-06T15:01:35.010778Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:35.020707Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff00000004000000
+2025-12-06T15:01:35.020770Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:35.058314Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff00000004000000
+2025-12-06T15:01:35.058381Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:35.146826Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f180000000104000000ff020000000000000000000000010003
+2025-12-06T15:01:35.146913Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:35.166777Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b97fb0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:35.166838Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:35.223188Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b97fb0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:35.223248Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:35.267332Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:35.267397Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:35.267409Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:35.267419Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:35.267431Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:35.267442Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:35.267468Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.267604Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:35.267615Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.267624Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.267631Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.267639Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.297975Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b97fb0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:35.298018Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:35.393360Z TRACE yggdrasil: Received IPv6 packet from TUN len=81 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=6002859600291101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003fc6914eb0029264d6630000000010000000000000f4445534b544f502d47493053494a540000ff00
+2025-12-06T15:01:35.393420Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:35.472020Z TRACE yggdrasil: Received IPv6 packet from TUN len=308 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775010c1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9010c9d730000800000000002000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:35.472086Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:35.898013Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff00000004000000
+2025-12-06T15:01:35.898074Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:35.908648Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:35.908696Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:35.908710Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:35.908720Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:35.908740Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:35.908752Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:35.908962Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on WLAN via fe80::a1d3:52b3:460c:1149 port 63598
+2025-12-06T15:01:35.909003Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 9 via fe80::23d6:2e17:c568:b899 port 63597
+2025-12-06T15:01:35.909072Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on vEthernet (Default Switch) via fe80::f0bd:e073:d8c2:e9a8 port 63596
+2025-12-06T15:01:35.909131Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 以太网 via fe80::656c:1f39:2a6f:bcec port 63594
+2025-12-06T15:01:35.909182Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 10 via fe80::6c35:7f79:d7da:5d3b port 63595
+2025-12-06T15:01:35.911405Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:35.911435Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:35.911447Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:35.911457Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:35.911468Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:35.911479Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:35.911621Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:35.911642Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.911650Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.911657Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.911664Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.911672Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.913733Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:35.913763Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:35.913775Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:35.913785Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:35.913796Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:35.913807Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:35.913892Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:35.913910Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.913918Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.913925Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.913933Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.913940Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.915912Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:35.915941Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:35.915953Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:35.915963Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:35.915974Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:35.915985Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:35.916051Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:35.916065Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.916073Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.916080Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.916088Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.916095Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.918000Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:35.918030Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:35.918041Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:35.918051Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:35.918062Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:35.918073Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:35.918086Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.918097Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.918105Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.918158Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:35.918171Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:35.918179Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:36.473054Z TRACE yggdrasil: Received IPv6 packet from TUN len=308 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775010c1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9010c9d730000800000000002000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:36.473126Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:36.716329Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:36.922531Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:36.922597Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:36.922610Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:36.922620Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:36.922631Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:36.922643Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:36.922671Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:36.922689Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:36.922800Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:36.922844Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:36.922854Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:36.922863Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:37.146455Z TRACE yggdrasil: Received IPv6 packet from TUN len=48 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::2 next_header=58 hop_limit=255 data_hex=6000000000083afffe80000000000000ec2a1f9c09064c22ff02000000000000000000000000000285001c4800000000
+2025-12-06T15:01:37.146519Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::2
+2025-12-06T15:01:37.473669Z TRACE yggdrasil: Received IPv6 packet from TUN len=372 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775014c1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9014cdd7f000084000000000100000002065f646f737663045f746370056c6f63616c0000
+2025-12-06T15:01:37.473736Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:37.474361Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b987b0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:37.474392Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:37.620192Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:37.620302Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:37.620324Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:37.620337Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:37.620353Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:37.620367Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:37.620629Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on Yggdrasil via fe80::ec2a:1f9c:906:4c22 port 63603
+2025-12-06T15:01:37.620712Z TRACE yggdrasil: Received IPv6 packet from TUN len=152 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::114 next_header=17 hop_limit=1 data_hex=60052ec800701101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000000114232923290070ad9000000005ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b
+2025-12-06T15:01:37.620753Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::114
+2025-12-06T15:01:37.622862Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:37.622892Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:37.622906Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:37.622945Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:37.622969Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:37.622986Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:37.623014Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:37.623036Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:37.623048Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:37.623059Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:37.623183Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:37.623228Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:37.725686Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b987b0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:37.725753Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:37.977274Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b987b0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:37.977344Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:38.229283Z TRACE yggdrasil: Received IPv6 packet from TUN len=515 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff77501db1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e901dba0f9000084000000000100000006065f646f737663045f746370056c6f63616c0000
+2025-12-06T15:01:38.229354Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:38.229794Z TRACE yggdrasil: Received IPv6 packet from TUN len=451 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ff775019b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9019bbb940000840000000001000000050f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:38.229828Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:38.626980Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:38.627053Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:38.627065Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:38.627075Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:38.627087Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:38.627099Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:38.627128Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:38.627242Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:38.627252Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:38.627260Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:38.627268Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:38.627276Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:38.665400Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:38.665469Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:38.665481Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:38.665492Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:38.665503Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:38.665514Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:38.715946Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:39.173006Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f0010100000000103000000ff02000000000000000000000000000c
+2025-12-06T15:01:39.173079Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:39.173243Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f100000000104000000ff02000000000000000000000000000c
+2025-12-06T15:01:39.174908Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:39.631209Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:39.631284Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:39.631297Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:39.631308Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:39.631319Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:39.631331Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:39.631461Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:39.631511Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:39.631521Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:39.631528Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:39.631536Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:39.631543Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:39.646111Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f100000000104000000ff02000000000000000000000000000c
+2025-12-06T15:01:39.646175Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:40.208500Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:40.208577Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:40.208590Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:40.208601Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:40.208613Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:40.208624Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:40.208858Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on WLAN via fe80::a1d3:52b3:460c:1149 port 63598
+2025-12-06T15:01:40.208903Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 9 via fe80::23d6:2e17:c568:b899 port 63597
+2025-12-06T15:01:40.208972Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 以太网 via fe80::656c:1f39:2a6f:bcec port 63594
+2025-12-06T15:01:40.209018Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 10 via fe80::6c35:7f79:d7da:5d3b port 63595
+2025-12-06T15:01:40.209082Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on vEthernet (Default Switch) via fe80::f0bd:e073:d8c2:e9a8 port 63596
+2025-12-06T15:01:40.211651Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:40.211686Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:40.211698Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:40.211711Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:40.211724Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:40.211735Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:40.211756Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.211774Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.211782Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.211790Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.211903Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:40.211943Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.214402Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:40.214435Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:40.214447Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:40.214457Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:40.214468Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:40.214479Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:40.214495Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.214506Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.214513Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.214609Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:40.214647Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.214657Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.216796Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:40.216827Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:40.216838Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:40.216848Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:40.216859Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:40.216870Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:40.216884Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.216903Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.216915Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.216923Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.216931Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.217011Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:40.219719Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:40.219753Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:40.219765Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:40.219775Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:40.219786Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:40.219797Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:40.219812Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.219823Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.219830Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.219838Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.219923Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:40.219963Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.585133Z DEBUG yggdrasil_multicast::multicast: Discovered peer via multicast: ec8c29d981169aa8 on 以太网
+2025-12-06T15:01:40.587754Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:40.587797Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:40.587809Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:40.587820Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:40.587831Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:40.587842Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:40.587869Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.587888Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.587896Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.588082Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:40.588121Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.588132Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:40.588334Z  INFO yggdrasil: Discovered peer via multicast peer=ec8c29d981169aa8 addr=[fe80::9e69:b4ff:fe61:f07e%4]:40017 interface=以太网
+2025-12-06T15:01:40.588402Z DEBUG yggdrasil_link::links: Connecting to peer addr=[fe80::9e69:b4ff:fe61:f07e%4]:40017
+2025-12-06T15:01:40.588417Z TRACE yggdrasil_link::links: Starting TCP connect
+2025-12-06T15:01:40.589651Z TRACE yggdrasil_link::links: TCP connected, starting TLS handshake local=[::1]:59611 remote=[fe80::9e69:b4ff:fe61:f07e%4]:40017
+2025-12-06T15:01:40.589706Z TRACE yggdrasil_link::links: Starting TLS client handshake
+2025-12-06T15:01:40.589733Z DEBUG rustls::client::hs: No cached session for DnsName("yggdrasil")
+2025-12-06T15:01:40.589741Z DEBUG rustls::client::hs: Not resuming any session
+2025-12-06T15:01:40.589963Z TRACE rustls::client::hs: Sending ClientHello Message {
+    version: TLSv1_0,
+    payload: Handshake {
+        parsed: HandshakeMessagePayload(
+            ClientHello(
+                ClientHelloPayload {
+                    client_version: TLSv1_2,
+                    random: 3212a16d4aabf0239acf02f21fdf061e8b16f166c10f1a20cb99b443e53a0401,
+                    session_id: 95f16b6893a9457b5dffbeff9a483c780e91109e322bafe4a072ad1900b81e34,
+                    cipher_suites: [
+                        TLS13_AES_256_GCM_SHA384,
+                        TLS13_AES_128_GCM_SHA256,
+                        TLS13_CHACHA20_POLY1305_SHA256,
+                        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+                        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+                        TLS_EMPTY_RENEGOTIATION_INFO_SCSV,
+                    ],
+                    compression_methods: [
+                        Null,
+                    ],
+                    extensions: ClientExtensions {
+                        server_name: SingleDnsName(
+                            DnsName(
+                                "yggdrasil",
+                            ),
+                        ),
+                        certificate_status_request: Ocsp(
+                            OcspCertificateStatusRequest {
+                                responder_ids: [],
+                                extensions: ,
+                            },
+                        ),
+                        named_groups: [
+                            X25519,
+                            secp256r1,
+                            secp384r1,
+                        ],
+                        ec_point_formats: SupportedEcPointFormats {
+                            uncompressed: true,
+                        },
+                        signature_schemes: [
+                            RSA_PKCS1_SHA256,
+                            RSA_PKCS1_SHA384,
+                            RSA_PKCS1_SHA512,
+                            ECDSA_NISTP256_SHA256,
+                            ECDSA_NISTP384_SHA384,
+                            ECDSA_NISTP521_SHA512,
+                            RSA_PSS_SHA256,
+                            RSA_PSS_SHA384,
+                            RSA_PSS_SHA512,
+                            ED25519,
+                        ],
+                        extended_master_secret_request: (),
+                        session_ticket: Request,
+                        supported_versions: SupportedProtocolVersions {
+                            tls13: true,
+                            tls12: true,
+                        },
+                        preshared_key_modes: PskKeyExchangeModes {
+                            psk_dhe: true,
+                            psk: false,
+                        },
+                        key_shares: [
+                            KeyShareEntry {
+                                group: X25519,
+                                payload: e17c51ef688e46c2e196ed9608ab29e936c9c11281f1c0632defd58639e1317f,
+                            },
+                        ],
+                        order_seed: 48435,
+                        contiguous_extensions: [],
+                        ..
+                    },
+                },
+            ),
+        ),
+        encoded: 010000e503033212a16d4aabf0239acf02f21fdf061e8b16f166c10f1a20cb99b443e53a04012095f16b6893a9457b5dffbeff9a483c780e91109e322bafe4a072ad1900b81e340014130213011303c02cc02bcca9c030c02fcca800ff01000088002b00050403040303000500050100000000003300260024001d0020e17c51ef688e46c2e196ed9608ab29e936c9c11281f1c0632defd58639e1317f00230000000a00080006001d001700180000000e000c00000979676764726173696c002d00020101000b0002010000170000000d001600140401050106010403050306030804080508060807,
+    },
+}
+2025-12-06T15:01:40.590746Z TRACE yggdrasil: Received IPv6 packet from TUN len=72 src=fe80::ec2a:1f9c:906:4c22 dst=fe80::9e69:b4ff:fe61:f07e next_header=6 hop_limit=128 data_hex=6009cb9300200680fe80000000000000ec2a1f9c09064c22fe800000000000009e69b4fffe61f07ee8de9c51da532046000000008002ffff54fb00000204ffc30103030801010402
+2025-12-06T15:01:40.590773Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=fe80::9e69:b4ff:fe61:f07e
+2025-12-06T15:01:40.715532Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:41.146489Z TRACE yggdrasil: Received IPv6 packet from TUN len=48 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::2 next_header=58 hop_limit=255 data_hex=6000000000083afffe80000000000000ec2a1f9c09064c22ff02000000000000000000000000000285001c4800000000
+2025-12-06T15:01:41.146573Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::2
+2025-12-06T15:01:41.591511Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:41.591582Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:41.591594Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:41.591605Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:41.591617Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:41.591628Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:41.591656Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:41.591674Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:41.591681Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:41.591803Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:41.591856Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:41.591875Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:41.591907Z TRACE yggdrasil: Received IPv6 packet from TUN len=72 src=fe80::ec2a:1f9c:906:4c22 dst=fe80::9e69:b4ff:fe61:f07e next_header=6 hop_limit=128 data_hex=6009cb9300200680fe80000000000000ec2a1f9c09064c22fe800000000000009e69b4fffe61f07ee8de9c51da532046000000008002ffff54fb00000204ffc30103030801010402
+2025-12-06T15:01:41.591942Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=fe80::9e69:b4ff:fe61:f07e
+2025-12-06T15:01:42.135592Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:42.135659Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:42.135671Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:42.135681Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:42.135693Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:42.135704Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:42.135918Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on Yggdrasil via fe80::ec2a:1f9c:906:4c22 port 63603
+2025-12-06T15:01:42.135971Z TRACE yggdrasil: Received IPv6 packet from TUN len=152 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::114 next_header=17 hop_limit=1 data_hex=60052ec800701101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000000114232923290070ad9000000005ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b
+2025-12-06T15:01:42.135981Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::114
+2025-12-06T15:01:42.138361Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:42.138392Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:42.138403Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:42.138414Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:42.138425Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:42.138436Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:42.138453Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:42.138471Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:42.138604Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:42.138642Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:42.138651Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:42.138659Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:42.648358Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f0010180000000103000000ff020000000000000000000000010003
+2025-12-06T15:01:42.648426Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:42.648443Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f210000000103000000ff0200000000000000000000000000fb
+2025-12-06T15:01:42.648458Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:42.648562Z TRACE yggdrasil: Skipped non-IPv6 packet len=40 first_byte=70
+2025-12-06T15:01:42.648590Z TRACE yggdrasil: Skipped non-IPv6 packet len=40 first_byte=70
+2025-12-06T15:01:42.654668Z TRACE yggdrasil: Received IPv6 packet from TUN len=96 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000380001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000b050000000204000000ff0200000000000000000000000000fb04000000
+2025-12-06T15:01:42.654738Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:42.654754Z TRACE yggdrasil: Skipped non-IPv6 packet len=40 first_byte=70
+2025-12-06T15:01:42.654762Z TRACE yggdrasil: Skipped non-IPv6 packet len=40 first_byte=70
+2025-12-06T15:01:42.655511Z TRACE yggdrasil: Received IPv6 packet from TUN len=81 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=6004d15300291101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003eab814eb0029c868d5c5000000010000000000000f4445534b544f502d47493053494a540000ff00
+2025-12-06T15:01:42.655541Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:42.655568Z TRACE yggdrasil: Skipped non-IPv6 packet len=61 first_byte=69
+2025-12-06T15:01:42.668782Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f0010100000000103000000ff02000000000000000000000000000c
+2025-12-06T15:01:42.668849Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:42.669523Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f100000000104000000ff02000000000000000000000000000c
+2025-12-06T15:01:42.669581Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:42.670595Z TRACE yggdrasil: Skipped non-IPv6 packet len=40 first_byte=70
+2025-12-06T15:01:42.715635Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:42.727045Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:42.727114Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:42.727122Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:42.743762Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff064c2204000000
+2025-12-06T15:01:42.743839Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:42.756776Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff00000004000000
+2025-12-06T15:01:42.756833Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:43.065579Z TRACE yggdrasil: Received IPv6 packet from TUN len=81 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=6004d15300291101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003eab814eb0029c868d5c5000000010000000000000f4445534b544f502d47493053494a540000ff00
+2025-12-06T15:01:43.065655Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:43.065669Z TRACE yggdrasil: Skipped non-IPv6 packet len=61 first_byte=69
+2025-12-06T15:01:43.081797Z TRACE yggdrasil: Skipped non-IPv6 packet len=165 first_byte=69
+2025-12-06T15:01:43.142566Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:43.142633Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:43.142645Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:43.142655Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:43.142667Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:43.142678Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:43.142706Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:43.142725Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:43.142835Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:43.142878Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:43.142888Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:43.142895Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:43.146333Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=70
+2025-12-06T15:01:43.146374Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f0007e10000000304000000ff0200000000000000000000000000fb04000000
+2025-12-06T15:01:43.146389Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:43.258140Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff00000004000000
+2025-12-06T15:01:43.258208Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:43.409589Z TRACE yggdrasil: Received IPv6 packet from TUN len=116 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=60000000004c0001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f00fb370000000304000000ff0200000000000000000001ff00000004000000
+2025-12-06T15:01:43.409650Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:43.410274Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:43.410638Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461b40000000000010000000000000477706164056c6f63616c0000010001
+2025-12-06T15:01:43.410693Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.410815Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:43.410911Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e90024e1980000000000010000000000000477706164056c6f63616c00001c8001
+2025-12-06T15:01:43.410941Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.411114Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:43.411240Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461b40000000000010000000000000477706164056c6f63616c0000010001
+2025-12-06T15:01:43.411268Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.411380Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:43.411528Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e90024e1980000000000010000000000000477706164056c6f63616c00001c8001
+2025-12-06T15:01:43.411554Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.477425Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:43.477484Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:43.477490Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:43.556532Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:43.556592Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:43.556604Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:43.556614Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:43.556625Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:43.556636Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:43.592127Z TRACE yggdrasil: Received IPv6 packet from TUN len=72 src=fe80::ec2a:1f9c:906:4c22 dst=fe80::9e69:b4ff:fe61:f07e next_header=6 hop_limit=128 data_hex=6009cb9300200680fe80000000000000ec2a1f9c09064c22fe800000000000009e69b4fffe61f07ee8de9c51da532046000000008002ffff54fb00000204ffc30103030801010402
+2025-12-06T15:01:43.592205Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=fe80::9e69:b4ff:fe61:f07e
+2025-12-06T15:01:43.656064Z TRACE yggdrasil: Skipped non-IPv6 packet len=79 first_byte=69
+2025-12-06T15:01:43.656563Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b97fb0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:43.656607Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.683996Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:43.684086Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:43.684124Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6006bca700301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:43.684143Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.684153Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6003959d00301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:43.684168Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.684721Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:43.684780Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6006bca700301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:43.684795Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.684803Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:43.684943Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6003959d00301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:43.684971Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.800481Z TRACE yggdrasil: Skipped non-IPv6 packet len=79 first_byte=69
+2025-12-06T15:01:43.800812Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b97fb0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:43.800849Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.819466Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:43.819818Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461b40000000000010000000000000477706164056c6f63616c0000010001
+2025-12-06T15:01:43.819870Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.820273Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:43.820683Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461990000000000010000000000000477706164056c6f63616c00001c0001
+2025-12-06T15:01:43.820712Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.821212Z TRACE yggdrasil: Skipped non-IPv6 packet len=78 first_byte=69
+2025-12-06T15:01:43.821376Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:43.821547Z TRACE yggdrasil: Received IPv6 packet from TUN len=70 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=600732ff001e1101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003e5a314eb001e5ff76dd90000000100000000000004777061640000010001
+2025-12-06T15:01:43.821577Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:43.821588Z TRACE yggdrasil: Skipped non-IPv6 packet len=50 first_byte=69
+2025-12-06T15:01:43.821742Z TRACE yggdrasil: Received IPv6 packet from TUN len=70 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=60045b9b001e1101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003da9014eb001eabf02cd800000001000000000000047770616400001c0001
+2025-12-06T15:01:43.821770Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:43.821779Z TRACE yggdrasil: Skipped non-IPv6 packet len=50 first_byte=69
+2025-12-06T15:01:43.821786Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461990000000000010000000000000477706164056c6f63616c00001c0001
+2025-12-06T15:01:43.821802Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.822185Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:43.822522Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461b40000000000010000000000000477706164056c6f63616c0000010001
+2025-12-06T15:01:43.822551Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:43.996586Z TRACE yggdrasil: Skipped non-IPv6 packet len=79 first_byte=69
+2025-12-06T15:01:43.996945Z TRACE yggdrasil: Received IPv6 packet from TUN len=99 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d003b1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9003b97fb0000000000010000000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:43.996977Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:44.107877Z TRACE yggdrasil: Skipped non-IPv6 packet len=288 first_byte=69
+2025-12-06T15:01:44.108156Z TRACE yggdrasil: Received IPv6 packet from TUN len=308 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d010c1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9010c9d730000800000000002000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:44.108180Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:44.146378Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:44.146431Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:44.146444Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:44.146454Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:44.146465Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:44.146476Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:44.146500Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.146520Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.146665Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:44.146705Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.146715Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.146723Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.178303Z TRACE yggdrasil: Skipped non-IPv6 packet len=198 first_byte=69
+2025-12-06T15:01:44.226844Z TRACE yggdrasil: Skipped non-IPv6 packet len=70 first_byte=69
+2025-12-06T15:01:44.227407Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:44.227440Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:44.227447Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:44.230292Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:44.230691Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461b40000000000010000000000000477706164056c6f63616c0000010001
+2025-12-06T15:01:44.230730Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:44.231315Z TRACE yggdrasil: Received IPv6 packet from TUN len=70 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=60045b9b001e1101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003da9014eb001eabf02cd800000001000000000000047770616400001c0001
+2025-12-06T15:01:44.231345Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:44.231359Z TRACE yggdrasil: Received IPv6 packet from TUN len=70 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::1:3 next_header=17 hop_limit=1 data_hex=600732ff001e1101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000010003e5a314eb001e5ff76dd90000000100000000000004777061640000010001
+2025-12-06T15:01:44.231368Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::1:3
+2025-12-06T15:01:44.231376Z TRACE yggdrasil: Skipped non-IPv6 packet len=50 first_byte=69
+2025-12-06T15:01:44.231383Z TRACE yggdrasil: Skipped non-IPv6 packet len=50 first_byte=69
+2025-12-06T15:01:44.231390Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:44.231738Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e90024e1980000000000010000000000000477706164056c6f63616c00001c8001
+2025-12-06T15:01:44.231768Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:44.232119Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:44.232470Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e90024e1980000000000010000000000000477706164056c6f63616c00001c8001
+2025-12-06T15:01:44.232497Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:44.232849Z TRACE yggdrasil: Skipped non-IPv6 packet len=56 first_byte=69
+2025-12-06T15:01:44.233159Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d00241101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9002461b40000000000010000000000000477706164056c6f63616c0000010001
+2025-12-06T15:01:44.233185Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:44.571277Z TRACE yggdrasil: Skipped non-IPv6 packet len=78 first_byte=69
+2025-12-06T15:01:44.716417Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:44.831915Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:44.831993Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:44.832005Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:44.832016Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:44.832027Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:44.832038Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:44.832241Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 以太网 via fe80::656c:1f39:2a6f:bcec port 63594
+2025-12-06T15:01:44.832301Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 10 via fe80::6c35:7f79:d7da:5d3b port 63595
+2025-12-06T15:01:44.832326Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 9 via fe80::23d6:2e17:c568:b899 port 63597
+2025-12-06T15:01:44.832372Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on WLAN via fe80::a1d3:52b3:460c:1149 port 63598
+2025-12-06T15:01:44.832429Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on vEthernet (Default Switch) via fe80::f0bd:e073:d8c2:e9a8 port 63596
+2025-12-06T15:01:44.834523Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:44.834557Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:44.834569Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:44.834579Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:44.834591Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:44.834601Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:44.834721Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:44.834766Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.834776Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.834783Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.834791Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.834798Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.836804Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:44.836833Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:44.836844Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:44.836854Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:44.836865Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:44.836876Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:44.836891Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.836902Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.836986Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:44.837029Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.837042Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.837052Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.839143Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:44.839175Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:44.839188Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:44.839198Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:44.839209Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:44.839220Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:44.839233Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.839244Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.839319Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:44.839352Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.839362Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.839369Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.841278Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:44.841307Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:44.841318Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:44.841329Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:44.841340Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:44.841351Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:44.841364Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.841374Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.841382Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.841466Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:44.841502Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.841511Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:44.977803Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:44.977855Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:44.977862Z TRACE yggdrasil: Skipped non-IPv6 packet len=96 first_byte=69
+2025-12-06T15:01:45.108798Z TRACE yggdrasil: Skipped non-IPv6 packet len=288 first_byte=69
+2025-12-06T15:01:45.109381Z TRACE yggdrasil: Received IPv6 packet from TUN len=308 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6009b27d010c1101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e9010c9d730000800000000002000000000f4445534b544f502d47493053494a54065f646f
+2025-12-06T15:01:45.109424Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:45.145896Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=fe80::ec2a:1f9c:906:4c22 dst=fe80::9e69:b4ff:fe61:f07e next_header=58 hop_limit=255 data_hex=6000000000183afffe80000000000000ec2a1f9c09064c22fe800000000000009e69b4fffe61f07e870097a600000000fe800000000000009e69b4fffe61f07e
+2025-12-06T15:01:45.145930Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=fe80::9e69:b4ff:fe61:f07e
+2025-12-06T15:01:45.178562Z TRACE yggdrasil: Skipped non-IPv6 packet len=198 first_byte=69
+2025-12-06T15:01:45.321718Z TRACE yggdrasil: Skipped non-IPv6 packet len=78 first_byte=69
+2025-12-06T15:01:45.591292Z TRACE yggdrasil_link::links: TLS client handshake failed error=tls handshake eof
+2025-12-06T15:01:45.591369Z DEBUG yggdrasil: Failed to connect to multicast peer addr=[fe80::9e69:b4ff:fe61:f07e%4]:40017 error=TLS error: tls handshake tls handshake eof
+2025-12-06T15:01:45.845904Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:45.845984Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:45.845996Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:45.846006Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:45.846017Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:45.846029Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:45.846055Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:45.846074Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:45.846082Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:45.846089Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:45.846097Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:45.846221Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:45.990805Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:45.990871Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:45.990883Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:45.990893Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:45.990905Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:45.990916Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:46.082004Z TRACE yggdrasil: Skipped non-IPv6 packet len=165 first_byte=69
+2025-12-06T15:01:46.146468Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=fe80::ec2a:1f9c:906:4c22 dst=fe80::9e69:b4ff:fe61:f07e next_header=58 hop_limit=255 data_hex=6000000000183afffe80000000000000ec2a1f9c09064c22fe800000000000009e69b4fffe61f07e870097a600000000fe800000000000009e69b4fffe61f07e
+2025-12-06T15:01:46.146529Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=fe80::9e69:b4ff:fe61:f07e
+2025-12-06T15:01:46.180023Z TRACE yggdrasil: Skipped non-IPv6 packet len=198 first_byte=69
+2025-12-06T15:01:46.365120Z TRACE yggdrasil: Skipped non-IPv6 packet len=165 first_byte=69
+2025-12-06T15:01:46.715508Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:46.850987Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:46.851090Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:46.851113Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:46.851133Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:46.851155Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:46.851176Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:46.851215Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:46.851244Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:46.851259Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:46.851273Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:46.851288Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:46.851405Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:47.146148Z TRACE yggdrasil: Received IPv6 packet from TUN len=64 src=fe80::ec2a:1f9c:906:4c22 dst=fe80::9e69:b4ff:fe61:f07e next_header=58 hop_limit=255 data_hex=6000000000183afffe80000000000000ec2a1f9c09064c22fe800000000000009e69b4fffe61f07e870097a600000000fe800000000000009e69b4fffe61f07e
+2025-12-06T15:01:47.146212Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=fe80::9e69:b4ff:fe61:f07e
+2025-12-06T15:01:47.173065Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:47.173124Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6007519c00301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:47.173135Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:47.173681Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:47.173715Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6007519c00301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:47.173725Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:47.180198Z TRACE yggdrasil: Skipped non-IPv6 packet len=198 first_byte=69
+2025-12-06T15:01:47.184523Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:47.184666Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ee46300301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:47.184744Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:47.185309Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:47.185343Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ee46300301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:47.185356Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:47.186684Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:47.186721Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:47.186732Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:47.186743Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:47.186755Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:47.186766Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:47.186905Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on Yggdrasil via fe80::ec2a:1f9c:906:4c22 port 63603
+2025-12-06T15:01:47.186929Z TRACE yggdrasil: Received IPv6 packet from TUN len=152 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::114 next_header=17 hop_limit=1 data_hex=60052ec800701101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000000114232923290070ad9000000005ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b
+2025-12-06T15:01:47.186944Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::114
+2025-12-06T15:01:47.189140Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:47.189231Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:47.189256Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:47.189273Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:47.189289Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:47.189305Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:47.189329Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:47.189442Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:47.189453Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:47.189460Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:47.189468Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:47.189476Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:48.174912Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:48.174987Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6007519c00301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:48.175045Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:48.175509Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:48.175566Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6007519c00301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:48.175583Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:48.185736Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:48.185822Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ee46300301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:48.185848Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:48.186401Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:48.186431Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ee46300301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:48.186441Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:48.194568Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:48.194606Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:48.194618Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:48.194628Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:48.194639Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:48.194650Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:48.194676Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:48.194692Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:48.194700Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:48.194813Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:48.194857Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:48.194871Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:48.716446Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:48.898997Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:48.899069Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:48.899081Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:48.899091Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:48.899148Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:48.899162Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:49.082330Z TRACE yggdrasil: Skipped non-IPv6 packet len=165 first_byte=69
+2025-12-06T15:01:49.199224Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:49.199306Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:49.199318Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:49.199328Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:49.199339Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:49.199350Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:49.199378Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:49.199499Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:49.199543Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:49.199553Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:49.199561Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:49.199569Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:49.365295Z TRACE yggdrasil: Skipped non-IPv6 packet len=165 first_byte=69
+2025-12-06T15:01:50.176518Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:50.176598Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6007519c00301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:50.176616Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:50.176949Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:50.176982Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=6007519c00301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:50.176995Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:50.188319Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:50.188351Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ee46300301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:50.188360Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:50.188885Z TRACE yggdrasil: Skipped non-IPv6 packet len=68 first_byte=69
+2025-12-06T15:01:50.188914Z TRACE yggdrasil: Received IPv6 packet from TUN len=88 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::fb next_header=17 hop_limit=1 data_hex=600ee46300301101fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000fb14e914e900302c360000000000010000000000000b5f676f6f676c6563617374045f746370056c6f
+2025-12-06T15:01:50.188974Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::fb
+2025-12-06T15:01:50.203387Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:50.203428Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:50.203439Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:50.203453Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:50.203470Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:50.203486Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:50.203512Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.203532Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.203642Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:50.203686Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.203699Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.203709Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.670750Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:50.670836Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:50.670848Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:50.670858Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:50.670870Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:50.670881Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:50.671080Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 以太网 via fe80::656c:1f39:2a6f:bcec port 63594
+2025-12-06T15:01:50.671113Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 9 via fe80::23d6:2e17:c568:b899 port 63597
+2025-12-06T15:01:50.671160Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on 本地连接* 10 via fe80::6c35:7f79:d7da:5d3b port 63595
+2025-12-06T15:01:50.671219Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on vEthernet (Default Switch) via fe80::f0bd:e073:d8c2:e9a8 port 63596
+2025-12-06T15:01:50.671266Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on WLAN via fe80::a1d3:52b3:460c:1149 port 63598
+2025-12-06T15:01:50.673542Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:50.673575Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:50.673587Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:50.673597Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:50.673608Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:50.673622Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:50.673643Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.673661Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.673668Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.673676Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.673684Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.673793Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:50.675897Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:50.675926Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:50.675937Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:50.675947Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:50.675959Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:50.675969Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:50.675982Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.675993Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.676001Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.676008Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.676080Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:50.676150Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.678687Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:50.678716Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:50.678728Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:50.678738Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:50.678749Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:50.678760Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:50.678773Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.678784Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.678791Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.678866Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:50.678902Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.678911Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.680836Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:50.680865Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:50.680876Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:50.680886Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:50.680897Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:50.680908Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:50.680921Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.680931Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.680939Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.680946Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.680954Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:50.681019Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:50.715688Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:51.684858Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:51.684933Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:51.684946Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:51.684956Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:51.684968Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:51.684979Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:51.685005Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:51.685021Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:51.685030Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:51.685037Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:51.685175Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:51.685219Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:51.695595Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:51.695642Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:51.695661Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:51.695675Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:51.695687Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:51.695698Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:52.690686Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:52.690767Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:52.690780Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:52.690790Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:52.690802Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:52.690813Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:52.690947Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:52.691005Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:52.691018Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:52.691028Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:52.691038Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:52.691048Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:52.715673Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:53.139302Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:53.139374Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:53.139387Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:53.139397Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:53.139409Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:53.139420Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:53.139619Z TRACE yggdrasil_multicast::multicast: Sent multicast beacon on Yggdrasil via fe80::ec2a:1f9c:906:4c22 port 63603
+2025-12-06T15:01:53.139675Z TRACE yggdrasil: Received IPv6 packet from TUN len=152 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::114 next_header=17 hop_limit=1 data_hex=60052ec800701101fe80000000000000ec2a1f9c09064c22ff020000000000000000000000000114232923290070ad9000000005ee72c828dccbf190fe68752b9e115532833476fd77b75b8452a4209b
+2025-12-06T15:01:53.139690Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::114
+2025-12-06T15:01:53.141870Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:53.141901Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:53.141913Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:53.141923Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:53.141934Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:53.141945Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:53.141963Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:53.142082Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:53.142124Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:53.142134Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:53.142142Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:53.142149Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:54.145641Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:54.145713Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:54.145725Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:54.145735Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:54.145747Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:54.145758Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:54.145785Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:54.145803Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:54.145811Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:54.145818Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:54.145928Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:54.145970Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:54.716443Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:54.781833Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:54.781908Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:54.781920Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:54.781935Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:54.781950Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:54.781961Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:55.149209Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:55.149282Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:55.149295Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:55.149305Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:55.149317Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:55.149328Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:55.149357Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:55.149480Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:55.149524Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:55.149534Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:55.149542Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:55.149549Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.153571Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:56.153688Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:56.153706Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:56.153717Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:56.153729Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:56.153740Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:56.153773Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.153928Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:56.153970Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.153983Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.153993Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.154004Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.334898Z DEBUG yggdrasil_multicast::multicast: Discovered peer via multicast: ec8c29d981169aa8 on 以太网
+2025-12-06T15:01:56.337805Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:56.337888Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:56.337910Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:56.337927Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:56.337946Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:56.337962Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:56.338003Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.338138Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:56.338181Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.338191Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.338198Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.338206Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:56.338470Z  INFO yggdrasil: Discovered peer via multicast peer=ec8c29d981169aa8 addr=[fe80::9e69:b4ff:fe61:f07e%4]:40017 interface=以太网
+2025-12-06T15:01:56.338536Z DEBUG yggdrasil_link::links: Connecting to peer addr=[fe80::9e69:b4ff:fe61:f07e%4]:40017
+2025-12-06T15:01:56.338546Z TRACE yggdrasil_link::links: Starting TCP connect
+2025-12-06T15:01:56.340010Z TRACE yggdrasil_link::links: TCP connected, starting TLS handshake local=[::1]:51201 remote=[fe80::9e69:b4ff:fe61:f07e%4]:40017
+2025-12-06T15:01:56.340064Z TRACE yggdrasil_link::links: Starting TLS client handshake
+2025-12-06T15:01:56.340090Z DEBUG rustls::client::hs: No cached session for DnsName("yggdrasil")
+2025-12-06T15:01:56.340101Z DEBUG rustls::client::hs: Not resuming any session
+2025-12-06T15:01:56.340294Z TRACE rustls::client::hs: Sending ClientHello Message {
+    version: TLSv1_0,
+    payload: Handshake {
+        parsed: HandshakeMessagePayload(
+            ClientHello(
+                ClientHelloPayload {
+                    client_version: TLSv1_2,
+                    random: 9254aeef82ebb39d71d330be4435d09e6a15c26c5dbde86cdc37ba9f6c61c2b2,
+                    session_id: 69ba1a44df1e92a3ecb4b55948ee3cbb9db882c8973356c128ac111dddc12680,
+                    cipher_suites: [
+                        TLS13_AES_256_GCM_SHA384,
+                        TLS13_AES_128_GCM_SHA256,
+                        TLS13_CHACHA20_POLY1305_SHA256,
+                        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+                        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+                        TLS_EMPTY_RENEGOTIATION_INFO_SCSV,
+                    ],
+                    compression_methods: [
+                        Null,
+                    ],
+                    extensions: ClientExtensions {
+                        server_name: SingleDnsName(
+                            DnsName(
+                                "yggdrasil",
+                            ),
+                        ),
+                        certificate_status_request: Ocsp(
+                            OcspCertificateStatusRequest {
+                                responder_ids: [],
+                                extensions: ,
+                            },
+                        ),
+                        named_groups: [
+                            X25519,
+                            secp256r1,
+                            secp384r1,
+                        ],
+                        ec_point_formats: SupportedEcPointFormats {
+                            uncompressed: true,
+                        },
+                        signature_schemes: [
+                            RSA_PKCS1_SHA256,
+                            RSA_PKCS1_SHA384,
+                            RSA_PKCS1_SHA512,
+                            ECDSA_NISTP256_SHA256,
+                            ECDSA_NISTP384_SHA384,
+                            ECDSA_NISTP521_SHA512,
+                            RSA_PSS_SHA256,
+                            RSA_PSS_SHA384,
+                            RSA_PSS_SHA512,
+                            ED25519,
+                        ],
+                        extended_master_secret_request: (),
+                        session_ticket: Request,
+                        supported_versions: SupportedProtocolVersions {
+                            tls13: true,
+                            tls12: true,
+                        },
+                        preshared_key_modes: PskKeyExchangeModes {
+                            psk_dhe: true,
+                            psk: false,
+                        },
+                        key_shares: [
+                            KeyShareEntry {
+                                group: X25519,
+                                payload: 8527063aa081309059027b7d46a9481841eba985661bd1497d9b18fb85c6b643,
+                            },
+                        ],
+                        order_seed: 4595,
+                        contiguous_extensions: [],
+                        ..
+                    },
+                },
+            ),
+        ),
+        encoded: 010000e503039254aeef82ebb39d71d330be4435d09e6a15c26c5dbde86cdc37ba9f6c61c2b22069ba1a44df1e92a3ecb4b55948ee3cbb9db882c8973356c128ac111dddc126800014130213011303c02cc02bcca9c030c02fcca800ff01000088000d001600140401050106010403050306030804080508060807000500050100000000003300260024001d00208527063aa081309059027b7d46a9481841eba985661bd1497d9b18fb85c6b6430000000e000c00000979676764726173696c00230000000a00080006001d0017001800170000000b00020100002d00020101002b00050403040303,
+    },
+}
+2025-12-06T15:01:56.341211Z TRACE yggdrasil: Received IPv6 packet from TUN len=72 src=fe80::ec2a:1f9c:906:4c22 dst=fe80::9e69:b4ff:fe61:f07e next_header=6 hop_limit=128 data_hex=60043c2900200680fe80000000000000ec2a1f9c09064c22fe800000000000009e69b4fffe61f07ec8049c51d1bd83cb000000008002ffff1ae600000204ffc30103030801010402
+2025-12-06T15:01:56.341239Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=fe80::9e69:b4ff:fe61:f07e
+2025-12-06T15:01:56.487045Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:56.487143Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:56.487156Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:56.487166Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:56.487178Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:56.487189Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:56.716608Z TRACE yggdrasil_link::peer_handler: Sending keep-alive
+2025-12-06T15:01:57.341729Z TRACE yggdrasil: Received IPv6 packet from TUN len=72 src=fe80::ec2a:1f9c:906:4c22 dst=fe80::9e69:b4ff:fe61:f07e next_header=6 hop_limit=128 data_hex=60043c2900200680fe80000000000000ec2a1f9c09064c22fe800000000000009e69b4fffe61f07ec8049c51d1bd83cb000000008002ffff1ae600000204ffc30103030801010402
+2025-12-06T15:01:57.341803Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=fe80::9e69:b4ff:fe61:f07e
+2025-12-06T15:01:57.342135Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: Yggdrasil (1 addresses)
+2025-12-06T15:01:57.342176Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 以太网 (1 addresses)
+2025-12-06T15:01:57.342188Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: WLAN (1 addresses)
+2025-12-06T15:01:57.342198Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 9 (1 addresses)
+2025-12-06T15:01:57.342209Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: 本地连接* 10 (1 addresses)
+2025-12-06T15:01:57.342220Z DEBUG yggdrasil_multicast::multicast: Discovered multicast interface: vEthernet (Default Switch) (1 addresses)
+2025-12-06T15:01:57.342246Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 10: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:57.342263Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 以太网: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:57.342271Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on vEthernet (Default Switch): 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:57.342278Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on WLAN: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:57.342389Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on 本地连接* 9: 在 getsockopt 或 setsockopt 调用中指定的一个未知的、无效的或不受支持的选项或层次。 (os error 10042)
+2025-12-06T15:01:57.342434Z TRACE yggdrasil_multicast::multicast: Failed to join multicast on Yggdrasil: 提供了一个无效的参数。 (os error 10022)
+2025-12-06T15:01:58.234579Z  INFO yggdrasil: Received Ctrl+C, initiating shutdown...
+2025-12-06T15:01:58.234767Z  INFO yggdrasil: Shutting down gracefully...
+2025-12-06T15:01:58.234799Z  INFO yggdrasil_multicast::multicast: Stopped multicast module
+2025-12-06T15:01:58.234810Z DEBUG yggdrasil: Multicast module stopped
+2025-12-06T15:01:58.234889Z  INFO yggdrasil_link::links: Links manager stopped
+2025-12-06T15:01:58.234922Z DEBUG yggdrasil: Links module stopped
+2025-12-06T15:01:58.344205Z  INFO yggdrasil_multicast::multicast: Stopped multicast module
+2025-12-06T15:01:58.344307Z TRACE yggdrasil: Received IPv6 packet from TUN len=76 src=fe80::ec2a:1f9c:906:4c22 dst=ff02::16 next_header=0 hop_limit=1 data_hex=6000000000240001fe80000000000000ec2a1f9c09064c22ff0200000000000000000000000000163a000502000001008f000f080000000103000000ff020000000000000000000000000114
+2025-12-06T15:01:58.344335Z TRACE yggdrasil: Destination not in Yggdrasil range, ignoring dst=ff02::16
+2025-12-06T15:01:58.443577Z  INFO yggdrasil_tun::tun: TUN adapter stopped
+2025-12-06T15:01:58.443710Z DEBUG yggdrasil: TUN read error error=not started
+2025-12-06T15:01:58.443744Z DEBUG yggdrasil::admin_server: Admin server shutting down
+2025-12-06T15:01:58.443763Z  INFO yggdrasil::admin_server: Admin server stopped
+2025-12-06T15:01:58.443933Z  INFO yggdrasil::core: Yggdrasil node stopped
+2025-12-06T15:01:58.444025Z  INFO yggdrasil: Shutdown complete

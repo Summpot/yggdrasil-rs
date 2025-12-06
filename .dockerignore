@@ -1,0 +1,39 @@
+# Docker build context ignore file
+
+# Build artifacts
+target/
+**/*.rs.bk
+**/*.pdb
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Test files
+tests/
+**/tests/
+
+# CI/CD
+.gitlab-ci.yml
+.travis.yml
+
+# Third party reference
+thirdparty/
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store

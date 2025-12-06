@@ -1,0 +1,162 @@
+[package]
+name = "yggdrasil"
+version = "0.1.0"
+edition = "2024"
+authors = ["Yggdrasil Contributors"]
+license = "LGPL-3.0"
+repository = "https://github.com/yggdrasil-network/yggdrasil-go"
+rust-version = "1.85"
+description = "Core functionality for the Yggdrasil network"
+
+[[bin]]
+name = "yggdrasil"
+path = "src/main.rs"
+
+[lib]
+name = "yggdrasil"
+path = "src/lib.rs"
+
+[dependencies]
+yggdrasil-types.workspace = true
+yggdrasil-address.workspace = true
+yggdrasil-wire.workspace = true
+yggdrasil-crypto.workspace = true
+yggdrasil-routing.workspace = true
+yggdrasil-session.workspace = true
+yggdrasil-link.workspace = true
+yggdrasil-config.workspace = true
+yggdrasil-multicast.workspace = true
+yggdrasil-tun.workspace = true
+tokio.workspace = true
+parking_lot.workspace = true
+dashmap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-appender.workspace = true
+service-manager.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+futures.workspace = true
+async-trait.workspace = true
+clap.workspace = true
+comfy-table.workspace = true
+url.workspace = true
+rustls.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[workspace]
+resolver = "2"
+members = [
+    ".",
+    "crates/yggdrasil-types",
+    "crates/yggdrasil-address",
+    "crates/yggdrasil-wire",
+    "crates/yggdrasil-crypto",
+    "crates/yggdrasil-routing",
+    "crates/yggdrasil-session",
+    "crates/yggdrasil-link",
+    "crates/yggdrasil-config",
+    "crates/yggdrasil-multicast",
+    "crates/yggdrasil-tun",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Yggdrasil Contributors"]
+license = "LGPL-3.0"
+repository = "https://github.com/yggdrasil-network/yggdrasil-go"
+rust-version = "1.85"
+
+[workspace.dependencies]
+# Internal crates
+yggdrasil = { path = "." }
+yggdrasil-types = { path = "crates/yggdrasil-types" }
+yggdrasil-address = { path = "crates/yggdrasil-address" }
+yggdrasil-wire = { path = "crates/yggdrasil-wire" }
+yggdrasil-crypto = { path = "crates/yggdrasil-crypto" }
+yggdrasil-routing = { path = "crates/yggdrasil-routing" }
+yggdrasil-session = { path = "crates/yggdrasil-session" }
+yggdrasil-link = { path = "crates/yggdrasil-link" }
+yggdrasil-config = { path = "crates/yggdrasil-config" }
+yggdrasil-multicast = { path = "crates/yggdrasil-multicast" }
+yggdrasil-tun = { path = "crates/yggdrasil-tun" }
+
+# Cryptography
+ed25519-dalek = { version = "2.2", features = ["rand_core"] }
+x25519-dalek = { version = "2.0", features = ["static_secrets"] }
+curve25519-dalek = { version = "4.1", features = ["rand_core"] }
+crypto_box = { version = "0.9", features = ["std", "chacha20"] }
+chacha20poly1305 = { version = "0.10", features = ["rand_core"] }
+blake2 = "0.10"
+sha2 = "0.10"
+rand = "0.9"
+rand_core = { version = "0.6" }
+getrandom = "0.3"
+
+# Async runtime
+tokio = { version = "1.48", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+
+# Networking
+socket2 = { version = "0.6", features = ["all"] }
+quinn = "0.11"
+rustls = { version = "0.23", default-features = false, features = [
+    "std",
+    "tls12",
+    "ring",
+] }
+tokio-rustls = "0.26"
+webpki-roots = "1.0"
+rcgen = "0.14"
+
+# Data structures
+bytes = "1.11"
+bitvec = "1.0"
+bloomfilter = "3.0"
+parking_lot = "0.12"
+dashmap = "6.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde-hjson = "1.1"
+hex = "0.4"
+
+# Error handling
+thiserror = "2.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+
+# Utilities
+regex = "1.12"
+url = "2.5"
+async-trait = "0.1"
+futures = "0.3"
+pin-project-lite = "0.2"
+clap = { version = "4.5", features = ["derive", "env", "string"] }
+tun-rs = { version = "2.7", features = ["async"] }
+comfy-table = "7.2"
+service-manager = "0.8"
+windows-sys = { version = "0.61", features = ["Win32_System_Console"] }
+libc = "0.2"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.release]
+opt-level = 3
+lto = "thin"

@@ -1,0 +1,32 @@
+[package]
+name = "yggdrasil-link"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Link layer for the Yggdrasil network"
+
+[dependencies]
+yggdrasil-types.workspace = true
+yggdrasil-wire.workspace = true
+yggdrasil-crypto.workspace = true
+yggdrasil-address.workspace = true
+yggdrasil-multicast.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+parking_lot.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+bytes.workspace = true
+quinn.workspace = true
+rustls.workspace = true
+tokio-rustls.workspace = true
+blake2.workspace = true
+hex.workspace = true
+rcgen.workspace = true
+time = { version = "0.3", features = ["std"] }
+tokio-tungstenite = { version = "0.28.0", features = ["native-tls"] }
+http = "1.4.0"

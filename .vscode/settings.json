@@ -1,0 +1,8 @@
+{
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        {
+            "text": "You **must** respond in the following locale: en-us."
+        }
+    ],
+    "github.copilot.chat.generateTests.codeLens": true
+}

@@ -1,0 +1,16 @@
+[package]
+name = "yggdrasil-wire"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Wire protocol encoding/decoding for the Yggdrasil network"
+
+[dependencies]
+yggdrasil-types.workspace = true
+bytes.workspace = true
+tokio = { workspace = true, features = ["io-util"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros"] }

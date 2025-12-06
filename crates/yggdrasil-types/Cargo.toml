@@ -1,0 +1,20 @@
+[package]
+name = "yggdrasil-types"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Core types for the Yggdrasil network"
+
+[dependencies]
+ed25519-dalek.workspace = true
+x25519-dalek.workspace = true
+thiserror.workspace = true
+hex.workspace = true
+serde = { workspace = true, optional = true }
+rand_core.workspace = true
+
+[features]
+default = []
+serde = ["dep:serde", "ed25519-dalek/serde"]

@@ -1,0 +1,18 @@
+[package]
+name = "yggdrasil-session"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Session encryption for the Yggdrasil network"
+
+[dependencies]
+yggdrasil-types.workspace = true
+yggdrasil-wire.workspace = true
+yggdrasil-crypto.workspace = true
+ed25519-dalek.workspace = true
+tokio.workspace = true
+parking_lot.workspace = true
+dashmap.workspace = true
+tracing.workspace = true

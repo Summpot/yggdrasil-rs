@@ -1,0 +1,322 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  CARGO_TERM_COLOR: always
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Get version from tag
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ inputs.tag }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+
+  build-binaries:
+    name: Build and Test Binaries
+    needs: create-release
+    uses: ./.github/workflows/_build-binaries.yml
+    with:
+      artifact-prefix: ''
+      include-docs: true
+
+  upload-release-assets:
+    name: Upload Release Assets
+    needs: [create-release, build-binaries]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        artifact:
+          - name: yggdrasil-linux-amd64
+            ext: tar.gz
+          - name: yggdrasil-linux-arm64
+            ext: tar.gz
+          - name: yggdrasil-linux-amd64-musl
+            ext: tar.gz
+          - name: yggdrasil-linux-arm64-musl
+            ext: tar.gz
+          - name: yggdrasil-windows-amd64
+            ext: zip
+          - name: yggdrasil-windows-arm64
+            ext: zip
+          - name: yggdrasil-macos-amd64
+            ext: tar.gz
+          - name: yggdrasil-macos-arm64
+            ext: tar.gz
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact.name }}
+          path: ./binaries
+
+      - name: Create archive with version
+        run: |
+          cd binaries
+          if [ "${{ matrix.artifact.ext }}" = "zip" ]; then
+            apt-get update && apt-get install -y zip
+            zip -r ../${{ matrix.artifact.name }}-${{ needs.create-release.outputs.version }}.zip *
+          else
+            tar -czf ../${{ matrix.artifact.name }}-${{ needs.create-release.outputs.version }}.tar.gz *
+          fi
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./${{ matrix.artifact.name }}-${{ needs.create-release.outputs.version }}.${{ matrix.artifact.ext }}
+          asset_name: ${{ matrix.artifact.name }}-${{ needs.create-release.outputs.version }}.${{ matrix.artifact.ext }}
+          asset_content_type: application/octet-stream
+
+  release-docker-amd64:
+    name: Release Docker Image (linux/amd64)
+    needs: [create-release, upload-release-assets]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download release asset
+        uses: robinraju/release-downloader@v1
+        with:
+          tag: ${{ needs.create-release.outputs.version }}
+          fileName: yggdrasil-linux-amd64-musl-${{ needs.create-release.outputs.version }}.tar.gz
+          
+      - name: Extract binaries
+        run: |
+          mkdir -p binaries
+          tar -xzf yggdrasil-linux-amd64-musl-${{ needs.create-release.outputs.version }}.tar.gz -C binaries
+          ls -la binaries
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}-amd64,value=${{ needs.create-release.outputs.version }}
+            type=raw,value=latest-amd64
+
+      - name: Build and push Docker image (linux/amd64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          build-args: |
+            TARGETARCH=amd64
+
+  release-docker-arm64:
+    name: Release Docker Image (linux/arm64)
+    needs: [create-release, upload-release-assets]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download release asset
+        uses: robinraju/release-downloader@v1
+        with:
+          tag: ${{ needs.create-release.outputs.version }}
+          fileName: yggdrasil-linux-arm64-musl-${{ needs.create-release.outputs.version }}.tar.gz
+          
+      - name: Extract binaries
+        run: |
+          mkdir -p binaries
+          tar -xzf yggdrasil-linux-arm64-musl-${{ needs.create-release.outputs.version }}.tar.gz -C binaries
+          ls -la binaries
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}-arm64,value=${{ needs.create-release.outputs.version }}
+            type=raw,value=latest-arm64
+
+      - name: Build and push Docker image (linux/arm64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/arm64
+          build-args: |
+            TARGETARCH=arm64
+
+  release-docker-manifest:
+    name: Create Docker Multi-arch Manifest
+    needs: [create-release, release-docker-amd64, release-docker-arm64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          # Create manifest for version tag
+          docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}-arm64
+          
+          # Create manifest for latest tag
+          docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
+          
+          # Extract version parts for additional tags
+          VERSION=${{ needs.create-release.outputs.version }}
+          VERSION_NO_V=${VERSION#v}
+          MAJOR=$(echo $VERSION_NO_V | cut -d. -f1)
+          MINOR=$(echo $VERSION_NO_V | cut -d. -f1-2)
+          
+          # Create manifest for major.minor tag
+          docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MINOR} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}-arm64
+          
+          # Create manifest for major tag
+          docker buildx imagetools create -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${MAJOR} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}-arm64
+
+      - name: Generate image digest
+        id: digest
+        run: |
+          DIGEST=$(docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }} --format '{{.Manifest.Digest}}')
+          echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+          echo "Image digest: ${DIGEST}"
+
+      - name: Create release notes
+        run: |
+          cat << EOF > release-notes.md
+          ## Docker Images
+          
+          Published to GitHub Container Registry:
+          
+          \`\`\`bash
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          \`\`\`
+          
+          **Image Digest**: \`${{ steps.digest.outputs.digest }}\`
+          
+          **Multi-platform support**: linux/amd64, linux/arm64
+          
+          **Architecture-specific images**:
+          - \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}-amd64\`
+          - \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}-arm64\`
+          
+          ### Quick Start
+          
+          \`\`\`bash
+          # Generate configuration
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }} gen-conf > config.hjson
+          
+          # Run Yggdrasil
+          docker run -d --name yggdrasil \\
+            --net=host \\
+            --cap-add=NET_ADMIN \\
+            -v \$(pwd)/config.hjson:/etc/yggdrasil/config.hjson \\
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.create-release.outputs.version }}
+          \`\`\`
+          EOF
+
+      - name: Update release with Docker info
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const releaseNotes = fs.readFileSync('release-notes.md', 'utf8');
+            
+            const release = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: '${{ needs.create-release.outputs.version }}'
+            });
+            
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.data.id,
+              body: (release.data.body || '') + '\n\n' + releaseNotes
+            });

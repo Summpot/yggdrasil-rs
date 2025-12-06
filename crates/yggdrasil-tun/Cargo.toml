@@ -1,0 +1,21 @@
+[package]
+name = "yggdrasil-tun"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "TUN interface for the Yggdrasil network"
+
+[dependencies]
+yggdrasil-types.workspace = true
+yggdrasil-address.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+tun-rs = { version = "2.7", features = ["async"] }
+
+[build-dependencies]
+
+[target.'cfg(windows)'.build-dependencies]
