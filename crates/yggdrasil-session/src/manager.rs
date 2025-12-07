@@ -160,6 +160,12 @@ impl SessionManager {
     }
 
     fn handle_init(&self, pub_key: &PublicKey, init: &SessionInit) -> HandleResult {
+        tracing::debug!(
+            from = %hex::encode(&pub_key.as_bytes()[..8]),
+            seq = init.seq,
+            key_seq = init.key_seq,
+            "Session: Processing Init message"
+        );
         let (session, buf) = self.session_for_init(pub_key, init);
         {
             let mut info = session.write();
@@ -208,10 +214,17 @@ impl SessionManager {
 
     fn handle_traffic(&self, pub_key: &PublicKey, msg: &[u8]) -> HandleResult {
         if let Some(session) = self.sessions.read().get(pub_key) {
+            let info_read = session.read();
             tracing::debug!(
                 from = %hex::encode(&pub_key.as_bytes()[..8]),
+                recv_shared = %hex::encode(info_read.recv_shared.as_bytes()),
+                recv_nonce = info_read.recv_nonce,
+                next_recv_shared = %hex::encode(info_read.next_recv_shared.as_bytes()),
+                next_recv_nonce = info_read.next_recv_nonce,
+                msg_len = msg.len(),
                 "Session: Found existing session, attempting to decrypt traffic"
             );
+            drop(info_read);
             let mut info = session.write();
             match info.decrypt_traffic(msg) {
                 Ok(payload) => {
@@ -262,11 +275,15 @@ impl SessionManager {
     /// Encrypt and send data to a peer.
     pub fn write_to(&self, to_key: PublicKey, msg: Vec<u8>) -> WriteResult {
         if let Some(session) = self.sessions.read().get(&to_key) {
+            let info = session.read();
             tracing::debug!(
                 dest = %hex::encode(&to_key.as_bytes()[..8]),
                 msg_len = msg.len(),
+                send_shared = %hex::encode(info.send_shared.as_bytes()),
+                send_nonce = info.send_nonce,
                 "Session: Encrypting traffic with existing session"
             );
+            drop(info);
             let mut info = session.write();
             let encrypted = info.encrypt_traffic(&msg);
             tracing::debug!(

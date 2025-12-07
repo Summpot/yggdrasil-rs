@@ -37,6 +37,13 @@ impl SessionInit {
 
     /// Encrypt the session init message.
     pub fn encrypt(&self, from: &SecretKey, to: &PublicKey) -> Result<Vec<u8>, WireError> {
+        tracing::debug!(
+            to = %hex::encode(&to.as_bytes()[..8]),
+            key_seq = self.key_seq,
+            seq = self.seq,
+            "Session Init: Encrypting Init message"
+        );
+
         // Generate ephemeral box keys
         let (from_pub, from_priv) = box_crypto::generate_keypair();
 
@@ -74,12 +81,31 @@ impl SessionInit {
         data.extend_from_slice(from_pub.as_bytes());
         data.extend_from_slice(&encrypted);
 
+        tracing::debug!(
+            to = %hex::encode(&to.as_bytes()[..8]),
+            data_len = data.len(),
+            "Session Init: Init message encrypted successfully"
+        );
+
         Ok(data)
     }
 
     /// Decrypt a session init message.
     pub fn decrypt(priv_key: &BoxPriv, from: &PublicKey, data: &[u8]) -> Option<Self> {
+        tracing::debug!(
+            from = %hex::encode(&from.as_bytes()[..8]),
+            data_len = data.len(),
+            expected_len = SESSION_INIT_SIZE,
+            "Session Init: Attempting to decrypt Init message"
+        );
+
         if data.len() != SESSION_INIT_SIZE {
+            tracing::warn!(
+                from = %hex::encode(&from.as_bytes()[..8]),
+                data_len = data.len(),
+                expected = SESSION_INIT_SIZE,
+                "Session Init: Invalid Init message length"
+            );
             return None;
         }
 
@@ -114,6 +140,15 @@ impl SessionInit {
         use ed25519_dalek::Verifier;
         verifying_key.verify(&sig_bytes_full, &sig).ok()?;
 
+        tracing::info!(
+            from = %hex::encode(&from.as_bytes()[..8]),
+            current = %hex::encode(current.as_bytes()),
+            next = %hex::encode(next.as_bytes()),
+            key_seq = key_seq,
+            seq = seq,
+            "Session Init: Init message decrypted and verified successfully"
+        );
+
         Some(Self {
             current,
             next,
@@ -138,14 +173,38 @@ impl SessionAck {
 
     /// Encrypt the session ack message.
     pub fn encrypt(&self, from: &SecretKey, to: &PublicKey) -> Result<Vec<u8>, WireError> {
+        tracing::debug!(
+            to = %hex::encode(&to.as_bytes()[..8]),
+            "Session Ack: Encrypting Ack message"
+        );
         let mut data = self.inner.encrypt(from, to)?;
         data[0] = 2; // sessionTypeAck
+        tracing::debug!(
+            to = %hex::encode(&to.as_bytes()[..8]),
+            data_len = data.len(),
+            "Session Ack: Ack message encrypted successfully"
+        );
         Ok(data)
     }
 
     /// Decrypt a session ack message.
     pub fn decrypt(priv_key: &BoxPriv, from: &PublicKey, data: &[u8]) -> Option<Self> {
+        tracing::debug!(
+            from = %hex::encode(&from.as_bytes()[..8]),
+            data_len = data.len(),
+            packet_type = if data.len() > 0 { data[0] } else { 255 },
+            "Session Ack: Attempting to decrypt Ack message"
+        );
+
         if data.len() != SESSION_ACK_SIZE || data[0] != 2 {
+            tracing::warn!(
+                from = %hex::encode(&from.as_bytes()[..8]),
+                data_len = data.len(),
+                packet_type = if data.len() > 0 { data[0] } else { 255 },
+                expected_len = SESSION_ACK_SIZE,
+                expected_type = 2,
+                "Session Ack: Invalid Ack message"
+            );
             return None;
         }
 

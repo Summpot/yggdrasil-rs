@@ -4,7 +4,7 @@
 //! using the NaCl box construction, matching the Go implementation.
 
 use crypto_box::{
-    ChaChaBox, Nonce, PublicKey as BoxPublicKey, SecretKey as BoxSecretKey,
+    SalsaBox, Nonce, PublicKey as BoxPublicKey, SecretKey as BoxSecretKey,
     aead::{Aead, OsRng},
 };
 
@@ -154,14 +154,38 @@ impl Default for BoxShared {
 
 impl BoxShared {
     /// Compute the shared secret between a public and private key.
+    /// This matches the NaCl box precompute: X25519 DH followed by HSalsa20.
+    ///
+    /// Corresponds to crypto_box_beforenm in NaCl spec:
+    /// https://nacl.cr.yp.to/box.html
     pub fn new(their_public: &BoxPub, my_private: &BoxPriv) -> Self {
         use x25519_dalek::{PublicKey, StaticSecret};
 
         let secret = StaticSecret::from(my_private.0);
         let public = PublicKey::from(their_public.0);
-        let shared = secret.diffie_hellman(&public);
+        let dh_result = secret.diffie_hellman(&public);
 
-        Self(shared.to_bytes())
+        // Apply HSalsa20 to the DH result, matching NaCl's Precompute
+        // Go: box.Precompute calls: curve25519.ScalarMult followed by salsa.HSalsa20
+        // See: https://github.com/golang/crypto/blob/main/nacl/box/box.go#L79-L81
+        //   curve25519.ScalarMult(sharedKey, privateKey, peersPublicKey)
+        //   salsa.HSalsa20(sharedKey, &zeros, sharedKey, &salsa.Sigma)
+        //
+        // NaCl box uses crypto_core_hsalsa20(sharedkey, zero, sharedkey, sigma)
+        // where sigma = "expand 32-byte k"
+        use salsa20::hsalsa;
+        const SIGMA: [u8; 16] = *b"expand 32-byte k";
+        const ZERO: [u8; 16] = [0u8; 16];
+        
+        use generic_array::GenericArray;
+        let key = GenericArray::from_slice(dh_result.as_bytes());
+        let input = GenericArray::from_slice(&ZERO);
+        
+        // HSalsa20 uses 10 rounds (U10), matching Salsa20/20
+        // Each "round" in the generic parameter means one full round (column + diagonal)
+        let shared_result = hsalsa::<typenum::consts::U10>(key, input);
+
+        Self(*shared_result.as_ref())
     }
 
     /// Get the raw bytes.
@@ -238,7 +262,7 @@ pub fn box_seal(
 ) -> Result<Vec<u8>, CryptoError> {
     let their_pk = their_public.to_box_public_key();
     let my_sk = my_private.to_box_secret_key();
-    let the_box = ChaChaBox::new(&their_pk, &my_sk);
+    let the_box = SalsaBox::new(&their_pk, &my_sk);
 
     let nonce_bytes = nonce_for_u64(nonce);
     let nonce = Nonce::from_slice(&nonce_bytes);
@@ -258,7 +282,7 @@ pub fn box_open(
 ) -> Result<Vec<u8>, CryptoError> {
     let their_pk = their_public.to_box_public_key();
     let my_sk = my_private.to_box_secret_key();
-    let the_box = ChaChaBox::new(&their_pk, &my_sk);
+    let the_box = SalsaBox::new(&their_pk, &my_sk);
 
     let nonce_bytes = nonce_for_u64(nonce);
     let nonce = Nonce::from_slice(&nonce_bytes);
@@ -276,15 +300,15 @@ pub fn box_seal_with_shared(msg: &[u8], nonce: u64, shared: &BoxShared) -> Vec<u
 
     use crypto_box::aead::KeyInit;
 
-    // Use ChaCha20Poly1305 with the shared secret as key
-    use chacha20poly1305::{ChaCha20Poly1305, Key};
+    // Use XSalsa20Poly1305 with the shared secret as key
+    use xsalsa20poly1305::{XSalsa20Poly1305, Key};
 
     let key = Key::from_slice(shared.as_bytes());
-    let cipher = ChaCha20Poly1305::new(key);
+    let cipher = XSalsa20Poly1305::new(key);
 
-    // Use first 12 bytes of our 24-byte nonce for ChaCha20
+    // Use full 24-byte nonce for XSalsa20
     let nonce_bytes = nonce_for_u64(nonce);
-    let nonce = chacha20poly1305::Nonce::from_slice(&nonce_bytes[..12]);
+    let nonce = xsalsa20poly1305::Nonce::from_slice(&nonce_bytes);
 
     cipher
         .encrypt(nonce, msg)
@@ -297,15 +321,15 @@ pub fn box_open_with_shared(
     nonce: u64,
     shared: &BoxShared,
 ) -> Result<Vec<u8>, CryptoError> {
-    use chacha20poly1305::{ChaCha20Poly1305, Key};
+    use xsalsa20poly1305::{XSalsa20Poly1305, Key};
     use crypto_box::aead::KeyInit;
 
     let key = Key::from_slice(shared.as_bytes());
-    let cipher = ChaCha20Poly1305::new(key);
+    let cipher = XSalsa20Poly1305::new(key);
 
-    // Use first 12 bytes of our 24-byte nonce for ChaCha20
+    // Use full 24-byte nonce for XSalsa20
     let nonce_bytes = nonce_for_u64(nonce);
-    let nonce = chacha20poly1305::Nonce::from_slice(&nonce_bytes[..12]);
+    let nonce = xsalsa20poly1305::Nonce::from_slice(&nonce_bytes);
 
     cipher
         .decrypt(nonce, ciphertext)
@@ -392,5 +416,130 @@ mod tests {
         // Try to decrypt with wrong nonce
         let result = box_open(&ciphertext, 2, &pub_key, &priv_key);
         assert!(result.is_err());
+    }
+
+    // === NaCl Box Compatibility Tests ===
+    // These tests lock in the correct HSalsa20 behavior we've verified against Go
+    
+    /// Test that HSalsa20 produces the correct output for known inputs
+    #[test]
+    fn test_hsalsa20_known_vector() {
+        let pub_key = hex::decode("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
+        let priv_key = hex::decode("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f").unwrap();
+        
+        let their_pub = BoxPub::from_bytes(&pub_key).unwrap();
+        let my_priv = BoxPriv::from_bytes(&priv_key).unwrap();
+        
+        let shared = BoxShared::new(&their_pub, &my_priv);
+        
+        // Expected shared secret (verified against golang.org/x/crypto/nacl/box)
+        let expected = hex::decode("901205f8d288b240566c4a476b84283f21583db4ad30f802dfeb69f0da1061b8").unwrap();
+        
+        assert_eq!(
+            shared.as_bytes(),
+            expected.as_slice(),
+            "HSalsa20 shared secret mismatch! BoxShared::new is broken."
+        );
+    }
+    
+    /// Test with real keys from white-box test
+    #[test]
+    fn test_whitebox_shared_secret() {
+        let eph_pub = hex::decode("029b51683e11d112ff3f790b52fe7389658d185472417f66e4ee1f953b3bed5d").unwrap();
+        let recv_priv = hex::decode("3ede643e1eaa8142a37e04da09cfd27e6a470d7b887f1b3df6b498d5de3e8952").unwrap();
+        
+        let their_pub = BoxPub::from_bytes(&eph_pub).unwrap();
+        let my_priv = BoxPriv::from_bytes(&recv_priv).unwrap();
+        
+        let shared = BoxShared::new(&their_pub, &my_priv);
+        
+        // Expected shared secret (computed by yggdrasil-go)
+        let expected = hex::decode("d3b139d8b5ccb73c2ac961dad181077a245d2b847779061cd7c774707ed32ab5").unwrap();
+        
+        assert_eq!(
+            shared.as_bytes(),
+            expected.as_slice(),
+            "White-box shared secret mismatch! yggdrasil-go compatibility broken."
+        );
+    }
+    
+    /// Test full encryption/decryption cycle matches Go
+    #[test]
+    fn test_box_encryption_cycle() {
+        let pub_key = hex::decode("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
+        let priv_key = hex::decode("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f").unwrap();
+        
+        let their_pub = BoxPub::from_bytes(&pub_key).unwrap();
+        let my_priv = BoxPriv::from_bytes(&priv_key).unwrap();
+        
+        let message = b"Hello, Yggdrasil!";
+        let nonce = 0u64;
+        
+        // Use precomputed shared secret (our verified path)
+        let shared = BoxShared::new(&their_pub, &my_priv);
+        let encrypted = box_seal_with_shared(message, nonce, &shared);
+        
+        // Expected ciphertext (verified against Go)
+        let expected_ct = hex::decode("bb5421d159a824d7d02d38a6986a7e97c6cbb8bbd9c83ec7e7fa1c24b6dd75a83c").unwrap();
+        
+        assert_eq!(
+            encrypted,
+            expected_ct,
+            "Encrypted output doesn't match Go! Encryption broken."
+        );
+        
+        // Verify decryption works
+        let decrypted = box_open_with_shared(&encrypted, nonce, &shared).unwrap();
+        assert_eq!(decrypted, message);
+    }
+    
+    /// Regression test: Ensure we're using HSalsa20 with correct round count (10 rounds)
+    #[test]
+    fn test_hsalsa20_rounds_regression() {
+        use x25519_dalek::{StaticSecret, PublicKey as X25519Public};
+        use salsa20::hsalsa;
+        use generic_array::GenericArray;
+        
+        let pub_bytes = hex::decode("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
+        let priv_bytes = hex::decode("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f").unwrap();
+        
+        let mut pub_key = [0u8; 32];
+        let mut priv_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_bytes);
+        priv_key.copy_from_slice(&priv_bytes);
+        
+        let secret = StaticSecret::from(priv_key);
+        let public = X25519Public::from(pub_key);
+        let dh_result = secret.diffie_hellman(&public);
+        
+        // Apply HSalsa20 with CORRECT round count (U10 = 10 rounds)
+        const ZERO: [u8; 16] = [0u8; 16];
+        let key = GenericArray::from_slice(dh_result.as_bytes());
+        let input = GenericArray::from_slice(&ZERO);
+        let shared_correct = hsalsa::<typenum::consts::U10>(key, input);
+        
+        // This is what U20 (WRONG) would produce
+        let shared_wrong = hsalsa::<typenum::consts::U20>(key, input);
+        
+        let expected_correct = hex::decode("901205f8d288b240566c4a476b84283f21583db4ad30f802dfeb69f0da1061b8").unwrap();
+        let wrong_output = hex::decode("166723c086efd5c431699ab764ce44a6ac5d28ade5c0bdd5240987c0414c5eaf").unwrap();
+        
+        assert_eq!(
+            shared_correct.as_slice(),
+            expected_correct.as_slice(),
+            "U10 (correct) must produce the right shared secret"
+        );
+        
+        assert_eq!(
+            shared_wrong.as_slice(),
+            wrong_output.as_slice(),
+            "U20 (wrong) produces different output - this documents the bug we fixed"
+        );
+        
+        assert_ne!(
+            shared_correct.as_slice(),
+            shared_wrong.as_slice(),
+            "U10 and U20 must produce different results"
+        );
     }
 }

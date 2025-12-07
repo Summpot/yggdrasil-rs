@@ -112,6 +112,18 @@ impl SessionInfo {
         self.next_recv_nonce = 0;
         self.recv_nonce = recv_nonce;
         self.send_nonce = send_nonce;
+
+        // Log session keys for debugging
+        tracing::info!(
+            remote_ed = %hex::encode(&self.ed.as_bytes()),
+            recv_shared = %hex::encode(self.recv_shared.as_bytes()),
+            send_shared = %hex::encode(self.send_shared.as_bytes()),
+            recv_nonce = recv_nonce,
+            send_nonce = send_nonce,
+            local_key_seq = self.local_key_seq,
+            remote_key_seq = self.remote_key_seq,
+            "Session: Shared secrets established"
+        );
     }
 
     /// Reset the activity timer.

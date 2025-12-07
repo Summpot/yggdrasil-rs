@@ -94,8 +94,9 @@ yggdrasil-tun = { path = "crates/yggdrasil-tun" }
 ed25519-dalek = { version = "2.2", features = ["rand_core"] }
 x25519-dalek = { version = "2.0", features = ["static_secrets"] }
 curve25519-dalek = { version = "4.1", features = ["rand_core"] }
-crypto_box = { version = "0.9", features = ["std", "chacha20"] }
-chacha20poly1305 = { version = "0.10", features = ["rand_core"] }
+crypto_box = { version = "0.9", features = ["std", "salsa20"] }
+xsalsa20poly1305 = { version = "0.9", features = ["rand_core"] }
+salsa20 = "0.10"
 blake2 = "0.10"
 sha2 = "0.10"
 rand = "0.9"
