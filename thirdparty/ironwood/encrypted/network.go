@@ -50,6 +50,7 @@ func (m *netManager) read() {
 			n, from, err := m.pc.PacketConn.ReadFrom(buf)
 			if err != nil {
 				// Exit the loop
+				m.pc.logger.Warnf("encrypted: network read error: %v", err)
 				m.running = false
 				if m.pc.IsClosed() {
 					select {
@@ -71,6 +72,7 @@ func (m *netManager) read() {
 				copy(msg, buf[:n])
 				var fromKey edPub
 				copy(fromKey[:], from.(types.Addr))
+				m.pc.logger.Traceln("encrypted: network received packet", "from", types.Addr(fromKey[:]), "len", n)
 				m.pc.sessions.handleData(m, &fromKey, msg)
 				m.Act(nil, rl) // continue to loop
 			}

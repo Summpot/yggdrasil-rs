@@ -104,6 +104,7 @@ func New(cert *tls.Certificate, logger Logger, opts ...SetupOption) (*Core, erro
 	); err != nil {
 		return nil, fmt.Errorf("error creating encryption: %w", err)
 	}
+	c.PacketConn.SetLogger(c.log)
 	c.proto.init(c)
 	if err := c.links.init(c); err != nil {
 		return nil, fmt.Errorf("error initialising links: %w", err)

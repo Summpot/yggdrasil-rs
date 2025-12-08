@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -507,10 +508,14 @@ func (l *links) listen(u *url.URL, sintf string, local bool) (*Listener, error) 
 		for {
 			conn, err := li.listener.Accept()
 			if err != nil {
+				l.core.log.Warnf("%s listener accept error: %v", strings.ToUpper(u.Scheme), err)
 				return
 			}
 			go func(conn net.Conn) {
 				defer conn.Close()
+				if tlsconn, ok := conn.(*tls.Conn); ok {
+					logTLSState(l.core.log, "server: ", tlsconn.ConnectionState())
+				}
 
 				// In order to populate a somewhat sane looking connection
 				// URI in the admin socket, we need to replace the host in
@@ -614,6 +619,10 @@ func (l *links) connect(ctx context.Context, u *url.URL, info linkInfo, options 
 }
 
 func (l *links) handler(linkType linkType, options linkOptions, conn net.Conn, success func(), local bool) error {
+	dir := "outbound"
+	if linkType == linkTypeIncoming {
+		dir = "inbound"
+	}
 	meta := version_getBaseMetadata()
 	meta.publicKey = l.core.public
 	meta.priority = options.priority
@@ -621,6 +630,7 @@ func (l *links) handler(linkType linkType, options linkOptions, conn net.Conn, s
 	if err != nil {
 		return fmt.Errorf("failed to generate handshake: %w", err)
 	}
+	l.core.log.Debugf("Sending version handshake (%s) to %s: priority=%d hasPassword=%t bytes=%d", dir, conn.RemoteAddr(), options.priority, len(options.password) > 0, len(metaBytes))
 	if err := conn.SetDeadline(time.Now().Add(time.Second * 6)); err != nil {
 		return fmt.Errorf("failed to set handshake deadline: %w", err)
 	}
@@ -637,7 +647,9 @@ func (l *links) handler(linkType linkType, options linkOptions, conn net.Conn, s
 		_ = conn.Close()
 		return err
 	}
+	l.core.log.Debugf("Received version handshake (%s) from %s: version=%d.%d priority=%d pubkey=%s", dir, conn.RemoteAddr(), meta.majorVer, meta.minorVer, meta.priority, hex.EncodeToString(meta.publicKey))
 	if !meta.check() {
+		l.core.log.Warnf("Remote node version mismatch (%s): local=%d.%d remote=%d.%d", dir, base.majorVer, base.minorVer, meta.majorVer, meta.minorVer)
 		return fmt.Errorf("remote node incompatible version (local %s, remote %s)",
 			fmt.Sprintf("%d.%d", base.majorVer, base.minorVer),
 			fmt.Sprintf("%d.%d", meta.majorVer, meta.minorVer),
@@ -656,6 +668,7 @@ func (l *links) handler(linkType linkType, options linkOptions, conn net.Conn, s
 		var key keyArray
 		copy(key[:], meta.publicKey)
 		if _, allowed := pinned[key]; !allowed {
+			l.core.log.Warnf("%s connection rejected: public key %s not in pinned list", dir, hex.EncodeToString(meta.publicKey))
 			return fmt.Errorf("node public key that does not match pinned keys")
 		}
 	}
@@ -673,13 +686,9 @@ func (l *links) handler(linkType linkType, options linkOptions, conn net.Conn, s
 			}
 		}
 		if linkType == linkTypeIncoming && !isallowed {
+			l.core.log.Warnf("%s connection rejected: %s not in AllowedPublicKeys", dir, hex.EncodeToString(meta.publicKey))
 			return fmt.Errorf("node public key %q is not in AllowedPublicKeys", hex.EncodeToString(meta.publicKey))
 		}
-	}
-
-	dir := "outbound"
-	if linkType == linkTypeIncoming {
-		dir = "inbound"
 	}
 	remoteAddr := net.IP(address.AddrForKey(meta.publicKey)[:]).String()
 	remoteStr := fmt.Sprintf("%s@%s", remoteAddr, conn.RemoteAddr())

@@ -17,6 +17,7 @@ type PacketConn struct {
 	secretBox boxPriv
 	sessions  sessionManager
 	network   netManager
+	logger    Logger
 	Debug     Debug
 }
 
@@ -26,7 +27,10 @@ func NewPacketConn(secret ed25519.PrivateKey, options ...network.Option) (*Packe
 	if err != nil {
 		return nil, err
 	}
-	pc := &PacketConn{PacketConn: npc}
+	pc := &PacketConn{
+		PacketConn: npc,
+		logger:     noopLogger{},
+	}
 	copy(pc.secretEd[:], secret[:])
 	pc.secretBox = *pc.secretEd.toBox()
 	pc.sessions.init(pc)
@@ -35,10 +39,20 @@ func NewPacketConn(secret ed25519.PrivateKey, options ...network.Option) (*Packe
 	return pc, nil
 }
 
+// SetLogger installs a logger used for detailed tracing. If logger is nil, a no-op logger is used.
+func (pc *PacketConn) SetLogger(logger Logger) {
+	if logger == nil {
+		pc.logger = noopLogger{}
+		return
+	}
+	pc.logger = logger
+}
+
 func (pc *PacketConn) ReadFrom(p []byte) (n int, from net.Addr, err error) {
 	pc.network.read()
 	info := <-pc.network.readCh
 	if info.err != nil {
+		pc.logger.Warnf("encrypted: ReadFrom error: %v", info.err)
 		err = info.err
 		return
 	}
@@ -47,6 +61,7 @@ func (pc *PacketConn) ReadFrom(p []byte) (n int, from net.Addr, err error) {
 		n = len(p)
 	}
 	copy(p, info.data[:n])
+	pc.logger.Traceln("encrypted: ReadFrom delivered", "from", from, "len", n)
 	freeBytes(info.data)
 	return
 }
@@ -67,6 +82,7 @@ func (pc *PacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	n = len(p)
 	var dest edPub
 	copy(dest[:], destKey)
+	pc.logger.Traceln("encrypted: WriteTo queued", "dest", destKey, "len", n)
 	pc.sessions.writeTo(dest, append(allocBytes(0), p...))
 	return
 }

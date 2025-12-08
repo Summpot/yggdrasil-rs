@@ -2,6 +2,7 @@ package encrypted
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"time"
 
 	"github.com/Arceliar/phony"
@@ -30,6 +31,22 @@ const (
 	sessionTypeAck
 	sessionTypeTraffic
 )
+
+func pubString(pub *edPub) string {
+	if pub == nil {
+		return "<nil>"
+	}
+	return hex.EncodeToString(pub[:])
+}
+
+func boxPubShort(pub boxPub) string {
+	const short = 8
+	str := hex.EncodeToString(pub[:])
+	if len(str) > short*2 {
+		return str[:short*2]
+	}
+	return str
+}
 
 /******************
  * sessionManager *
@@ -61,7 +78,9 @@ func (mgr *sessionManager) _newSession(ed *edPub, recv, send boxPub, seq uint64)
 func (mgr *sessionManager) _sessionForInit(pub *edPub, init *sessionInit) (*sessionInfo, *sessionBuffer) {
 	var info *sessionInfo
 	var buf *sessionBuffer
+	peer := pubString(pub)
 	if info = mgr.sessions[*pub]; info == nil {
+		mgr.pc.logger.Debugf("encrypted: creating new session for %s from init seq=%d keySeq=%d", peer, init.seq, init.keySeq)
 		info = mgr._newSession(pub, init.current, init.next, init.seq)
 		if buf = mgr.buffers[*pub]; buf != nil {
 			buf.timer.Stop()
@@ -70,6 +89,7 @@ func (mgr *sessionManager) _sessionForInit(pub *edPub, init *sessionInit) (*sess
 			info.nextPub, info.nextPriv = buf.init.next, buf.nextPriv
 			info._fixShared(0, 0)
 			// The caller is responsible for sending buf.data when ready
+			mgr.pc.logger.Debugf("encrypted: applying buffered traffic for %s after init (buffered bytes=%d)", peer, len(buf.data))
 		}
 	}
 	return info, buf
@@ -78,31 +98,43 @@ func (mgr *sessionManager) _sessionForInit(pub *edPub, init *sessionInit) (*sess
 func (mgr *sessionManager) handleData(from phony.Actor, pub *edPub, data []byte) {
 	mgr.Act(from, func() {
 		if len(data) == 0 {
+			mgr.pc.logger.Traceln("encrypted: received empty session payload")
 			return
 		}
+		peer := pubString(pub)
+		msgType := data[0]
+		mgr.pc.logger.Traceln("encrypted: received session message", "peer", peer, "type", msgType, "len", len(data))
 		switch data[0] {
 		case sessionTypeDummy:
 		case sessionTypeInit:
 			init := new(sessionInit)
 			if init.decrypt(&mgr.pc.secretBox, pub, data) {
+				mgr.pc.logger.Debugf("encrypted: session init decrypted from %s seq=%d keySeq=%d current=%s next=%s", peer, init.seq, init.keySeq, boxPubShort(init.current), boxPubShort(init.next))
 				mgr._handleInit(pub, init)
+			} else {
+				mgr.pc.logger.Warnf("encrypted: failed to decrypt session init from %s (len=%d)", peer, len(data))
 			}
 			freeBytes(data)
 		case sessionTypeAck:
 			ack := new(sessionAck)
 			if ack.decrypt(&mgr.pc.secretBox, pub, data) {
+				mgr.pc.logger.Debugf("encrypted: session ack decrypted from %s seq=%d keySeq=%d current=%s next=%s", peer, ack.seq, ack.keySeq, boxPubShort(ack.current), boxPubShort(ack.next))
 				mgr._handleAck(pub, ack)
+			} else {
+				mgr.pc.logger.Warnf("encrypted: failed to decrypt session ack from %s (len=%d)", peer, len(data))
 			}
 			freeBytes(data)
 		case sessionTypeTraffic:
 			mgr._handleTraffic(pub, data)
 		default:
+			mgr.pc.logger.Warnf("encrypted: unknown session message type %d from %s", data[0], peer)
 		}
 	})
 }
 
 func (mgr *sessionManager) _handleInit(pub *edPub, init *sessionInit) {
 	if info, buf := mgr._sessionForInit(pub, init); info != nil {
+		mgr.pc.logger.Traceln("encrypted: processing init", "peer", pubString(pub), "seq", init.seq, "keySeq", init.keySeq)
 		info.handleInit(mgr, init)
 		if buf != nil && buf.data != nil {
 			info.doSend(mgr, buf.data)
@@ -113,6 +145,7 @@ func (mgr *sessionManager) _handleInit(pub *edPub, init *sessionInit) {
 func (mgr *sessionManager) _handleAck(pub *edPub, ack *sessionAck) {
 	_, isOld := mgr.sessions[*pub]
 	if info, buf := mgr._sessionForInit(pub, &ack.sessionInit); info != nil {
+		mgr.pc.logger.Traceln("encrypted: processing ack", "peer", pubString(pub), "seq", ack.seq, "keySeq", ack.keySeq, "existing", isOld)
 		if isOld {
 			info.handleAck(mgr, ack)
 		} else {
@@ -126,6 +159,7 @@ func (mgr *sessionManager) _handleAck(pub *edPub, ack *sessionAck) {
 
 func (mgr *sessionManager) _handleTraffic(pub *edPub, msg []byte) {
 	if info := mgr.sessions[*pub]; info != nil {
+		mgr.pc.logger.Traceln("encrypted: routing traffic message to session", "peer", pubString(pub), "len", len(msg))
 		info.doRecv(mgr, msg)
 	} else {
 		// We don't know that the node really exists, it could be spoofed/replay
@@ -135,6 +169,7 @@ func (mgr *sessionManager) _handleTraffic(pub *edPub, msg []byte) {
 		currentPub, _ := newBoxKeys()
 		nextPub, _ := newBoxKeys()
 		init := newSessionInit(&currentPub, &nextPub, 0)
+		mgr.pc.logger.Debugf("encrypted: unknown session traffic from %s (len=%d), sending stateless init current=%s next=%s", pubString(pub), len(msg), boxPubShort(init.current), boxPubShort(init.next))
 		mgr.sendInit(pub, &init)
 	}
 }
@@ -143,8 +178,10 @@ func (mgr *sessionManager) writeTo(toKey edPub, msg []byte) {
 	// WARNING: unsafe to call from within an actor, must only be exposed over the PacketConn functions (which are, themselves, unsafe for actors to call in most cases, since they may block)
 	phony.Block(mgr, func() {
 		if info := mgr.sessions[toKey]; info != nil {
+			mgr.pc.logger.Traceln("encrypted: writeTo using existing session", "peer", pubString(&toKey), "len", len(msg))
 			info.doSend(mgr, msg)
 		} else {
+			mgr.pc.logger.Debugf("encrypted: no session for %s, buffering %d bytes and sending init", pubString(&toKey), len(msg))
 			// Need to buffer the traffic
 			mgr._bufferAndInit(toKey, msg)
 		}
@@ -163,10 +200,12 @@ func (mgr *sessionManager) _bufferAndInit(toKey edPub, msg []byte) {
 		buf.nextPriv = nextPriv
 		buf.timer = time.AfterFunc(0, func() {})
 		mgr.buffers[toKey] = buf
+		mgr.pc.logger.Debugf("encrypted: created buffer for %s with init current=%s next=%s", pubString(&toKey), boxPubShort(buf.init.current), boxPubShort(buf.init.next))
 	}
 	buf.data = msg
 	buf.timer.Stop()
 	mgr.sendInit(&toKey, &buf.init)
+	mgr.pc.logger.Traceln("encrypted: buffered message length", len(msg), "for", pubString(&toKey))
 	buf.timer = time.AfterFunc(sessionTimeout, func() {
 		mgr.Act(nil, func() {
 			if b := mgr.buffers[toKey]; b == buf {
@@ -179,13 +218,19 @@ func (mgr *sessionManager) _bufferAndInit(toKey edPub, msg []byte) {
 
 func (mgr *sessionManager) sendInit(dest *edPub, init *sessionInit) {
 	if bs, err := init.encrypt(&mgr.pc.secretEd, dest); err == nil {
+		mgr.pc.logger.Debugf("encrypted: sending session init to %s seq=%d keySeq=%d size=%d", pubString(dest), init.seq, init.keySeq, len(bs))
 		mgr.pc.PacketConn.WriteTo(bs, types.Addr(dest.asKey()))
+	} else {
+		mgr.pc.logger.Warnf("encrypted: failed to encrypt session init for %s: %v", pubString(dest), err)
 	}
 }
 
 func (mgr *sessionManager) sendAck(dest *edPub, ack *sessionAck) {
 	if bs, err := ack.encrypt(&mgr.pc.secretEd, dest); err == nil {
+		mgr.pc.logger.Debugf("encrypted: sending session ack to %s seq=%d keySeq=%d size=%d", pubString(dest), ack.seq, ack.keySeq, len(bs))
 		mgr.pc.PacketConn.WriteTo(bs, types.Addr(dest.asKey()))
+	} else {
+		mgr.pc.logger.Warnf("encrypted: failed to encrypt session ack for %s: %v", pubString(dest), err)
 	}
 }
 
@@ -263,6 +308,7 @@ func (info *sessionInfo) _resetTimer() {
 func (info *sessionInfo) handleInit(from phony.Actor, init *sessionInit) {
 	info.Act(from, func() {
 		if init.seq <= info.seq {
+			info.mgr.pc.logger.Traceln("encrypted: ignoring stale init", "peer", pubString(&info.ed), "seq", init.seq, "known", info.seq)
 			return
 		}
 		info._handleUpdate(init)
@@ -274,6 +320,7 @@ func (info *sessionInfo) handleInit(from phony.Actor, init *sessionInit) {
 func (info *sessionInfo) handleAck(from phony.Actor, ack *sessionAck) {
 	info.Act(from, func() {
 		if ack.seq <= info.seq {
+			info.mgr.pc.logger.Traceln("encrypted: ignoring stale ack", "peer", pubString(&info.ed), "seq", ack.seq, "known", info.seq)
 			return
 		}
 		info._handleUpdate(&ack.sessionInit)
@@ -282,6 +329,7 @@ func (info *sessionInfo) handleAck(from phony.Actor, ack *sessionAck) {
 
 // return true if everything looks OK and the session was updated
 func (info *sessionInfo) _handleUpdate(init *sessionInit) {
+	info.mgr.pc.logger.Debugf("encrypted: session update for %s seq %d->%d keySeq=%d", pubString(&info.ed), info.seq, init.seq, init.keySeq)
 	info.current = init.current
 	info.next = init.next
 	info.seq = init.seq
@@ -300,9 +348,12 @@ func (info *sessionInfo) doSend(from phony.Actor, msg []byte) {
 	// TODO? some worker pool to multi-thread this
 	info.Act(from, func() {
 		defer freeBytes(msg)
+		nextNonce := info.sendNonce + 1
+		info.mgr.pc.logger.Traceln("encrypted: sending traffic", "peer", pubString(&info.ed), "len", len(msg), "nonce", nextNonce, "localKeySeq", info.localKeySeq, "remoteKeySeq", info.remoteKeySeq)
 		info.sendNonce += 1 // Advance the nonce before anything else
 		if info.sendNonce == 0 {
 			// Nonce overflowed, so rotate keys
+			info.mgr.pc.logger.Warnf("encrypted: nonce overflow for %s, rotating keys", pubString(&info.ed))
 			info.recvPub, info.recvPriv = info.sendPub, info.sendPriv
 			info.sendPub, info.sendPriv = info.nextPub, info.nextPriv
 			info.nextPub, info.nextPriv = newBoxKeys()
@@ -326,6 +377,7 @@ func (info *sessionInfo) doSend(from phony.Actor, msg []byte) {
 		freeBytes(tmp)
 		// send
 		info.mgr.pc.PacketConn.WriteTo(bs, types.Addr(info.ed[:]))
+		info.mgr.pc.logger.Traceln("encrypted: traffic sent", "peer", pubString(&info.ed), "bytes", len(msg), "nonce", info.sendNonce, "localKeySeq", info.localKeySeq, "remoteKeySeq", info.remoteKeySeq)
 		info.tx += uint64(len(msg))
 		info._resetTimer()
 	})
@@ -336,6 +388,7 @@ func (info *sessionInfo) doRecv(from phony.Actor, msg []byte) {
 	info.Act(from, func() {
 		orig := msg
 		defer freeBytes(orig)
+		info.mgr.pc.logger.Traceln("encrypted: received traffic", "peer", pubString(&info.ed), "len", len(orig))
 		if len(msg) < sessionTrafficOverheadMin || msg[0] != sessionTypeTraffic {
 			return
 		}
@@ -360,12 +413,14 @@ func (info *sessionInfo) doRecv(from phony.Actor, msg []byte) {
 		fromNext := remoteKeySeq == info.remoteKeySeq+1
 		toRecv := localKeySeq+1 == info.localKeySeq
 		toSend := localKeySeq == info.localKeySeq
+		info.mgr.pc.logger.Traceln("encrypted: traffic header", "peer", pubString(&info.ed), "remoteKeySeq", remoteKeySeq, "localKeySeq", localKeySeq, "nonce", nonce, "fromCurrent", fromCurrent, "fromNext", fromNext, "toRecv", toRecv, "toSend", toSend)
 		var sharedKey *boxShared
 		var onSuccess func(boxPub)
 		switch {
 		case fromCurrent && toRecv:
 			// The boring case, nothing to ratchet, just update nonce
 			if !(info.recvNonce < nonce) {
+				info.mgr.pc.logger.Traceln("encrypted: dropping duplicate/old traffic", "peer", pubString(&info.ed), "nonce", nonce, "known", info.recvNonce)
 				return
 			}
 			sharedKey = &info.recvShared
@@ -375,6 +430,7 @@ func (info *sessionInfo) doRecv(from phony.Actor, msg []byte) {
 		case fromNext && toSend:
 			// The remote side appears to have ratcheted forward
 			if !(info.nextSendNonce < nonce) {
+				info.mgr.pc.logger.Traceln("encrypted: dropping stale next-send traffic", "peer", pubString(&info.ed), "nonce", nonce, "known", info.nextSendNonce)
 				return
 			}
 			sharedKey = &info.nextSendShared
@@ -401,6 +457,7 @@ func (info *sessionInfo) doRecv(from phony.Actor, msg []byte) {
 			// Technically there's no reason we can't handle this
 			//panic("DEBUG") // TODO test this
 			if !(info.nextRecvNonce < nonce) {
+				info.mgr.pc.logger.Traceln("encrypted: dropping stale next-recv traffic", "peer", pubString(&info.ed), "nonce", nonce, "known", info.nextRecvNonce)
 				return
 			}
 			sharedKey = &info.nextRecvShared
@@ -425,6 +482,7 @@ func (info *sessionInfo) doRecv(from phony.Actor, msg []byte) {
 		default:
 			// We can't make sense of their message
 			// Send a sessionInit and hope they ack so we can fix things
+			info.mgr.pc.logger.Warnf("encrypted: unable to map traffic keys for %s (remoteKeySeq=%d localKeySeq=%d), requesting reinit", pubString(&info.ed), remoteKeySeq, localKeySeq)
 			info._sendInit()
 			return
 		}
@@ -438,12 +496,14 @@ func (info *sessionInfo) doRecv(from phony.Actor, msg []byte) {
 			info.mgr.pc.network.recv(info, msg)
 			// Misc remaining followup work
 			onSuccess(key)
+			info.mgr.pc.logger.Traceln("encrypted: traffic decrypted", "peer", pubString(&info.ed), "payload", len(msg), "nonce", nonce, "remoteKeySeq", remoteKeySeq, "localKeySeq", localKeySeq)
 			info.rx += uint64(len(msg))
 			info._resetTimer()
 		} else {
 			// Keys somehow became out-of-sync
 			// This seems to happen in some edge cases if a node restarts
 			// Fix by sending a new init
+			info.mgr.pc.logger.Warnf("encrypted: failed to decrypt traffic for %s (nonce=%d), requesting reinit", pubString(&info.ed), nonce)
 			info._sendInit()
 		}
 	})

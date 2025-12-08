@@ -40,6 +40,7 @@ func (l *linkTLS) dial(ctx context.Context, url *url.URL, info linkInfo, options
 		if sni := options.tlsSNI; sni != "" {
 			tlsconfig.ServerName = sni
 		}
+		l.core.log.Debugf("TLS dialing %s via %s:%d sni=%q min=%s max=%s", url.Host, ip, port, tlsconfig.ServerName, tlsVersionName(tlsconfig.MinVersion), tlsVersionName(tlsconfig.MaxVersion))
 		addr := &net.TCPAddr{
 			IP:   ip,
 			Port: port,
@@ -52,7 +53,15 @@ func (l *linkTLS) dial(ctx context.Context, url *url.URL, info linkInfo, options
 			NetDialer: dialer,
 			Config:    tlsconfig,
 		}
-		return tlsdialer.DialContext(ctx, "tcp", addr.String())
+		conn, err := tlsdialer.DialContext(ctx, "tcp", addr.String())
+		if err != nil {
+			l.core.log.Warnf("TLS dial failed %s via %s:%d: %v", url.Host, ip, port, err)
+			return nil, err
+		}
+		if tlsconn, ok := conn.(*tls.Conn); ok {
+			logTLSState(l.core.log, "client: ", tlsconn.ConnectionState())
+		}
+		return conn, nil
 	})
 }
 
@@ -68,5 +77,6 @@ func (l *linkTLS) listen(ctx context.Context, url *url.URL, sintf string) (net.L
 		return nil, err
 	}
 	tlslistener := tls.NewListener(listener, l.config)
+	l.core.log.Debugf("TLS listener prepared on %s min=%s max=%s", hostport, tlsVersionName(l.config.MinVersion), tlsVersionName(l.config.MaxVersion))
 	return tlslistener, nil
 }
