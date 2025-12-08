@@ -436,7 +436,7 @@ impl Multicast {
             }
         };
 
-        debug!(
+        trace!(
             "Discovered peer via multicast: {} on {}",
             hex::encode(&adv.public_key[..8]),
             interface.name

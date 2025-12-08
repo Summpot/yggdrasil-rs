@@ -78,6 +78,8 @@ pub struct LinkMetrics {
     pub tx: AtomicU64,
     /// Whether the connection is still alive.
     pub alive: AtomicBool,
+    /// Last measured RTT in microseconds.
+    pub rtt_us: AtomicU64,
 }
 
 #[derive(Debug)]
@@ -94,6 +96,7 @@ pub struct LinkSummary {
     pub rx_bytes: u64,
     pub tx_bytes: u64,
     pub alive: bool,
+    pub rtt_us: u64,
 }
 
 /// Active link connection state.
@@ -124,7 +127,7 @@ pub struct PeerConnectedEvent {
     pub priority: u8,
     pub outbound: bool,
     pub peer_port: yggdrasil_types::PeerPort,
-    pub outgoing_tx: mpsc::UnboundedSender<OutgoingPacket>,
+    pub outgoing_tx: mpsc::Sender<OutgoingPacket>,
     pub event_rx: mpsc::UnboundedReceiver<PeerEvent>,
 }
 
@@ -179,6 +182,57 @@ impl Links {
     /// Get a reference to the peer port allocator (for spawned tasks).
     fn peer_port_allocator(&self) -> Arc<AtomicU64> {
         self.next_peer_port.clone()
+    }
+
+    /// Check whether we already have a live connection to the given public key.
+    pub fn has_active_connection(&self, key: &PublicKey) -> bool {
+        let links = self.links.read();
+        links.values().any(|state| {
+            state.conn.as_ref().map_or(false, |conn| {
+                conn.info.remote_key == *key && conn.metrics.alive.load(Ordering::Relaxed)
+            })
+        })
+    }
+
+    /// Remove a connection from the internal state and mark it as disconnected.
+    /// For ephemeral or incoming links we drop the entire entry so it no longer
+    /// appears in peer listings.
+    pub fn cleanup_connection(
+        &self,
+        key: &PublicKey,
+        peer_port: PeerPort,
+        error: Option<String>,
+    ) {
+        let mut links = self.links.write();
+        let mut to_remove = Vec::new();
+
+        for (uri, state) in links.iter_mut() {
+            let matches_peer = state
+                .conn
+                .as_ref()
+                .map(|conn| conn.info.remote_key == *key && conn.info.peer_port == peer_port)
+                .unwrap_or(false);
+
+            if !matches_peer {
+                continue;
+            }
+
+            if let Some(conn) = state.conn.take() {
+                conn.metrics.alive.store(false, Ordering::SeqCst);
+                conn.task.abort();
+            }
+
+            state.last_error = error.clone();
+            state.last_error_time = Some(Instant::now());
+
+            if matches!(state.link_type, LinkType::Ephemeral | LinkType::Incoming) {
+                to_remove.push(uri.clone());
+            }
+        }
+
+        for uri in to_remove {
+            links.remove(&uri);
+        }
     }
 
     /// Get our public key.
@@ -382,6 +436,13 @@ impl Links {
             )));
         }
 
+        // Drop duplicate connections to the same peer. If we already have a
+        // live connection, prefer the existing one to avoid in/out duplicates
+        // when multicast discovers the same peer from both sides.
+        if links.has_active_connection(&metadata.public_key) {
+            return Err(LinkError::Protocol("duplicate connection already active".to_string()));
+        }
+
         // Compute IPv6 address
         let ipv6_addr = yggdrasil_address::addr_for_key(&metadata.public_key)
             .map(|a| a.to_string())
@@ -406,6 +467,7 @@ impl Links {
             rx: AtomicU64::new(0),
             tx: AtomicU64::new(0),
             alive: AtomicBool::new(true),
+            rtt_us: AtomicU64::new(0),
         });
 
         let info = LinkInfo {
@@ -574,6 +636,13 @@ impl Links {
             )));
         }
 
+        // Avoid duplicate connections to the same peer. This mirrors the Go
+        // behaviour where multicast should not leave both inbound and
+        // outbound links simultaneously for a single neighbour.
+        if self.has_active_connection(&metadata.public_key) {
+            return Err(LinkError::Protocol("duplicate connection already active".to_string()));
+        }
+
         // Compute IPv6 address
         let ipv6_addr = yggdrasil_address::addr_for_key(&metadata.public_key)
             .map(|a| a.to_string())
@@ -596,6 +665,7 @@ impl Links {
             rx: AtomicU64::new(0),
             tx: AtomicU64::new(0),
             alive: AtomicBool::new(true),
+            rtt_us: AtomicU64::new(0),
         });
 
         let info = LinkInfo {
@@ -790,6 +860,7 @@ impl Links {
                     rx_bytes: c.metrics.rx.load(Ordering::Relaxed),
                     tx_bytes: c.metrics.tx.load(Ordering::Relaxed),
                     alive: c.metrics.alive.load(Ordering::Relaxed),
+                    rtt_us: c.metrics.rtt_us.load(Ordering::Relaxed),
                 })
             })
             .collect();
@@ -807,6 +878,32 @@ impl Links {
     pub fn connection_count(&self) -> usize {
         let links = self.links.read();
         links.values().filter(|state| state.conn.is_some()).count()
+    }
+
+    /// Update the RTT measurement for a connection identified by peer key and port.
+    pub fn update_rtt(&self, key: &PublicKey, port: PeerPort, rtt: Duration) {
+        let rtt_us = rtt.as_micros() as u64;
+        let links = self.links.read();
+
+        // Prefer matching by both key and port for uniqueness.
+        for state in links.values() {
+            if let Some(conn) = &state.conn {
+                if conn.info.remote_key == *key && conn.info.peer_port == port {
+                    conn.metrics.rtt_us.store(rtt_us, Ordering::Relaxed);
+                    return;
+                }
+            }
+        }
+
+        // Fallback: update first link matching the key if port lookup failed.
+        for state in links.values() {
+            if let Some(conn) = &state.conn {
+                if conn.info.remote_key == *key {
+                    conn.metrics.rtt_us.store(rtt_us, Ordering::Relaxed);
+                    return;
+                }
+            }
+        }
     }
 
     /// Get listener addresses.

@@ -211,8 +211,11 @@ impl Router {
             .map(|i| i.sig_res.req.seq + 1)
             .unwrap_or(1);
 
-        use rand::Rng;
-        let nonce = rand::rng().random();
+        // Generate a cryptographically secure random nonce
+        use rand::RngCore;
+        let mut nonce_bytes = [0u8; 8];
+        rand::rng().fill_bytes(&mut nonce_bytes);
+        let nonce = u64::from_be_bytes(nonce_bytes);
 
         RouterSigReq::new(seq, nonce)
     }
@@ -244,7 +247,7 @@ impl Router {
         &mut self,
         peer_key: &PublicKey,
         res: &RouterSigRes,
-        _rtt: Duration,
+        rtt: Duration,
     ) {
         // Verify the response matches our request
         if let Some(req) = self.requests.get(peer_key) {
@@ -256,10 +259,14 @@ impl Router {
                     self.res_seqs.insert(*peer_key, self.res_seq_ctr);
                     self.responses.insert(*peer_key, res.clone());
 
-                    // Update latency for the peer
-                    if let Some(_peers) = self.peers.get_by_key(peer_key) {
-                        // Update latency for all connections to this peer
-                        // (In practice, we'd need mutable access here)
+                    // Update latency for all connections to this peer
+                    if let Some(peers) = self.peers.get_by_key(peer_key) {
+                        let ports: Vec<_> = peers.keys().copied().collect();
+                        for port in ports {
+                            if let Some(info) = self.peers.get_mut(peer_key, port) {
+                                info.update_latency(rtt);
+                            }
+                        }
                     }
                 }
             }
@@ -748,5 +755,27 @@ mod tests {
         let ancestry = router.get_ancestry(&router.public_key);
         assert_eq!(ancestry.len(), 1);
         assert_eq!(ancestry[0], router.public_key);
+    }
+
+    #[test]
+    fn test_nonce_generation_is_random() {
+        let key = PrivateKey::generate();
+        let config = RouterConfig::default();
+        let callbacks = Arc::new(DefaultCallbacks);
+
+        let router = Router::new(key, config, callbacks);
+
+        // Generate multiple nonces and verify they are different
+        let nonce1 = router.new_sig_req().nonce;
+        let nonce2 = router.new_sig_req().nonce;
+        let nonce3 = router.new_sig_req().nonce;
+
+        // All nonces should be non-zero and different from each other
+        assert_ne!(nonce1, 0, "Nonce should not be zero");
+        assert_ne!(nonce2, 0, "Nonce should not be zero");
+        assert_ne!(nonce3, 0, "Nonce should not be zero");
+        assert_ne!(nonce1, nonce2, "Nonces should be different");
+        assert_ne!(nonce2, nonce3, "Nonces should be different");
+        assert_ne!(nonce1, nonce3, "Nonces should be different");
     }
 }

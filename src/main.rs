@@ -363,6 +363,7 @@ async fn start_links(
     let peer_registry: PeerRegistry = Arc::new(dashmap::DashMap::new());
     let peer_registry_clone = Arc::clone(&peer_registry);
     let routing_for_peers = Arc::clone(&routing);
+    let links_for_events = Arc::clone(&links);
 
     // Periodic routing maintenance
     let routing_for_tick = Arc::clone(&routing);
@@ -415,6 +416,7 @@ async fn start_links(
             let peer_registry_inner = Arc::clone(&peer_registry_clone);
             let routing_for_peer = Arc::clone(&routing_clone);
             let incoming_tx_for_peer = incoming_tx.clone();
+            let links_for_peer = Arc::clone(&links_for_events);
             let mut peer_event_rx = event.event_rx;
             tokio::spawn(async move {
                 while let Some(peer_event) = peer_event_rx.recv().await {
@@ -435,6 +437,7 @@ async fn start_links(
                                 rtt_ms = rtt.as_millis(),
                                 "Received signature response"
                             );
+                            links_for_peer.update_rtt(&from, res.port, rtt);
                             routing_for_peer.handle_sig_response(
                                 from,
                                 res,
@@ -501,7 +504,7 @@ async fn start_links(
                             );
                             routing_for_peer.forward_path_broken(broken, &peer_registry_inner);
                         }
-                        yggdrasil_link::PeerEvent::Disconnected { key, error } => {
+                        yggdrasil_link::PeerEvent::Disconnected { key, peer_port, error } => {
                             tracing::info!(
                                 peer = %hex::encode(&key.as_bytes()[..8]),
                                 error = ?error,
@@ -510,6 +513,7 @@ async fn start_links(
                             // Remove peer from registry
                             peer_registry_inner.remove(&key);
                             routing_for_peer.peer_disconnected(&key, &peer_registry_inner);
+                            links_for_peer.cleanup_connection(&key, peer_port, error.clone());
                             break;
                         }
                     }
@@ -576,15 +580,17 @@ async fn start_multicast(
     let links_clone = links.cloned();
     tokio::spawn(async move {
         while let Some(event) = peer_rx.recv().await {
-            tracing::info!(
-                peer = %hex::encode(&event.public_key.as_bytes()[..8]),
-                addr = %event.addr,
-                interface = %event.interface,
-                "Discovered peer via multicast"
-            );
-
             // Connect to the discovered peer
             if let Some(ref links) = links_clone {
+                if links.has_active_connection(&event.public_key) {
+                    tracing::trace!(
+                        peer = %hex::encode(&event.public_key.as_bytes()[..8]),
+                        addr = %event.addr,
+                        "Skipping multicast connect, link already active"
+                    );
+                    continue;
+                }
+
                 let links = Arc::clone(links);
                 let addr = event.addr;
                 let password = event.password.into_bytes();

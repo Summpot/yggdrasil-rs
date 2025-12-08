@@ -36,7 +36,7 @@ pub struct PeerHandler<S> {
     /// Assigned peer port for this connection.
     peer_port: PeerPort,
     /// Channel to send outgoing packets.
-    outgoing_rx: mpsc::UnboundedReceiver<OutgoingPacket>,
+    outgoing_rx: mpsc::Receiver<OutgoingPacket>,
     /// Channel to receive events.
     event_tx: mpsc::UnboundedSender<PeerEvent>,
     /// Keep-alive interval.
@@ -83,18 +83,20 @@ pub enum PeerEvent {
     /// Peer disconnected.
     Disconnected {
         key: PublicKey,
+        peer_port: PeerPort,
         error: Option<String>,
     },
 }
 
 /// Create peer handler channels.
 pub fn create_peer_channels() -> (
-    mpsc::UnboundedSender<OutgoingPacket>,
-    mpsc::UnboundedReceiver<OutgoingPacket>,
+    mpsc::Sender<OutgoingPacket>,
+    mpsc::Receiver<OutgoingPacket>,
     mpsc::UnboundedSender<PeerEvent>,
     mpsc::UnboundedReceiver<PeerEvent>,
 ) {
-    let (outgoing_tx, outgoing_rx) = mpsc::unbounded_channel();
+    const OUTGOING_CHANNEL_CAPACITY: usize = 512;
+    let (outgoing_tx, outgoing_rx) = mpsc::channel(OUTGOING_CHANNEL_CAPACITY);
     let (event_tx, event_rx) = mpsc::unbounded_channel();
     (outgoing_tx, outgoing_rx, event_tx, event_rx)
 }
@@ -109,7 +111,7 @@ where
         private_key: PrivateKey,
         remote_key: PublicKey,
         peer_port: PeerPort,
-        outgoing_rx: mpsc::UnboundedReceiver<OutgoingPacket>,
+        outgoing_rx: mpsc::Receiver<OutgoingPacket>,
         event_tx: mpsc::UnboundedSender<PeerEvent>,
     ) -> Self {
         let public_key = private_key.public_key();
@@ -185,6 +187,7 @@ where
                             debug!(error = ?e, "Failed to read frame, connection closing");
                             let _ = event_tx.send(PeerEvent::Disconnected {
                                 key: remote_key,
+                                peer_port,
                                 error: Some(format!("{:?}", e)),
                             });
                             break;
@@ -218,6 +221,7 @@ where
                         );
                         let _ = event_tx.send(PeerEvent::Disconnected {
                             key: remote_key,
+                            peer_port,
                             error: Some(format!("{:?}", e)),
                         });
                         break;
@@ -232,6 +236,7 @@ where
                         );
                         let _ = event_tx.send(PeerEvent::Disconnected {
                             key: remote_key,
+                                peer_port,
                             error: Some(format!("flush error: {:?}", e)),
                         });
                         break;

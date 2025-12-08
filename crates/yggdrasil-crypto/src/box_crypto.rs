@@ -174,7 +174,6 @@ impl BoxShared {
         // NaCl box uses crypto_core_hsalsa20(sharedkey, zero, sharedkey, sigma)
         // where sigma = "expand 32-byte k"
         use salsa20::hsalsa;
-        const SIGMA: [u8; 16] = *b"expand 32-byte k";
         const ZERO: [u8; 16] = [0u8; 16];
         
         use generic_array::GenericArray;

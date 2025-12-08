@@ -5,7 +5,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use dashmap::DashMap;
 use hex;
 use parking_lot::RwLock;
-use tokio::sync::mpsc;
+use tokio::sync::mpsc::{self, error::TrySendError};
 use tracing::{debug, trace, warn};
 use yggdrasil_link::OutgoingPacket;
 use yggdrasil_routing::{Router, RouterCallbacks, RouterConfig};
@@ -18,7 +18,7 @@ use yggdrasil_wire::{
 use crate::Core;
 
 /// Registry for tracking peer outgoing channels.
-pub type PeerRegistry = Arc<DashMap<PublicKey, mpsc::UnboundedSender<OutgoingPacket>>>;
+pub type PeerRegistry = Arc<DashMap<PublicKey, mpsc::Sender<OutgoingPacket>>>;
 
 #[derive(Default)]
 struct RouterActions {
@@ -337,6 +337,7 @@ impl RoutingRuntime {
                     next_lookup,
                     WirePacketType::ProtoPathLookup,
                     registry,
+                    true,
                 );
                 forwarded = true;
             } else {
@@ -379,7 +380,13 @@ impl RoutingRuntime {
         let mut watermark = notify.watermark;
         if let Some(next) = self.next_hop_for_path(&notify.path, &mut watermark) {
             notify.watermark = watermark;
-            self.send_control_packet(next, notify, WirePacketType::ProtoPathNotify, registry);
+            self.send_control_packet(
+                next,
+                notify,
+                WirePacketType::ProtoPathNotify,
+                registry,
+                true,
+            );
             return;
         }
 
@@ -418,7 +425,13 @@ impl RoutingRuntime {
         let mut watermark = broken.watermark;
         if let Some(next) = self.next_hop_for_path(&broken.path, &mut watermark) {
             broken.watermark = watermark;
-            self.send_control_packet(next, broken, WirePacketType::ProtoPathBroken, registry);
+            self.send_control_packet(
+                next,
+                broken,
+                WirePacketType::ProtoPathBroken,
+                registry,
+                true,
+            );
             return;
         }
 
@@ -495,7 +508,7 @@ impl RoutingRuntime {
                 } else {
                     debug!(peer = %peer_hex, dest = %dest_hex, "Forwarding traffic to next hop");
                 }
-                self.send_traffic_to_peer(next, traffic, &tx);
+                self.send_traffic_to_peer(next, traffic, tx.value());
             } else {
                 debug!(
                     peer = %hex::encode(&next.as_bytes()[..8]),
@@ -515,7 +528,7 @@ impl RoutingRuntime {
         &self,
         peer: PublicKey,
         traffic: Traffic,
-        tx: &mpsc::UnboundedSender<OutgoingPacket>,
+        tx: &mpsc::Sender<OutgoingPacket>,
     ) {
         let mut payload = Vec::new();
         if let Err(e) = traffic.wire_encode(&mut payload) {
@@ -535,10 +548,29 @@ impl RoutingRuntime {
             "Sending traffic packet to peer channel"
         );
 
-        if let Err(e) = tx.send(packet) {
-            debug!(peer = %hex::encode(&peer.as_bytes()[..8]), error = %e, "Failed to send traffic packet to channel");
-        } else {
-            trace!(peer = %hex::encode(&peer.as_bytes()[..8]), "Traffic packet sent to channel successfully");
+        self.send_with_backpressure(tx, packet, true, &peer);
+    }
+
+    fn send_with_backpressure(
+        &self,
+        tx: &mpsc::Sender<OutgoingPacket>,
+        packet: OutgoingPacket,
+        allow_drop: bool,
+        peer: &PublicKey,
+    ) {
+        let packet_type = packet.packet_type;
+        match tx.try_send(packet) {
+            Ok(_) => {}
+            Err(TrySendError::Full(packet)) => {
+                if allow_drop {
+                    debug!(peer = %hex::encode(&peer.as_bytes()[..8]), packet_type = ?packet_type, "Dropping packet due to backpressure");
+                } else if let Err(e) = tx.blocking_send(packet) {
+                    debug!(peer = %hex::encode(&peer.as_bytes()[..8]), packet_type = ?packet_type, error = %e, "Failed to deliver packet under backpressure");
+                }
+            }
+            Err(TrySendError::Closed(_)) => {
+                debug!(peer = %hex::encode(&peer.as_bytes()[..8]), packet_type = ?packet_type, "Peer channel closed while sending");
+            }
         }
     }
 
@@ -580,6 +612,7 @@ impl RoutingRuntime {
                 WirePacketType::ProtoSigReq,
                 |buf| req.wire_encode(buf),
                 registry,
+                false,
             );
         }
 
@@ -589,6 +622,7 @@ impl RoutingRuntime {
                 WirePacketType::ProtoAnnounce,
                 |buf| ann.wire_encode(buf),
                 registry,
+                false,
             );
         }
     }
@@ -599,6 +633,7 @@ impl RoutingRuntime {
         kind: WirePacketType,
         encode: F,
         registry: &PeerRegistry,
+        allow_drop: bool,
     ) where
         F: FnOnce(&mut Vec<u8>) -> Result<(), WireError>,
     {
@@ -614,9 +649,7 @@ impl RoutingRuntime {
                 payload,
             };
 
-            if let Err(e) = tx.send(packet) {
-                debug!(peer = %hex::encode(&peer.as_bytes()[..8]), error = %e, "Failed to send control packet");
-            }
+            self.send_with_backpressure(tx.value(), packet, allow_drop, &peer);
         } else {
             trace!(peer = %hex::encode(&peer.as_bytes()[..8]), "No peer channel for control packet");
         }
@@ -628,10 +661,11 @@ impl RoutingRuntime {
         packet: P,
         kind: WirePacketType,
         registry: &PeerRegistry,
+        allow_drop: bool,
     ) where
         P: WireEncode,
     {
-        self.send_control(peer, kind, |buf| packet.wire_encode(buf), registry);
+        self.send_control(peer, kind, |buf| packet.wire_encode(buf), registry, allow_drop);
     }
 
     /// Broadcast a PathLookup to all known peers except an optional excluded peer.
@@ -661,9 +695,7 @@ impl RoutingRuntime {
                 payload,
             };
 
-            if let Err(e) = tx.send(packet) {
-                debug!(peer = %hex::encode(&peer.as_bytes()[..8]), error = %e, "Failed to send path lookup");
-            }
+            self.send_with_backpressure(tx, packet, true, &peer);
         }
     }
 
