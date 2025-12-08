@@ -164,7 +164,7 @@ func (m *Multicast) _updateInterfaces() {
 			info.addrs = append(info.addrs, addr)
 		}
 		interfaces[name] = info
-		m.log.Debugf("Discovered addresses for interface %s: %s", name, addrs)
+		// m.log.Debugf("Discovered addresses for interface %s: %s", name, addrs)
 	}
 	m._interfaces = interfaces
 }
@@ -447,7 +447,7 @@ func (m *Multicast) listen() {
 				RawQuery: v.Encode(),
 			}
 			if err := m.core.CallPeer(u, from.Zone); err != nil {
-				m.log.Debugln("Call from multicast failed:", err)
+				// m.log.Debugln("Call from multicast failed:", err)
 			}
 		}
 	}
