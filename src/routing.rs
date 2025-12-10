@@ -15,6 +15,7 @@ use yggdrasil_wire::{
     PathBroken, PathLookup, PathNotify, PathNotifyInfo, Traffic, WireEncode, WirePacketType,
 };
 
+use crate::debug_logger::PlaintextDebugLogger;
 use crate::Core;
 
 /// Registry for tracking peer outgoing channels.
@@ -48,10 +49,11 @@ pub struct RoutingRuntime {
     router: RwLock<Router>,
     last_sig_requests: RwLock<HashMap<PublicKey, (u64, u64)>>,
     peer_ports: RwLock<HashMap<PublicKey, PeerPort>>, // track latest port per peer
+    debug_logger: Option<Arc<PlaintextDebugLogger>>,
 }
 
 impl RoutingRuntime {
-    pub fn new(core: Arc<Core>) -> Self {
+    pub fn new(core: Arc<Core>, debug_logger: Option<Arc<PlaintextDebugLogger>>) -> Self {
         let callbacks = Arc::new(RoutingCallbacks);
         let mut router = Router::new(
             core.private_key().clone(),
@@ -66,6 +68,7 @@ impl RoutingRuntime {
             router: RwLock::new(router),
             last_sig_requests: RwLock::new(HashMap::new()),
             peer_ports: RwLock::new(HashMap::new()),
+            debug_logger,
         }
     }
 
@@ -183,6 +186,10 @@ impl RoutingRuntime {
             }
         };
 
+        if let Some(logger) = &self.debug_logger {
+            logger.log_out(&dest_key, packet);
+        }
+
         let sessions = self.core.sessions();
         match sessions.write_to(dest_key, packet.to_vec()) {
             WriteResult::Send { data } => self.send_encrypted_payload(dest_key, data, registry),
@@ -226,6 +233,10 @@ impl RoutingRuntime {
             let sessions = self.core.sessions();
             match sessions.handle_data(&from, &traffic.payload) {
                 HandleResult::Received { payload } => {
+                    if let Some(logger) = &self.debug_logger {
+                        logger.log_in(&from, &payload);
+                    }
+
                     debug!(
                         from = %hex::encode(&from.as_bytes()[..8]),
                         payload_len = payload.len(),

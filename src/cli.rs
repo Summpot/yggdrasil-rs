@@ -21,6 +21,10 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub log_file: Option<PathBuf>,
 
+    /// Plaintext debug log output path (captures decrypted/encrypted payloads)
+    #[arg(long = "debug-plaintext-log", global = true)]
+    pub debug_plaintext_log: Option<PathBuf>,
+
     /// Admin socket endpoint (for admin commands)
     #[arg(
         short = 'e',

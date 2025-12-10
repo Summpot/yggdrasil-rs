@@ -1,10 +1,39 @@
 //! Session initialization and acknowledgment messages.
 
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use yggdrasil_crypto::{
     box_crypto::{self, BoxPriv, BoxPub},
     conversion::ed_to_curve25519_public,
 };
 use yggdrasil_types::{PublicKey, SecretKey, WireError};
+
+/// Tracks the last session init sequence number so that repeated inits within
+/// the same second still advance and are accepted by Go nodes.
+static LAST_SESSION_SEQ: AtomicU64 = AtomicU64::new(0);
+
+/// Generate a monotonically increasing session init sequence number.
+fn next_session_seq() -> u64 {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+
+    loop {
+        let prev = LAST_SESSION_SEQ.load(Ordering::Relaxed);
+        let candidate = std::cmp::max(now, prev.saturating_add(1));
+        match LAST_SESSION_SEQ.compare_exchange(
+            prev,
+            candidate,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        ) {
+            Ok(_) => return candidate,
+            Err(_) => continue,
+        }
+    }
+}
 
 use crate::{SESSION_ACK_SIZE, SESSION_INIT_SIZE};
 
@@ -28,10 +57,7 @@ impl SessionInit {
             current: *current,
             next: *next,
             key_seq,
-            seq: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
+            seq: next_session_seq(),
         }
     }
 

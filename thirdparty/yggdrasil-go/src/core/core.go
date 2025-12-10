@@ -44,6 +44,7 @@ type Core struct {
 		nodeinfo           NodeInfo                   // immutable after startup
 		nodeinfoPrivacy    NodeInfoPrivacy            // immutable after startup
 		_allowedPublicKeys map[[32]byte]struct{}      // configurable after startup
+		debugLogger        *plaintextLogger           // immutable after startup
 	}
 	pathNotify func(ed25519.PublicKey)
 }
@@ -177,6 +178,22 @@ func (c *Core) MTU() uint64 {
 	return MTU
 }
 
+func (c *Core) logPlaintext(direction string, addr net.Addr, data []byte) {
+	if c.config.debugLogger == nil {
+		return
+	}
+
+	kaddr, ok := addr.(iwt.Addr)
+	if !ok || len(kaddr) != ed25519.PublicKeySize {
+		return
+	}
+
+	peer := make(ed25519.PublicKey, ed25519.PublicKeySize)
+	copy(peer, kaddr)
+
+	c.config.debugLogger.log(direction, peer, data)
+}
+
 func (c *Core) ReadFrom(p []byte) (n int, from net.Addr, err error) {
 	buf := allocBytes(int(c.PacketConn.MTU()))
 	defer freeBytes(buf)
@@ -202,6 +219,7 @@ func (c *Core) ReadFrom(p []byte) (n int, from net.Addr, err error) {
 			continue
 		}
 		bs = bs[1:n]
+		c.logPlaintext("IN", from, bs)
 		copy(p, bs)
 		if len(p) < len(bs) {
 			n = len(p)
@@ -213,6 +231,8 @@ func (c *Core) ReadFrom(p []byte) (n int, from net.Addr, err error) {
 }
 
 func (c *Core) WriteTo(p []byte, addr net.Addr) (n int, err error) {
+	c.logPlaintext("OUT", addr, p)
+
 	buf := allocBytes(0)
 	defer func() { freeBytes(buf) }()
 	buf = append(buf, typeSessionTraffic)

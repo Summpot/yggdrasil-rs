@@ -169,7 +169,14 @@ impl SessionManager {
         let (session, buf) = self.session_for_init(pub_key, init);
         {
             let mut info = session.write();
+            let current_seq = info.seq;
             if !info.handle_init(init) {
+                tracing::debug!(
+                    from = %hex::encode(&pub_key.as_bytes()[..8]),
+                    init_seq = init.seq,
+                    current_seq = current_seq,
+                    "Session: Init ignored (duplicate or out-of-order)"
+                );
                 return HandleResult::Ignored;
             }
         }
@@ -189,12 +196,27 @@ impl SessionManager {
 
         {
             let mut info = session.write();
+            let current_seq = info.seq;
             if is_old {
                 if !info.handle_ack(ack) {
+                    tracing::debug!(
+                        from = %hex::encode(&pub_key.as_bytes()[..8]),
+                        ack_seq = ack.inner.seq,
+                        current_seq = current_seq,
+                        is_old = is_old,
+                        "Session: Ack ignored (duplicate or out-of-order)"
+                    );
                     return HandleResult::Ignored;
                 }
             } else {
                 if !info.handle_init(&ack.inner) {
+                    tracing::debug!(
+                        from = %hex::encode(&pub_key.as_bytes()[..8]),
+                        init_seq = ack.inner.seq,
+                        current_seq = current_seq,
+                        is_old = is_old,
+                        "Session: Ack-init ignored (duplicate or out-of-order)"
+                    );
                     return HandleResult::Ignored;
                 }
             }
@@ -311,6 +333,14 @@ impl SessionManager {
             let (next_pub, next_priv) = box_crypto::generate_keypair();
             SessionBuffer::new(current_pub, current_priv, next_pub, next_priv)
         });
+
+        // Refresh the init sequence so peers that already tracked a previous
+        // init (e.g., if an ack was lost) will accept and respond instead of
+        // treating it as stale.
+        let current = buf.init.current;
+        let next = buf.init.next;
+        let key_seq = buf.init.key_seq;
+        buf.init = SessionInit::new(&current, &next, key_seq);
 
         buf.data = Some(msg);
         let init = buf.init.clone();
