@@ -160,8 +160,7 @@ where
                 result = read_frame(&mut reader) => {
                     match result {
                         Ok(packet) => {
-                            debug!(
-                                remote = %hex::encode(&remote_key.as_bytes()[..8]),
+                            trace!(
                                 packet_type = ?packet.packet_type,
                                 payload_len = packet.payload.len(),
                                 "Received packet from peer"
@@ -181,19 +180,11 @@ where
                                 &mut writer,
                                 &mut last_sig_req_time,
                             ).await {
-                                debug!(
-                                    remote = %hex::encode(&remote_key.as_bytes()[..8]),
-                                    error = %e,
-                                    "Failed to handle packet"
-                                );
+                                debug!(error = %e, "Failed to handle packet");
                             }
                         }
                         Err(e) => {
-                            debug!(
-                                remote = %hex::encode(&remote_key.as_bytes()[..8]),
-                                error = ?e,
-                                "Failed to read frame, connection closing"
-                            );
+                            debug!(error = ?e, "Failed to read frame, connection closing");
                             let _ = event_tx.send(PeerEvent::Disconnected {
                                 key: remote_key,
                                 peer_port,

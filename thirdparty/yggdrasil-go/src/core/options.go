@@ -35,12 +35,6 @@ func (c *Core) _applyOption(opt SetupOption) (err error) {
 		pk := [32]byte{}
 		copy(pk[:], v)
 		c.config._allowedPublicKeys[pk] = struct{}{}
-	case DebugPlaintextLog:
-		logger, err := newPlaintextLogger(string(v))
-		if err != nil {
-			return fmt.Errorf("failed to configure plaintext debug log: %w", err)
-		}
-		c.config.debugLogger = logger
 	}
 	return
 }
@@ -58,12 +52,10 @@ type NodeInfo map[string]interface{}
 type NodeInfoPrivacy bool
 type AllowedPublicKey ed25519.PublicKey
 type PeerFilter func(net.IP) bool
-type DebugPlaintextLog string
 
-func (a ListenAddress) isSetupOption()     {}
-func (a Peer) isSetupOption()              {}
-func (a NodeInfo) isSetupOption()          {}
-func (a NodeInfoPrivacy) isSetupOption()   {}
-func (a AllowedPublicKey) isSetupOption()  {}
-func (a PeerFilter) isSetupOption()        {}
-func (a DebugPlaintextLog) isSetupOption() {}
+func (a ListenAddress) isSetupOption()    {}
+func (a Peer) isSetupOption()             {}
+func (a NodeInfo) isSetupOption()         {}
+func (a NodeInfoPrivacy) isSetupOption()  {}
+func (a AllowedPublicKey) isSetupOption() {}
+func (a PeerFilter) isSetupOption()       {}

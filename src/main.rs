@@ -5,7 +5,6 @@
 
 mod admin_commands;
 mod cli;
-mod debug_logger;
 mod routing;
 mod service;
 mod utils;
@@ -19,7 +18,6 @@ use tracing_subscriber::Layer;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use debug_logger::PlaintextDebugLogger;
 use tokio::sync::{broadcast, mpsc};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -104,7 +102,6 @@ fn main() -> ExitCode {
 
 fn run(cli: Cli) -> Result<()> {
     let endpoint = &cli.endpoint;
-    let debug_plaintext_log = cli.debug_plaintext_log.clone();
     match cli.command {
         Some(Commands::Run {
             config,
@@ -113,15 +110,7 @@ fn run(cli: Cli) -> Result<()> {
             if_name,
             if_mtu,
             autoconf,
-        }) => cmd_run(
-            config,
-            stdin,
-            admin_listen,
-            if_name,
-            if_mtu,
-            autoconf,
-            debug_plaintext_log,
-        ),
+        }) => cmd_run(config, stdin, admin_listen, if_name, if_mtu, autoconf),
         Some(Commands::GenerateConfig { json }) => cmd_generate_config(json),
         Some(Commands::GenerateKeys) => cmd_generate_keys(),
         Some(Commands::Info {
@@ -166,7 +155,6 @@ fn cmd_run(
     if_name_override: Option<String>,
     if_mtu_override: Option<u64>,
     autoconf: bool,
-    debug_plaintext_log: Option<PathBuf>,
 ) -> Result<()> {
     let mut config = if autoconf {
         NodeConfig::generate()
@@ -198,28 +186,15 @@ fn cmd_run(
     }
 
     let rt = tokio::runtime::Runtime::new()?;
-    rt.block_on(async { run_daemon(config, debug_plaintext_log).await })
+    rt.block_on(async { run_daemon(config).await })
 }
 
-async fn run_daemon(
-    config: NodeConfig,
-    debug_plaintext_log: Option<PathBuf>,
-) -> Result<()> {
+async fn run_daemon(config: NodeConfig) -> Result<()> {
     // Create shutdown channel
     let (shutdown_tx, _) = broadcast::channel::<()>(1);
 
     // Get platform defaults for values not specified in config
     let defaults = get_defaults();
-
-    // Configure optional plaintext debug logging
-    let debug_logger = if let Some(path) = debug_plaintext_log {
-        let logger = PlaintextDebugLogger::from_path(path)
-            .with_context(|| "Failed to open plaintext debug log")?;
-        tracing::info!(path = %logger.path().display(), "Plaintext debug logging enabled");
-        Some(Arc::new(logger))
-    } else {
-        None
-    };
 
     // Create the core
     let core = Arc::new(Core::new(&config)?);
@@ -253,10 +228,7 @@ async fn run_daemon(
     };
 
     // Create routing runtime
-    let routing = Arc::new(RoutingRuntime::new(
-        Arc::clone(&core),
-        debug_logger.clone(),
-    ));
+    let routing = Arc::new(RoutingRuntime::new(Arc::clone(&core)));
 
     // Start links manager
     let links_result = start_links(&config, Arc::clone(&routing)).await?;
@@ -1163,7 +1135,7 @@ fn run_compat_mode(args: &[String]) -> ExitCode {
         }
     };
 
-    match rt.block_on(run_daemon(config, None)) {
+    match rt.block_on(run_daemon(config)) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("Error: {:#}", e);

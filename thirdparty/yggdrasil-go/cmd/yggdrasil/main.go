@@ -54,7 +54,6 @@ func main() {
 	getsnet := flag.Bool("subnet", false, "use in combination with either -useconf or -useconffile, outputs your IPv6 subnet")
 	getpkey := flag.Bool("publickey", false, "use in combination with either -useconf or -useconffile, outputs your public key")
 	loglevel := flag.String("loglevel", "info", "loglevel to enable")
-	debugPlaintextLog := flag.String("debug-plaintext-log", "", "file path to capture plaintext packet debug logs")
 	chuserto := flag.String("user", "", "user (and, optionally, group) to set UID/GID to")
 	flag.Parse()
 
@@ -222,10 +221,6 @@ func main() {
 				panic(err)
 			}
 			options = append(options, core.AllowedPublicKey(k[:]))
-		}
-		if *debugPlaintextLog != "" {
-			options = append(options, core.DebugPlaintextLog(*debugPlaintextLog))
-			logger.Infof("Plaintext debug logging to %s", *debugPlaintextLog)
 		}
 		if n.core, err = core.New(cfg.Certificate, logger, options...); err != nil {
 			panic(err)
